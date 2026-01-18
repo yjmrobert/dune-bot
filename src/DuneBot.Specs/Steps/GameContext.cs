@@ -50,6 +50,7 @@ namespace DuneBot.Specs.Steps
                     });
             
             MockRepo.Setup(r => r.GetGameAsync(It.IsAny<int>())).ReturnsAsync(Game);
+            MockRepo.Setup(r => r.UpdateGameAsync(It.IsAny<Game>())).Returns(System.Threading.Tasks.Task.CompletedTask);
         }
     }
 }
