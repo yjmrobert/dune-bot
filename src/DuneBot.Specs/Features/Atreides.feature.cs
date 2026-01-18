@@ -19,7 +19,7 @@ namespace DuneBot.Specs.Features
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class BattleResolutionFeature : object, Xunit.IClassFixture<BattleResolutionFeature.FixtureData>, Xunit.IAsyncLifetime
+    public partial class AtreidesFactionFeature : object, Xunit.IClassFixture<AtreidesFactionFeature.FixtureData>, Xunit.IAsyncLifetime
     {
         
         private static Reqnroll.ITestRunner testRunner;
@@ -28,10 +28,10 @@ namespace DuneBot.Specs.Features
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "Battle.feature"
+#line 1 "Atreides.feature"
 #line hidden
         
-        public BattleResolutionFeature(BattleResolutionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public AtreidesFactionFeature(AtreidesFactionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Battle Resolution", "  In order to resolve conflicts\n  As a Game Engine\n  I want to determine the winn" +
-                    "er of a battle based on leaders, weapons, and defenses", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Atreides Faction", "  In order to plan my strategy\n  As the Atreides Faction\n  I want to see the futu" +
+                    "re", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -87,14 +87,14 @@ namespace DuneBot.Specs.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Basic Battle Winner")]
-        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
-        [Xunit.TraitAttribute("Description", "Basic Battle Winner")]
-        public async System.Threading.Tasks.Task BasicBattleWinner()
+        [Xunit.SkippableFactAttribute(DisplayName="Atreides sees the next card up for bid")]
+        [Xunit.TraitAttribute("FeatureTitle", "Atreides Faction")]
+        [Xunit.TraitAttribute("Description", "Atreides sees the next card up for bid")]
+        public async System.Threading.Tasks.Task AtreidesSeesTheNextCardUpForBid()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Basic Battle Winner", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Atreides sees the next card up for bid", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 6
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -106,40 +106,19 @@ namespace DuneBot.Specs.Features
             {
                 await this.ScenarioStartAsync();
 #line 7
-    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the game is in the \"ChoamCharity\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-                Reqnroll.Table table1 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Leader",
-                            "Strength",
-                            "Weapon",
-                            "Defense",
-                            "Dial"});
-                table1.AddRow(new string[] {
-                            "Atreides",
-                            "Duncan",
-                            "5",
-                            "None",
-                            "None",
-                            "1"});
-                table1.AddRow(new string[] {
-                            "Harkonnen",
-                            "Beast",
-                            "5",
-                            "None",
-                            "None",
-                            "5"});
 #line 8
-    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table1, "Given ");
+    await testRunner.AndAsync("the \"Atreides\" faction is in the game", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 12
-    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line 9
+    await testRunner.AndAsync("the next card in the deck is \"Lasgun\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 13
-    await testRunner.ThenAsync("the winner should be \"Harkonnen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line 10
+    await testRunner.WhenAsync("the phase advances to \"Bidding\"", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 14
-    await testRunner.AndAsync("\"Atreides\" should lose all forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line 11
+    await testRunner.ThenAsync("\"Atreides\" should receive a DM containing \"Lasgun\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -152,12 +131,12 @@ namespace DuneBot.Specs.Features
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await BattleResolutionFeature.FeatureSetupAsync();
+                await AtreidesFactionFeature.FeatureSetupAsync();
             }
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await BattleResolutionFeature.FeatureTearDownAsync();
+                await AtreidesFactionFeature.FeatureTearDownAsync();
             }
         }
     }

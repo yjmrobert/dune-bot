@@ -19,7 +19,7 @@ namespace DuneBot.Specs.Features
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class BattleResolutionFeature : object, Xunit.IClassFixture<BattleResolutionFeature.FixtureData>, Xunit.IAsyncLifetime
+    public partial class SpicePhaseFeature : object, Xunit.IClassFixture<SpicePhaseFeature.FixtureData>, Xunit.IAsyncLifetime
     {
         
         private static Reqnroll.ITestRunner testRunner;
@@ -28,10 +28,10 @@ namespace DuneBot.Specs.Features
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "Battle.feature"
+#line 1 "Spice.feature"
 #line hidden
         
-        public BattleResolutionFeature(BattleResolutionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public SpicePhaseFeature(SpicePhaseFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Battle Resolution", "  In order to resolve conflicts\n  As a Game Engine\n  I want to determine the winn" +
-                    "er of a battle based on leaders, weapons, and defenses", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Spice Phase", "  In order to gain resources\n  As the Game Engine\n  I want to spawn spice in terr" +
+                    "itories", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -77,6 +77,15 @@ namespace DuneBot.Specs.Features
             await testRunner.CollectScenarioErrorsAsync();
         }
         
+        public virtual async System.Threading.Tasks.Task FeatureBackgroundAsync()
+        {
+#line 6
+  #line hidden
+#line 7
+     await testRunner.GivenAsync("the game is in the \"Storm\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+        }
+        
         async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
         {
             await this.TestInitializeAsync();
@@ -87,15 +96,15 @@ namespace DuneBot.Specs.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Basic Battle Winner")]
-        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
-        [Xunit.TraitAttribute("Description", "Basic Battle Winner")]
-        public async System.Threading.Tasks.Task BasicBattleWinner()
+        [Xunit.SkippableFactAttribute(DisplayName="Spice Blow A adds spice")]
+        [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
+        [Xunit.TraitAttribute("Description", "Spice Blow A adds spice")]
+        public async System.Threading.Tasks.Task SpiceBlowAAddsSpice()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Basic Battle Winner", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 6
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Spice Blow A adds spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 9
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -105,41 +114,51 @@ namespace DuneBot.Specs.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 7
-    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line 6
+  await this.FeatureBackgroundAsync();
 #line hidden
-                Reqnroll.Table table1 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Leader",
-                            "Strength",
-                            "Weapon",
-                            "Defense",
-                            "Dial"});
-                table1.AddRow(new string[] {
-                            "Atreides",
-                            "Duncan",
-                            "5",
-                            "None",
-                            "None",
-                            "1"});
-                table1.AddRow(new string[] {
-                            "Harkonnen",
-                            "Beast",
-                            "5",
-                            "None",
-                            "None",
-                            "5"});
-#line 8
-    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table1, "Given ");
+#line 10
+    await testRunner.GivenAsync("the next spice card A is \"The Great Flat\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 11
+    await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 12
-    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.ThenAsync("territory \"The Great Flat\" should have 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 13
-    await testRunner.ThenAsync("the winner should be \"Harkonnen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Spice Blow B adds spice")]
+        [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
+        [Xunit.TraitAttribute("Description", "Spice Blow B adds spice")]
+        public async System.Threading.Tasks.Task SpiceBlowBAddsSpice()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Spice Blow B adds spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 16
+  this.ScenarioInitialize(scenarioInfo);
 #line hidden
-#line 14
-    await testRunner.AndAsync("\"Atreides\" should lose all forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 17
+    await testRunner.GivenAsync("the next spice card B is \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 18
+    await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 19
+    await testRunner.ThenAsync("territory \"Broken Land\" should have 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -152,12 +171,12 @@ namespace DuneBot.Specs.Features
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await BattleResolutionFeature.FeatureSetupAsync();
+                await SpicePhaseFeature.FeatureSetupAsync();
             }
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await BattleResolutionFeature.FeatureTearDownAsync();
+                await SpicePhaseFeature.FeatureTearDownAsync();
             }
         }
     }

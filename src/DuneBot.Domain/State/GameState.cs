@@ -22,7 +22,7 @@ public class GameState
     public List<string> TraitorDeck { get; set; } = new(); // Used during setup 
 
     // Bidding Phase State
-    public string? BiddingCard { get; set; } // The card currently up for auction
+    public string? CurrentCard { get; set; } // The card currently up for auction
     public int CurrentBid { get; set; }
     public ulong? HighBidderId { get; set; }
     public ulong? CurrentBidderId { get; set; } // Whose turn to bid

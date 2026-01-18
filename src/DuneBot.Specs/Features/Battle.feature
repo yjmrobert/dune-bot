@@ -4,6 +4,7 @@ Feature: Battle Resolution
   I want to determine the winner of a battle based on leaders, weapons, and defenses
 
   Scenario: Basic Battle Winner
+    Given the game is in the "Battle" phase
     Given the following factions are in a battle in "Arrakeen":
       | Faction   | Leader   | Strength | Weapon | Defense | Dial |
       | Atreides  | Duncan   | 5        | None   | None    | 1    |

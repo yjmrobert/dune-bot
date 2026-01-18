@@ -19,7 +19,7 @@ namespace DuneBot.Specs.Features
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class StormPhaseFeature : object, Xunit.IClassFixture<StormPhaseFeature.FixtureData>, Xunit.IAsyncLifetime
+    public partial class ShipmentPhaseFeature : object, Xunit.IClassFixture<ShipmentPhaseFeature.FixtureData>, Xunit.IAsyncLifetime
     {
         
         private static Reqnroll.ITestRunner testRunner;
@@ -28,10 +28,10 @@ namespace DuneBot.Specs.Features
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "Storm.feature"
+#line 1 "Shipment.feature"
 #line hidden
         
-        public StormPhaseFeature(StormPhaseFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public ShipmentPhaseFeature(ShipmentPhaseFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -39,8 +39,7 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Storm Phase", "  In order to simulate the harsh environment of Arrakis\n  As a Game Engine\n  I wa" +
-                    "nt the storm to move blindly and destroy exposed forces", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Shipment Phase", "  In order to deploy forces\n  As a Player\n  I want to ship forces to Arrakis", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -77,6 +76,15 @@ namespace DuneBot.Specs.Features
             await testRunner.CollectScenarioErrorsAsync();
         }
         
+        public virtual async System.Threading.Tasks.Task FeatureBackgroundAsync()
+        {
+#line 6
+  #line hidden
+#line 7
+     await testRunner.GivenAsync("the game is in the \"ShipmentAndMovement\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+        }
+        
         async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
         {
             await this.TestInitializeAsync();
@@ -87,15 +95,15 @@ namespace DuneBot.Specs.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Storm moves randomly")]
-        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Storm moves randomly")]
-        public async System.Threading.Tasks.Task StormMovesRandomly()
+        [Xunit.SkippableFactAttribute(DisplayName="Shipment to Stronghold is cheaper")]
+        [Xunit.TraitAttribute("FeatureTitle", "Shipment Phase")]
+        [Xunit.TraitAttribute("Description", "Shipment to Stronghold is cheaper")]
+        public async System.Threading.Tasks.Task ShipmentToStrongholdIsCheaper()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm moves randomly", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 6
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Shipment to Stronghold is cheaper", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 9
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -105,28 +113,34 @@ namespace DuneBot.Specs.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 7
-    await testRunner.GivenAsync("the current storm position is sector 18", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line 6
+  await this.FeatureBackgroundAsync();
 #line hidden
-#line 8
-    await testRunner.WhenAsync("the storm moves 2 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line 10
+    await testRunner.GivenAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 9
-    await testRunner.ThenAsync("the new storm position should be sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line 11
+    await testRunner.AndAsync("\"Atreides\" has 10 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 12
+    await testRunner.WhenAsync("\"Atreides\" ships 5 forces to \"Arrakeen\" (Sector 8)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 13
+    await testRunner.ThenAsync("\"Atreides\" should have 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Storm destroys forces in open sand")]
-        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Storm destroys forces in open sand")]
-        public async System.Threading.Tasks.Task StormDestroysForcesInOpenSand()
+        [Xunit.SkippableFactAttribute(DisplayName="Shipment to Desert is expensive")]
+        [Xunit.TraitAttribute("FeatureTitle", "Shipment Phase")]
+        [Xunit.TraitAttribute("Description", "Shipment to Desert is expensive")]
+        public async System.Threading.Tasks.Task ShipmentToDesertIsExpensive()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm destroys forces in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 11
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Shipment to Desert is expensive", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 16
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -136,48 +150,33 @@ namespace DuneBot.Specs.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 12
-    await testRunner.GivenAsync("the current storm position is sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
-#line hidden
-                Reqnroll.Table table7 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Forces"});
-                table7.AddRow(new string[] {
-                            "Atreides",
-                            "5"});
-                table7.AddRow(new string[] {
-                            "Harkonnen",
-                            "3"});
-#line 13
-    await testRunner.AndAsync("the following forces are in \"Old Gap\" (Sector 3):", ((string)(null)), table7, "And ");
+#line 6
+  await this.FeatureBackgroundAsync();
 #line hidden
 #line 17
-    await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.GivenAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 18
-    await testRunner.ThenAsync("\"Atreides\" should have 0 forces in \"Old Gap\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.AndAsync("\"Atreides\" has 10 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 19
-    await testRunner.AndAsync("\"Harkonnen\" should have 0 forces in \"Old Gap\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("\"Atreides\" ships 5 forces to \"Basin\" (Sector 8)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 20
-    await testRunner.AndAsync("\"Atreides\" should represent 5 forces in the tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
-#line hidden
-#line 21
-    await testRunner.AndAsync("\"Harkonnen\" should represent 3 forces in the tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("\"Atreides\" should have 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Forces in Safe Zones survive")]
-        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Forces in Safe Zones survive")]
-        public async System.Threading.Tasks.Task ForcesInSafeZonesSurvive()
+        [Xunit.SkippableFactAttribute(DisplayName="Unable to ship into Storm")]
+        [Xunit.TraitAttribute("FeatureTitle", "Shipment Phase")]
+        [Xunit.TraitAttribute("Description", "Unable to ship into Storm")]
+        public async System.Threading.Tasks.Task UnableToShipIntoStorm()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Forces in Safe Zones survive", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Unable to ship into Storm", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 23
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -188,23 +187,23 @@ namespace DuneBot.Specs.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 24
-    await testRunner.GivenAsync("the current storm position is sector 1", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line 6
+  await this.FeatureBackgroundAsync();
 #line hidden
-                Reqnroll.Table table8 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Forces"});
-                table8.AddRow(new string[] {
-                            "Atreides",
-                            "5"});
+#line 24
+    await testRunner.GivenAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
 #line 25
-    await testRunner.AndAsync("the following forces are in \"Arrakeen\" (Sector 2):", ((string)(null)), table8, "And ");
+    await testRunner.AndAsync("\"Atreides\" has 10 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 26
+    await testRunner.AndAsync("the storm is at sector 3", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 27
+    await testRunner.WhenAsync("\"Atreides\" ships 5 forces to \"Arrakeen\" (Sector 3)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 28
-    await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 29
-    await testRunner.ThenAsync("\"Atreides\" should have 5 forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("the action should fail with message \"Cannot ship into Storm.\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -217,12 +216,12 @@ namespace DuneBot.Specs.Features
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await StormPhaseFeature.FeatureSetupAsync();
+                await ShipmentPhaseFeature.FeatureSetupAsync();
             }
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await StormPhaseFeature.FeatureTearDownAsync();
+                await ShipmentPhaseFeature.FeatureTearDownAsync();
             }
         }
     }

@@ -14,38 +14,21 @@ namespace DuneBot.Specs.Steps
     [Binding]
     public class BattleSteps
     {
-        private Game _game;
-        private GameEngine _engine;
-        private Mock<IGameRepository> _mockRepo;
-        private Mock<IDiscordService> _mockDiscord;
-        private Mock<IGameRenderer> _mockRenderer;
-        private Mock<IDeckService> _mockDeck;
-        private ScenarioContext _scenarioContext;
+        private readonly GameContext _context;
+        private readonly ScenarioContext _scenarioContext;
         
-        public BattleSteps(ScenarioContext scenarioContext)
+        public BattleSteps(GameContext context, ScenarioContext scenarioContext)
         {
+            _context = context;
             _scenarioContext = scenarioContext;
-            _mockRepo = new Mock<IGameRepository>();
-            _mockDiscord = new Mock<IDiscordService>();
-            _mockRenderer = new Mock<IGameRenderer>();
-            _mockDeck = new Mock<IDeckService>();
-            
-            // We need real MapService for logic? Or mock?
-            // Engine uses IMapService. Let's use real MapService for integration feel.
-            var mapService = new DuneBot.Engine.Services.MapService();
-            
-            _engine = new GameEngine(_mockRepo.Object, _mockDiscord.Object, _mockRenderer.Object, mapService, _mockDeck.Object);
-            
-            _game = new Game 
-            { 
-                State = new GameState 
-                { 
-                    Phase = GamePhase.Battle,
-                    Turn = 1
-                } 
-            };
-            _mockRepo.Setup(r => r.GetGameAsync(It.IsAny<int>())).ReturnsAsync(_game);
+            // Existing tests might rely on default Phase=Battle if they don't have a Given step.
+            // We should check Feature file. If it has Given, we don't need to force it here.
+            // But if we want to be safe, we can set it if it's default check. 
+            // Better: rely on Scenario to set it. We'll verify Battle.feature next.
         }
+        
+        private Game _game => _context.Game;
+        private GameEngine _engine => _context.Engine;
 
         [Given(@"the following factions are in a battle in ""(.*)""")]
         [Given(@"the following factions are in a battle in ""(.*)"":")]
@@ -59,8 +42,12 @@ namespace DuneBot.Specs.Steps
             };
             
             // Setup forces in territory
-            var t = new Territory { Name = territory };
-            _game.State.Map.Territories.Add(t);
+            var t = _game.State.Map.Territories.FirstOrDefault(x => x.Name == territory);
+            if (t == null)
+            {
+                t = new Territory { Name = territory };
+                _game.State.Map.Territories.Add(t);
+            }
 
             foreach (var row in table.Rows)
             {
@@ -122,7 +109,14 @@ namespace DuneBot.Specs.Steps
                 var weapon = row["Weapon"] == "None" ? null : row["Weapon"];
                 var defense = row["Defense"] == "None" ? null : row["Defense"];
                 
-                await _engine.SubmitBattlePlanAsync(1, id, leader, dial, weapon, defense);
+                try
+                {
+                    await _engine.SubmitBattlePlanAsync(1, id, leader, dial, weapon, defense);
+                }
+                catch (System.Exception ex)
+                {
+                    _scenarioContext["ErrorException"] = ex;
+                }
             }
         }
 
@@ -146,5 +140,46 @@ namespace DuneBot.Specs.Steps
             
             Assert.False(t.FactionForces.ContainsKey(factionEnum), $"{loserName} should have no forces in {territory}");
         }
+
+        [Given(@"""(.*)"" has a traitor called ""(.*)""")]
+        public void GivenHasATraitorCalled(string factionName, string traitorName)
+        {
+            var f = _game.State.Factions.First(x => x.PlayerName == factionName);
+            f.Traitors.Add(traitorName);
+        }
+
+        [Then(@"""(.*)"" should have captured ""(.*)""")]
+        public void ThenShouldHaveCaptured(string factionName, string leaderName)
+        {
+             var f = _game.State.Factions.First(x => x.PlayerName == factionName);
+             Assert.Contains(leaderName, f.CapturedLeaders);
+             
+             // Or check logic?
+             // Since "Duncan" is usually just the name. 
+             // Leader capture logic puts the string into CapturedLeaders list.
+        }
+
+        [Given(@"""(.*)"" uses Voice on ""(.*)"" to forbid ""(.*)""")]
+        public void GivenUsesVoiceToForbid(string user, string target, string card)
+        {
+            Assert.NotNull(_game.State.CurrentBattle);
+            _game.State.CurrentBattle.VoiceRestriction = ((ulong)target.Length, card, false); // false = forbid
+        }
+
+        [Given(@"""(.*)"" uses Voice on ""(.*)"" to force ""(.*)""")]
+        public void GivenUsesVoiceToForce(string user, string target, string card)
+        {
+             Assert.NotNull(_game.State.CurrentBattle);
+             _game.State.CurrentBattle.VoiceRestriction = ((ulong)target.Length, card, true); // true = force
+        }
+
+        [Given(@"""(.*)"" holds ""(.*)""")]
+        public void GivenHolds(string factionName, string card)
+        {
+            var f = _game.State.Factions.First(f => f.PlayerName == factionName);
+            f.TreacheryCards.Add(card);
+        }
+
+
     }
 }

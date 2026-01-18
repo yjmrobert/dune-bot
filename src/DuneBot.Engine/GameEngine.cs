@@ -344,12 +344,12 @@ public class GameEngine
         if (card == null)
         {
             game.State.ActionLog.Add("Bidding: No Treachery Cards left!");
-            game.State.BiddingCard = null;
+            game.State.CurrentCard = null;
             return;
         }
         
         // 2. Setup Auction State
-        game.State.BiddingCard = card;
+        game.State.CurrentCard = card;
         game.State.CurrentBid = 0;
         game.State.HighBidderId = null;
         game.State.IsBiddingRoundActive = true;
@@ -463,11 +463,11 @@ public class GameEngine
         return false; 
     }
 
-    private async Task ResolveAuctionWin(Game game)
+    internal async Task ResolveAuctionWin(Game game)
     {
         var winnerId = game.State.HighBidderId!.Value;
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == winnerId);
-        var card = game.State.BiddingCard;
+        var card = game.State.CurrentCard;
         int cost = game.State.CurrentBid;
         
         faction.Spice -= cost;
@@ -493,7 +493,7 @@ public class GameEngine
             await _discordService.ArchiveThreadAsync(game.GuildId, game.State.BiddingThreadId.Value);
         }
         
-        game.State.BiddingCard = null;
+        game.State.CurrentCard = null;
         game.State.CurrentBid = 0;
         game.State.HighBidderId = null;
         game.State.CurrentBidderId = null;
@@ -898,9 +898,10 @@ public class GameEngine
         // Check if Voice already used? Rules say "Before any battle plans are revealed" -> usually before commit.
         if (battle.VoiceRestriction.HasValue) throw new Exception("Voice already used this battle.");
         
-        // MVP: Type validation ("Weapon" or "Defense" or "Treachery Card"?)
-        // Simplified: "Weapon", "Defense"
-        if (type != "Weapon" && type != "Defense") throw new Exception("Voice can only name 'Weapon' or 'Defense'.");
+        // MVP: Type validation
+        // Allow "Weapon", "Defense", or any non-empty string as card name?
+        if (string.IsNullOrEmpty(type)) throw new Exception("Voice type cannot be empty.");
+        // Removed strict "Weapon"/"Defense" check to allow card names.
         
         battle.VoiceRestriction = (targetId, type, mustPlay);
         
@@ -966,7 +967,7 @@ public class GameEngine
         if (battle.VoiceRestriction.HasValue && battle.VoiceRestriction.Value.TargetId == userId)
         {
             var r = battle.VoiceRestriction.Value;
-            // r.Type: "Weapon" or "Defense"
+            // r.Type: "Weapon", "Defense", or Card Name
             // r.MustPlay: true/false
             
             bool playedWeapon = !string.IsNullOrEmpty(plan.Weapon);
@@ -1006,6 +1007,20 @@ public class GameEngine
                 else
                 {
                      if (playedDefense) throw new Exception("Voice forbids playing a Defense!");
+                }
+            }
+            else
+            {
+                // Specific Card
+                bool playedIt = (plan.Weapon == r.Type) || (plan.Defense == r.Type);
+                if (r.MustPlay)
+                {
+                     if (!playedIt && faction.TreacheryCards.Contains(r.Type)) 
+                         throw new Exception($"Voice requires you to play {r.Type}!");
+                }
+                else
+                {
+                     if (playedIt) throw new Exception($"Voice forbids playing {r.Type}!");
                 }
             }
         }

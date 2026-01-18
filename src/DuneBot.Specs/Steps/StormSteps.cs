@@ -13,39 +13,16 @@ namespace DuneBot.Specs.Steps
     [Binding]
     public class StormSteps
     {
-        private Game _game;
-        private GameEngine _engine;
-        private Mock<IGameRepository> _mockRepo;
-        private Mock<IDiscordService> _mockDiscord;
-        private Mock<IGameRenderer> _mockRenderer;
-        private Mock<IDeckService> _mockDeck;
-        private readonly DuneBot.Engine.Services.MapService _mapService;
+        private readonly GameContext _context;
 
-        public StormSteps()
+        public StormSteps(GameContext context)
         {
-            _mockRepo = new Mock<IGameRepository>();
-            _mockDiscord = new Mock<IDiscordService>();
-            _mockRenderer = new Mock<IGameRenderer>();
-            _mockDeck = new Mock<IDeckService>();
-            _mapService = new DuneBot.Engine.Services.MapService();
-
-            _engine = new GameEngine(_mockRepo.Object, _mockDiscord.Object, _mockRenderer.Object, _mapService, _mockDeck.Object);
-            
-            _game = new Game 
-            { 
-                State = new GameState 
-                { 
-                    Phase = GamePhase.Storm,
-                    Turn = 1,
-                    StormLocation = 18 // Default
-                } 
-            };
-            
-            // Initialize Map
-            _game.State.Map = _mapService.InitializeMap();
-            
-            _mockRepo.Setup(r => r.GetGameAsync(It.IsAny<int>())).ReturnsAsync(_game);
+            _context = context;
         }
+
+        private Game _game => _context.Game;
+        private GameEngine _engine => _context.Engine;
+        private DuneBot.Engine.Services.MapService _mapService => _context.MapService;
 
         [Given(@"the current storm position is sector (.*)")]
         public void GivenTheCurrentStormPositionIsSector(int sector)

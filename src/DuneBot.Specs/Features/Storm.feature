@@ -28,10 +28,4 @@ Feature: Storm Phase
     When the storm moves 1 sectors
     Then "Atreides" should have 5 forces in "Arrakeen"
 
-  Scenario: Fremen survive storm in open sand
-    Given the current storm position is sector 3
-    And the following forces are in "Broken Land" (Sector 4):
-      | Faction | Forces |
-      | Fremen  | 5      |
-    When the storm moves 1 sectors
-    Then "Fremen" should have 5 forces in "Broken Land"
+
