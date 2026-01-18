@@ -832,6 +832,10 @@ public class GameEngine
         // Assume valid if not dead for MVP.
         if (faction.DeadLeaders.Contains(leader)) throw new Exception("Leader is dead.");
         
+        // Check if captured by anyone
+        if (game.State.Factions.Any(f => f.CapturedLeaders.Contains(leader)))
+            throw new Exception("Leader is captured!");
+            
         // 2. Dial limit (Must not exceed forces in territory)
         var territory = game.State.Map.Territories.First(t => t.Name == battle.TerritoryName);
         if (!territory.FactionForces.ContainsKey(faction.Faction)) throw new Exception("You have no forces there?"); // Should not happen
@@ -855,6 +859,13 @@ public class GameEngine
         
         // Check Voice
         ValidateVoice(battle, userId, battle.Plans[userId], faction);
+        
+        // Check Prescience
+        if (battle.PrescienceRequest.HasValue && battle.PrescienceRequest.Value.RequesterId != userId)
+        {
+            // The submitter is the opponent of the requester
+            await RevealPrescienceInfo(game, battle, userId);
+        }
         
         game.State.ActionLog.Add($"**{faction.PlayerName}** committed battle plan.");
         
@@ -900,8 +911,56 @@ public class GameEngine
         await _repository.UpdateGameAsync(game);
     }
     
-    // Add Validation logic helper or inject into SubmitBattlePlan
-    // Refactoring SubmitBattlePlan to check Voice
+    public async Task UsePrescienceAsync(int gameId, ulong userId, string type)
+    {
+        var game = await _repository.GetGameAsync(gameId);
+        if (game == null) throw new Exception("Game not found.");
+        
+        if (game.State.Phase != GamePhase.Battle) throw new Exception("Not in Battle phase.");
+        var battle = game.State.CurrentBattle;
+        if (battle == null || !battle.IsActive) throw new Exception("No active battle.");
+        
+        var userFaction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
+        if (userFaction.Faction != Faction.Atreides) throw new Exception("Only Atreides can use Prescience.");
+        
+        if (battle.PrescienceRequest.HasValue) throw new Exception("Prescience already used this battle.");
+        
+        if (type != "Leader" && type != "Weapon" && type != "Defense" && type != "Dial")
+            throw new Exception("Invalid Prescience type. Choose: Leader, Weapon, Defense, Dial.");
+            
+        battle.PrescienceRequest = (userId, type);
+        game.State.ActionLog.Add($"**{userFaction.PlayerName}** uses Prescience. They will see the opponent's **{type}**.");
+        
+        // If opponent already submitted (unlikely if they know rules, but possible in async), reveal now
+        var opponentId = (battle.Faction1Id == userId) ? battle.Faction2Id : battle.Faction1Id;
+        if (battle.Plans.ContainsKey(opponentId))
+        {
+            await RevealPrescienceInfo(game, battle, opponentId);
+        }
+        
+        await _repository.UpdateGameAsync(game);
+    }
+    
+    private async Task RevealPrescienceInfo(Game game, BattleState battle, ulong opponentId)
+    {
+        if (battle.PrescienceRequest == null) return;
+        
+        var req = battle.PrescienceRequest.Value;
+        var plan = battle.Plans[opponentId];
+        string info = "None";
+        
+        switch (req.Type)
+        {
+            case "Leader": info = plan.LeaderName; break;
+            case "Weapon": info = plan.Weapon ?? "None"; break;
+            case "Defense": info = plan.Defense ?? "None"; break;
+            case "Dial": info = plan.Dial.ToString(); break;
+        }
+        
+        await _discordService.SendDirectMessageAsync(req.RequesterId, 
+            $"**[Atreides Prescience]** Opponent's {req.Type} is: **{info}**.");
+    }
+
     private void ValidateVoice(BattleState battle, ulong userId, BattlePlan plan, FactionState faction)
     {
         if (battle.VoiceRestriction.HasValue && battle.VoiceRestriction.Value.TargetId == userId)
@@ -1020,10 +1079,12 @@ public class GameEngine
         if (s1 > s2)
         {
             WinBattle(game, battle, f1, f2, plan1, plan2, plan1.Dial, false);
+            HandleHarkonnenCapture(game, f1, f2, plan2, l2Dead);
         }
         else if (s2 > s1)
         {
             WinBattle(game, battle, f2, f1, plan2, plan1, plan2.Dial, false);
+            HandleHarkonnenCapture(game, f2, f1, plan1, l1Dead);
         }
         else
         {
@@ -1084,6 +1145,15 @@ public class GameEngine
             // Refund to tanks? Yes.
             var fState = game.State.Factions.First(f => f.Faction == faction);
             fState.ForcesInTanks += amount;
+        }
+    }
+    
+    private void HandleHarkonnenCapture(Game game, FactionState winner, FactionState loser, BattlePlan loserPlan, bool loserLeaderDead)
+    {
+        if (winner.Faction == Faction.Harkonnen && !loserLeaderDead && !string.IsNullOrEmpty(loserPlan.LeaderName))
+        {
+            winner.CapturedLeaders.Add(loserPlan.LeaderName);
+            game.State.ActionLog.Add($"**{winner.PlayerName}** (Harkonnen) CAPTURED leader **{loserPlan.LeaderName}**!");
         }
     }
     

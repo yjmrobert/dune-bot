@@ -53,6 +53,7 @@ public class FactionState
     public List<string> TreacheryCards { get; set; } = new();
     public List<string> Traitors { get; set; } = new();
     public List<string> DeadLeaders { get; set; } = new(); // Leaders in the tanks
+    public List<string> CapturedLeaders { get; set; } = new(); // Leaders captured by this faction
     public bool HasPassed { get; set; } // Track pass status for phases
     public int RevivedTroopsThisTurn { get; set; } // Reset each turn
     public bool HasShipped { get; set; } // Reset at Ship/Move phase
@@ -70,6 +71,10 @@ public class BattleState
     // Voice Restriction: "Must play X" or "Must not play X"
     public (ulong TargetId, string Type, bool MustPlay)? VoiceRestriction { get; set; } 
     // Type: "Projectile Weapon", "Poison Defense", etc. MVP: "Weapon", "Defense"
+
+    // Atreides Prescience: "Show me X"
+    public (ulong RequesterId, string Type)? PrescienceRequest { get; set; }
+    // Type: "Leader", "Weapon", "Defense", "Dial"
 }
 
 public class BattlePlan
