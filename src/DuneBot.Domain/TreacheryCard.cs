@@ -44,7 +44,7 @@ public class TreacheryCard
 
     // Helper properties for common card type checks
     public bool IsPoison => Type?.Contains("Poison", StringComparison.OrdinalIgnoreCase) == true;
-    public bool IsLasgun => Name?.Contains("Lasgun", StringComparison.OrdinalIgnoreCase) == true;
-    public bool IsShield => Name?.Contains("Shield", StringComparison.OrdinalIgnoreCase) == true;
-    public bool IsSnooper => Name?.Contains("Snooper", StringComparison.OrdinalIgnoreCase) == true;
+    public bool IsLasgun => Type?.Contains("Lasgun", StringComparison.OrdinalIgnoreCase) == true;
+    public bool IsProjectileDefense => Type == "Defense - Projectile";
+    public bool IsPoisonDefense => Type == "Defense - Poison";
 }

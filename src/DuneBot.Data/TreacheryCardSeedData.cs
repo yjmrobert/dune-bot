@@ -35,90 +35,70 @@ public static class TreacheryCardSeedData
         return new List<TreacheryCard>
         {
             // ==========================================================
-            // WEAPONS - POISON
+            // WEAPONS - PROJECTILE
             // ==========================================================
             new TreacheryCard
             {
                 Id = 1,
-                Name = "PLACEHOLDER - Poison Weapon 1",
-                Type = "Weapon - Poison",
-                Description = "PLACEHOLDER: Poison weapon description. Kills target leader but may backfire.",
-                IsWeapon = true,
-                IsDefense = false,
-                IsSpecial = false
-            },
-            new TreacheryCard
-            {
-                Id = 2,
-                Name = "PLACEHOLDER - Poison Weapon 2",
-                Type = "Weapon - Poison",
-                Description = "PLACEHOLDER: Another poison weapon.",
+                Name = "PLACEHOLDER - Projectile Weapon 1",
+                Type = "Weapon - Projectile",
+                Description = "PLACEHOLDER: Projectile weapon description.",
                 IsWeapon = true,
                 IsDefense = false,
                 IsSpecial = false
             },
 
             // ==========================================================
-            // WEAPONS - PROJECTILE
+            // WEAPONS - POISON
+            // ==========================================================
+            new TreacheryCard
+            {
+                Id = 2,
+                Name = "PLACEHOLDER - Poison Weapon 1",
+                Type = "Weapon - Poison",
+                Description = "PLACEHOLDER: Poison weapon description.",
+                IsWeapon = true,
+                IsDefense = false,
+                IsSpecial = false
+            },
+
+            // ==========================================================
+            // WEAPONS - LASGUN
             // ==========================================================
             new TreacheryCard
             {
                 Id = 3,
                 Name = "Lasgun",
-                Type = "Weapon - Projectile",
-                Description = "Energy weapon. Creates atomic explosion when combined with a Shield.",
+                Type = "Weapon - Lasgun",
+                Description = "Energy weapon. Creates atomic explosion when used against Projectile Defense.",
                 IsWeapon = true,
                 IsDefense = false,
                 IsSpecial = false
             },
+
+            // ==========================================================
+            // DEFENSES - PROJECTILE
+            // ==========================================================
             new TreacheryCard
             {
                 Id = 4,
-                Name = "PLACEHOLDER - Projectile Weapon",
-                Type = "Weapon - Projectile",
-                Description = "PLACEHOLDER: Standard projectile weapon.",
-                IsWeapon = true,
-                IsDefense = false,
-                IsSpecial = false
-            },
-
-            // ==========================================================
-            // WEAPONS - MELEE
-            // ==========================================================
-            new TreacheryCard
-            {
-                Id = 5,
-                Name = "PLACEHOLDER - Crysknife",
-                Type = "Weapon - Melee",
-                Description = "PLACEHOLDER: Sacred Fremen blade.",
-                IsWeapon = true,
-                IsDefense = false,
-                IsSpecial = false
-            },
-
-            // ==========================================================
-            // DEFENSES - SHIELD
-            // ==========================================================
-            new TreacheryCard
-            {
-                Id = 6,
-                Name = "Shield",
-                Type = "Defense - Shield",
-                Description = "Protective energy field. Creates atomic explosion when hit by Lasgun.",
+                Name = "PLACEHOLDER - Projectile Defense 1",
+                Type = "Defense - Projectile",
+                Description = "PLACEHOLDER: Protects against projectile weapons. Creates atomic explosion with Lasgun.",
                 IsWeapon = false,
                 IsDefense = true,
                 IsSpecial = false
             },
 
             // ==========================================================
-            // DEFENSES - SNOOPER
+            // DEFENSES - POISON
             // ==========================================================
             new TreacheryCard
             {
-                Id = 7,
-                Name = "Snooper",
-                Type = "Defense - Snooper",
-                Description = "Poison detector. Protects against poison weapons.",
+                Id = 5,
+                Name = "PLACEHOLDER - Poison Defense 1",
+                Type = "Defense - Poison",
+                Description = "PLACEHOLDER: Protects against poison weapons.",
                 IsWeapon = false,
                 IsDefense = true,
                 IsSpecial = false
@@ -129,7 +109,7 @@ public static class TreacheryCardSeedData
             // ==========================================================
             new TreacheryCard
             {
-                Id = 8,
+                Id = 6,
                 Name = "PLACEHOLDER - Worthless Card 1",
                 Type = "Special - Worthless",
                 Description = "PLACEHOLDER: Worthless card with no effect.",
@@ -140,38 +120,19 @@ public static class TreacheryCardSeedData
 
             // ==========================================================
             // TODO: USER TO ADD MORE CARDS HERE
-            // Format for each card type:
+            // 
+            // WEAPON CATEGORIES:
+            // - "Weapon - Projectile"
+            // - "Weapon - Poison"  
+            // - "Weapon - Lasgun"
             //
-            // WEAPON - POISON:
-            //   - Name: Specific poison weapon name
-            //   - Type: "Weapon - Poison"
-            //   - IsWeapon: true
-            //
-            // WEAPON - PROJECTILE:
-            //   - Name: Specific projectile weapon name  
-            //   - Type: "Weapon - Projectile"
-            //   - IsWeapon: true
-            //
-            // WEAPON - MELEE:
-            //   - Name: Specific melee weapon name
-            //   - Type: "Weapon - Melee"
-            //   - IsWeapon: true
-            //
-            // DEFENSE - SHIELD:
-            //   - Name: "Shield" (or variant)
-            //   - Type: "Defense - Shield"
-            //   - IsDefense: true
-            //
-            // DEFENSE - SNOOPER:
-            //   - Name: "Snooper" (or variant)
-            //   - Type: "Defense - Snooper"
-            //   - IsDefense: true
+            // DEFENSE CATEGORIES:
+            // - "Defense - Projectile"
+            // - "Defense - Poison"
             //
             // SPECIAL:
-            //   - Name: Special card name
-            //   - Type: "Special - [Subtype]"
-            //   - IsSpecial: true
-            //
+            // - "Special - Worthless"
+            // - "Special - [Other]"
             // ==========================================================
         };
     }
@@ -185,10 +146,11 @@ public static class TreacheryCardSeedData
     {
         var requiredCardTypes = new[]
         {
-            "Weapon - Poison",
             "Weapon - Projectile",
-            "Defense - Shield",
-            "Defense - Snooper"
+            "Weapon - Poison",
+            "Weapon - Lasgun",
+            "Defense - Projectile",
+            "Defense - Poison"
         };
 
         foreach (var cardType in requiredCardTypes)
@@ -201,16 +163,11 @@ public static class TreacheryCardSeedData
             }
         }
 
-        // Verify specific critical cards
-        var criticalCards = new[] { "Lasgun", "Shield", "Snooper" };
-        foreach (var cardName in criticalCards)
+        // Verify specific critical card (Lasgun)
+        if (!context.TreacheryCards.Any(c => c.Name == "Lasgun"))
         {
-            if (!context.TreacheryCards.Any(c => c.Name == cardName))
-            {
-                throw new InvalidOperationException(
-                    $"Missing critical card: {cardName}. " +
-                    $"This card is required for game mechanics.");
-            }
+            throw new InvalidOperationException(
+                "Missing critical card: Lasgun. This card is required for atomic explosion mechanic.");
         }
     }
 }
