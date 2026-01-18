@@ -270,6 +270,9 @@ public class GameEngine
                 int newSector = _mapService.CalculateNextStormSector(oldSector, move);
                 game.State.StormLocation = newSector;
                 
+                // Storm Damage
+                ApplyStormDamage(game, oldSector, move);
+                
                 nextPhase = GamePhase.Storm;
                 game.State.Turn++;
                 game.State.ActionLog.Add($"--- Round {game.State.Turn} Started ---");
@@ -287,6 +290,51 @@ public class GameEngine
         
         await _repository.UpdateGameAsync(game);
         await PostGameUpdate(game);
+    }
+
+    private void ApplyStormDamage(Game game, int startSector, int moveAmount)
+    {
+        var sectorsHit = new List<int>();
+        for (int i = 1; i <= moveAmount; i++)
+        {
+            int s = startSector + i;
+            if (s > 18) s -= 18;
+            sectorsHit.Add(s);
+        }
+        
+        foreach (var sector in sectorsHit)
+        {
+            // Find territories in this sector
+            var territories = game.State.Map.Territories.Where(t => t.Sector == sector);
+            
+            foreach (var t in territories)
+            {
+                // Check Safe Zones (Shield Wall Assumption)
+                if (t.Name.Contains("Imperial Basin") || t.Name == "Arrakeen" || t.Name == "Carthag")
+                {
+                    continue; // Safe
+                }
+                
+                // Kill forces
+                var factions = t.FactionForces.Keys.ToList();
+                foreach (var fType in factions)
+                {
+                    if (fType == Faction.Fremen) continue; // Fremen Immune
+                    
+                    int count = t.FactionForces[fType];
+                    if (count > 0)
+                    {
+                        var faction = game.State.Factions.First(f => f.Faction == fType);
+                        
+                        // Kill forces -> Tanks
+                        faction.ForcesInTanks += count;
+                        t.FactionForces.Remove(fType); // Wiped out
+                        
+                        game.State.ActionLog.Add($"**STORM** wiped out {count} {faction.PlayerName} troops in **{t.Name}**.");
+                    }
+                }
+            }
+        }
     }
 
     private async Task StartBiddingPhase(Game game)
@@ -694,6 +742,12 @@ public class GameEngine
                       
         int maxMoves = hasOrnithopters ? 3 : 1;
         
+        // Fremen Movement: 2 spaces default
+        if (faction.Faction == Faction.Fremen)
+        {
+            maxMoves = Math.Max(maxMoves, 2);
+        }
+        
         if (!_mapService.IsReachable(fromTerritoryName, toTerritoryName, maxMoves))
             throw new Exception($"Destination unreachable (Max moves: {maxMoves}).");
 
@@ -799,9 +853,11 @@ public class GameEngine
             Defense = defense
         };
         
+        // Check Voice
+        ValidateVoice(battle, userId, battle.Plans[userId], faction);
+        
         game.State.ActionLog.Add($"**{faction.PlayerName}** committed battle plan.");
         
-        // Check if both submitted
         if (battle.Plans.Count == 2)
         {
             game.State.ActionLog.Add("Both plans committed! Resolving...");
@@ -809,6 +865,91 @@ public class GameEngine
         }
         
         await _repository.UpdateGameAsync(game);
+    }
+    
+    public async Task UseVoiceAsync(int gameId, ulong userId, ulong targetId, string type, bool mustPlay)
+    {
+        var game = await _repository.GetGameAsync(gameId);
+        if (game == null) throw new Exception("Game not found.");
+        
+        if (game.State.Phase != GamePhase.Battle) throw new Exception("Not in Battle phase.");
+        if (game.State.CurrentBattle == null || !game.State.CurrentBattle.IsActive) throw new Exception("No active battle.");
+        
+        var battle = game.State.CurrentBattle;
+        
+        // Verify User is Bene Gesserit
+        var userFaction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
+        if (userFaction.Faction != Faction.BeneGesserit) throw new Exception("Only Bene Gesserit can use Voice.");
+        
+        // Verify Target is in Battle
+        if (targetId != battle.Faction1Id && targetId != battle.Faction2Id) throw new Exception("Target not in battle.");
+        
+        // Check if Voice already used? Rules say "Before any battle plans are revealed" -> usually before commit.
+        if (battle.VoiceRestriction.HasValue) throw new Exception("Voice already used this battle.");
+        
+        // MVP: Type validation ("Weapon" or "Defense" or "Treachery Card"?)
+        // Simplified: "Weapon", "Defense"
+        if (type != "Weapon" && type != "Defense") throw new Exception("Voice can only name 'Weapon' or 'Defense'.");
+        
+        battle.VoiceRestriction = (targetId, type, mustPlay);
+        
+        string command = mustPlay ? "MUST play" : "Must NOT play";
+        var targetFaction = game.State.Factions.First(f => f.PlayerDiscordId == targetId);
+        
+        game.State.ActionLog.Add($"**{userFaction.PlayerName}** uses Voice on **{targetFaction.PlayerName}**: {command} a {type}.");
+        await _repository.UpdateGameAsync(game);
+    }
+    
+    // Add Validation logic helper or inject into SubmitBattlePlan
+    // Refactoring SubmitBattlePlan to check Voice
+    private void ValidateVoice(BattleState battle, ulong userId, BattlePlan plan, FactionState faction)
+    {
+        if (battle.VoiceRestriction.HasValue && battle.VoiceRestriction.Value.TargetId == userId)
+        {
+            var r = battle.VoiceRestriction.Value;
+            // r.Type: "Weapon" or "Defense"
+            // r.MustPlay: true/false
+            
+            bool playedWeapon = !string.IsNullOrEmpty(plan.Weapon);
+            bool playedDefense = !string.IsNullOrEmpty(plan.Defense);
+            
+            if (r.Type == "Weapon")
+            {
+                if (r.MustPlay)
+                {
+                    // Must play weapon IF they have one.
+                    bool hasWeapon = faction.TreacheryCards.Any(c => c != "Lasgun"); // MVP: Simplistic check for "IsWeapon".
+                    // Real logic needs card metadata (IsWeapon, IsDefense).
+                    // For MVP, if they didn't play one, we assume they might not have one?
+                    // Rules: "If you have at least one... you must play one."
+                    // We need to know if they HAVE one.
+                    // Let's assume for MVP validation: If MustPlay=True and Plan=Empty, check hand.
+                    // If hand has candidate, Error.
+                    if (!playedWeapon && faction.TreacheryCards.Count > 0) // Assume any card *could* be weapon for MVP? No, that's bad.
+                    {
+                        // TODO: Better card metadata. For now, we trust player or assume all cards are potentially valid if we don't know?
+                        // Let's fail if they have ANY cards and didn't play one? No.
+                        // PASS for MVP if we can't strict check types.
+                    }
+                }
+                else
+                {
+                    // Must NOT play
+                    if (playedWeapon) throw new Exception("Voice forbids playing a Weapon!");
+                }
+            }
+            else if (r.Type == "Defense")
+            {
+                if (r.MustPlay)
+                {
+                     // Must play defense if able
+                }
+                else
+                {
+                     if (playedDefense) throw new Exception("Voice forbids playing a Defense!");
+                }
+            }
+        }
     }
     
     private void ResolveBattle(Game game, BattleState battle)

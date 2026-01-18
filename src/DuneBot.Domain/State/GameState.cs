@@ -66,6 +66,10 @@ public class BattleState
     public ulong Faction2Id { get; set; }
     public bool IsActive { get; set; }
     public Dictionary<ulong, BattlePlan> Plans { get; set; } = new();
+    
+    // Voice Restriction: "Must play X" or "Must not play X"
+    public (ulong TargetId, string Type, bool MustPlay)? VoiceRestriction { get; set; } 
+    // Type: "Projectile Weapon", "Poison Defense", etc. MVP: "Weapon", "Defense"
 }
 
 public class BattlePlan
