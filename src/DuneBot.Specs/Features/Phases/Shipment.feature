@@ -26,3 +26,10 @@ Feature: Shipment Phase
     And the storm is at sector 3
     When "Atreides" ships 5 forces to "Arrakeen" (Sector 3)
     Then the action should fail with message "Cannot ship into Storm."
+
+  Scenario: Cannot ship more forces than in reserves
+    Given "Atreides" has 10 spice
+    And "Atreides" has 3 forces in reserves
+    When "Atreides" ships 5 forces to "Carthag" (Sector 10)
+    Then the action should fail with message "Not enough reserves"
+

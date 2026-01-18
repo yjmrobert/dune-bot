@@ -209,6 +209,43 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
+        [Xunit.SkippableFactAttribute(DisplayName="Cannot ship more forces than in reserves")]
+        [Xunit.TraitAttribute("FeatureTitle", "Shipment Phase")]
+        [Xunit.TraitAttribute("Description", "Cannot ship more forces than in reserves")]
+        public async System.Threading.Tasks.Task CannotShipMoreForcesThanInReserves()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cannot ship more forces than in reserves", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 30
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 31
+    await testRunner.GivenAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 32
+    await testRunner.AndAsync("\"Atreides\" has 3 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 33
+    await testRunner.WhenAsync("\"Atreides\" ships 5 forces to \"Carthag\" (Sector 10)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 34
+    await testRunner.ThenAsync("the action should fail with message \"Not enough reserves\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
         [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
         [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, Xunit.IAsyncLifetime

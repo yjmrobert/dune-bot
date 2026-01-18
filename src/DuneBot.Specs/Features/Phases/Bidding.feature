@@ -38,3 +38,17 @@ Feature: Bidding Phase
     And "Atreides" should have the card
 
 
+  # Scenario: All players pass - card returned to deck
+  # NOTE: CheckIfAllPassed() not implemented in engine (returns false)
+  #   Given the "Atreides" faction has 10 spice
+  #   And the "Harkonnen" faction has 10 spice
+  #   And a card is up for bid with current bid 0 by "No one"
+  #   And it is "Atreides" turn to bid
+  #   When "Atreides" passes
+  #   And "Harkonnen" passes
+  #   Then the bidding round should be inactive
+  #   # Card returned to deck when all pass
+
+
+
+

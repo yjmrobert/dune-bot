@@ -214,5 +214,11 @@ namespace DuneBot.Specs.Steps
         {
              ThenTheCurrentBidderShouldBe(factionName);
         }
+
+        [Then(@"the bidding round should be inactive")]
+        public void ThenTheBiddingRoundShouldBeInactive()
+        {
+            Assert.False(_context.Game.State.IsBiddingRoundActive);
+        }
     }
 }
