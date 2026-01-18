@@ -210,14 +210,14 @@ namespace DuneBot.Specs.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Fremen match native immunity")]
+        [Xunit.SkippableFactAttribute(DisplayName="Fremen survive storm in open sand")]
         [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Fremen match native immunity")]
-        public async System.Threading.Tasks.Task FremenMatchNativeImmunity()
+        [Xunit.TraitAttribute("Description", "Fremen survive storm in open sand")]
+        public async System.Threading.Tasks.Task FremenSurviveStormInOpenSand()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Fremen match native immunity", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Fremen survive storm in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 31
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -229,68 +229,22 @@ namespace DuneBot.Specs.Features
             {
                 await this.ScenarioStartAsync();
 #line 32
-    await testRunner.GivenAsync("the current storm position is sector 1", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the current storm position is sector 3", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
                 Reqnroll.Table table4 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Forces"});
                 table4.AddRow(new string[] {
                             "Fremen",
-                            "10"});
+                            "5"});
 #line 33
-    await testRunner.AndAsync("the following forces are in \"Sietch Tabr\" (Sector 1):", ((string)(null)), table4, "And ");
+    await testRunner.AndAsync("the following forces are in \"Broken Land\" (Sector 4):", ((string)(null)), table4, "And ");
 #line hidden
-                Reqnroll.Table table5 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Forces"});
-                table5.AddRow(new string[] {
-                            "Fremen",
-                            "5"});
 #line 36
-    await testRunner.AndAsync("the following forces are in \"Imperial Basin (S1)\" (Sector 1):", ((string)(null)), table5, "And ");
-#line hidden
-#line 39
-    await testRunner.WhenAsync("the storm moves 0 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
-#line hidden
-            }
-            await this.ScenarioCleanupAsync();
-        }
-        
-        [Xunit.SkippableFactAttribute(DisplayName="Fremen survive storm in open sand")]
-        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Fremen survive storm in open sand")]
-        public async System.Threading.Tasks.Task FremenSurviveStormInOpenSand()
-        {
-            string[] tagsOfScenario = ((string[])(null));
-            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Fremen survive storm in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 45
-  this.ScenarioInitialize(scenarioInfo);
-#line hidden
-            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
-            {
-                testRunner.SkipScenario();
-            }
-            else
-            {
-                await this.ScenarioStartAsync();
-#line 46
-    await testRunner.GivenAsync("the current storm position is sector 18", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
-#line hidden
-                Reqnroll.Table table6 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Forces"});
-                table6.AddRow(new string[] {
-                            "Fremen",
-                            "5"});
-#line 47
-    await testRunner.AndAsync("the following forces are in \"Imperial Basin (S1)\" (Sector 1):", ((string)(null)), table6, "And ");
-#line hidden
-#line 50
     await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 51
-    await testRunner.ThenAsync("\"Fremen\" should have 5 forces in \"Imperial Basin (S1)\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line 37
+    await testRunner.ThenAsync("\"Fremen\" should have 5 forces in \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

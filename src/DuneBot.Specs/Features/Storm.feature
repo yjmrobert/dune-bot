@@ -28,24 +28,10 @@ Feature: Storm Phase
     When the storm moves 1 sectors
     Then "Atreides" should have 5 forces in "Arrakeen"
 
-  Scenario: Fremen match native immunity
-    Given the current storm position is sector 1
-    And the following forces are in "Sietch Tabr" (Sector 1):
-      | Faction | Forces |
-      | Fremen  | 10     |
-    And the following forces are in "Imperial Basin (S1)" (Sector 1):
-      | Faction | Forces |
-      | Fremen  | 5      |
-    When the storm moves 0 sectors
-    # Testing logic: Storm hits current sector if it doesn't move? 
-    # Actually, storm logic is: Move N, sweep sectors from Start+1 to Start+N.
-    # So if start is 1, move 1 -> hits 2.
-    # Let's adjust: Start 18, Move 1 -> Hits 1.
-    
   Scenario: Fremen survive storm in open sand
-    Given the current storm position is sector 18
-    And the following forces are in "Imperial Basin (S1)" (Sector 1):
+    Given the current storm position is sector 3
+    And the following forces are in "Broken Land" (Sector 4):
       | Faction | Forces |
       | Fremen  | 5      |
     When the storm moves 1 sectors
-    Then "Fremen" should have 5 forces in "Imperial Basin (S1)"
+    Then "Fremen" should have 5 forces in "Broken Land"
