@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-DuneBot.Host-950d5d7a-ebfd-4c62-8861-85e6cab05876</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="3.18.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DuneBot.Domain\DuneBot.Domain.csproj" />
+    <ProjectReference Include="..\DuneBot.Engine\DuneBot.Engine.csproj" />
+    <ProjectReference Include="..\DuneBot.Data\DuneBot.Data.csproj" />
+    <ProjectReference Include="..\DuneBot.Renderer\DuneBot.Renderer.csproj" />
+  </ItemGroup>
+</Project>
