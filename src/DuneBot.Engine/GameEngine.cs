@@ -100,7 +100,10 @@ public class GameEngine
         // 5. Deal Traitors
         foreach (var faction in game.State.Factions)
         {
-            for (int k = 0; k < 4; k++)
+            // Harkonnen keeps 4, others keep 1 (MVP: Draw target amount directly)
+            int count = (faction.Faction == Faction.Harkonnen) ? 4 : 1;
+            
+            for (int k = 0; k < count; k++)
             {
                 var card = _deckService.Draw(game.State.TraitorDeck, new List<string>()); // No discard for setup
                 if (card != null) faction.Traitors.Add(card);
@@ -320,6 +323,14 @@ public class GameEngine
             
             await _discordService.SendThreadMessageAsync(game.GuildId, threadId, msg);
             game.State.ActionLog.Add($"Bidding started for **{card}** in thread.");
+            
+            // Atreides Prescience
+            var atreides = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Atreides);
+            if (atreides != null && atreides.PlayerDiscordId.HasValue)
+            {
+                await _discordService.SendDirectMessageAsync(atreides.PlayerDiscordId.Value, 
+                    $"**[Atreides Prescience]** The card up for bid is: **{card}**.");
+            }
         }
     }
 
@@ -413,6 +424,17 @@ public class GameEngine
         
         faction.Spice -= cost;
         faction.TreacheryCards.Add(card!);
+        
+        // Emperor Wealth: Receives payments for cards
+        if (faction.Faction != Faction.Emperor)
+        {
+            var emperor = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Emperor);
+            if (emperor != null)
+            {
+                emperor.Spice += cost;
+                game.State.ActionLog.Add($"**{emperor.PlayerName}** (Emperor) received the payment.");
+            }
+        }
         
         string winMsg = $"**{faction.PlayerName}** won **{card}** for **{cost}** spice!";
         game.State.ActionLog.Add(winMsg);
@@ -580,14 +602,28 @@ public class GameEngine
         int costPerForce = territory.IsStronghold ? 1 : 2; 
         int totalCost = amount * costPerForce;
         
-        // Guild discount? "Guild pays half" (rounded up). MVP: Ignore Guild discount for now or implement if easy.
-        // Let's stick to base rules.
+        // Guild discount: "Guild pays half" (rounded up).
+        if (faction.Faction == Faction.Guild)
+        {
+            totalCost = (int)Math.Ceiling(totalCost / 2.0);
+        }
         
         if (faction.Spice < totalCost) throw new Exception($"Not enough spice. Cost: {totalCost}. You have {faction.Spice}.");
 
         // 4. Execute
         faction.Spice -= totalCost;
         faction.Reserves -= amount;
+        
+        // Guild Income: If not Guild shipping, Guild receives payment
+        if (faction.Faction != Faction.Guild)
+        {
+             var guild = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Guild);
+             if (guild != null)
+             {
+                 guild.Spice += totalCost;
+                 game.State.ActionLog.Add($"**{guild.PlayerName}** (Guild) received shipment payment.");
+             }
+        }
         
         if (!territory.FactionForces.ContainsKey(faction.Faction))
             territory.FactionForces[faction.Faction] = 0;

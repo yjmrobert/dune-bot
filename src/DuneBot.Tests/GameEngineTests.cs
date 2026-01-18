@@ -95,7 +95,11 @@ namespace DuneBot.Tests
             Assert.Equal(GamePhase.Storm, game.State.Phase);
             Assert.Equal(1, game.State.Turn);
             Assert.DoesNotContain(game.State.Factions, f => f.Faction == Faction.None);
-            Assert.All(game.State.Factions, f => Assert.Equal(4, f.Traitors.Count)); // Check Traitors
+            Assert.All(game.State.Factions, f => 
+            {
+                if (f.Faction == Faction.Harkonnen) Assert.Equal(4, f.Traitors.Count);
+                else Assert.Equal(1, f.Traitors.Count);
+            });
             Assert.NotNull(game.State.Map); 
             Assert.True(game.State.StormLocation >= 1 && game.State.StormLocation <= 18); 
             _mockRepo.Verify(r => r.UpdateGameAsync(game), Times.Once);
@@ -519,7 +523,184 @@ namespace DuneBot.Tests
             await _engine.AdvancePhaseAsync(gameId);
 
             // Assert
+            // Assert
             _mockRepo.Verify(r => r.DeleteGameAsync(gameId), Times.Once); // Game Deleted = Win
+        }
+
+        [Fact]
+        public async Task StartBidding_ShouldNotifyAtreides()
+        {
+             // Arrange
+            var gameId = 1;
+            var game = new Game { 
+                GuildId = 123,
+                State = new GameState { Phase = GamePhase.ChoamCharity } // Will transition to Bidding
+            };
+            
+            var f1 = new FactionState { PlayerDiscordId = 10, PlayerName = "Atreides", Faction = Faction.Atreides };
+            game.State.Factions.Add(f1);
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            _mockDecks.Setup(d => d.Draw(It.IsAny<List<string>>(), It.IsAny<List<string>>())).Returns("Lasgun");
+            _mockDiscord.Setup(d => d.CreatePhaseThreadAsync(123, 0, It.IsAny<string>())).ReturnsAsync((ulong)999);
+
+            // Act
+            // Advance Phase from Choam -> Bidding
+            await _engine.AdvancePhaseAsync(gameId);
+
+            // Assert
+            _mockDiscord.Verify(d => d.SendDirectMessageAsync(10, It.Is<string>(s => s.Contains("Lasgun"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task StartGame_ShouldGiveHarkonnenFourTraitors()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.Setup } };
+            // Add Harkonnen and Atreides
+            game.State.Factions.Add(new FactionState { PlayerDiscordId = 1, Faction = Faction.Atreides }); // Will be shuffled, so we can't guarantee who is who?
+            // Wait, StartGame shuffles factions.
+            // Setup() in test constructor mocks decks but StartGame calls:
+            // 1. Shuffle Factions
+            // 2. Assign Factions
+            
+            // To test specific outcome, we mock the Shuffle? Or inspect state after.
+            // Since we add 2 players, one will be Harkonnen, one something else (if we control available factions).
+            // StartGame logic:
+            // var availableFactions = Enum.GetValues<Faction>()... .OrderBy(Guid).Take(count)
+            
+            // This is non-deterministic.
+            // However, after StartGame, we can check "Find Harkonnen -> Count Traitors".
+            // Problem: If Harkonnen is not picked (random 2 from 6), test fails.
+            
+            // Refactor needed: StartGame logic or Test logic.
+            // For this test, I'll rely on checking *IF* Harkonnen is present, count is 4.
+            // But I can't guarantee Harkonnen presence without mocking Random or refustering.
+            
+            // ALTERNATIVE: Use checking logic on "Whatever" faction got Harkonnen. 
+            // Better: Force assignment? No, hardcoded in StartGame.
+            
+            // Let's modify the test to just run StartGame and assert property on specific faction IF it exists.
+            // To guarantee existence, I'd need to mock Enum.GetValues? Impossible.
+            // Wait, if I supply 6 players, ALL factions are assigned. 
+            // So: Add 6 dummy players.
+            
+            for(int i=2; i<=6; i++) game.State.Factions.Add(new FactionState { PlayerDiscordId = (ulong)i, PlayerName = $"P{i}" });
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            _mockMap.Setup(m => m.InitializeMap()).Returns(new MapState());
+            
+            // Act
+            await _engine.StartGameAsync(gameId);
+            
+            // Assert
+            var harkonnen = game.State.Factions.First(f => f.Faction == Faction.Harkonnen);
+            var atreides = game.State.Factions.First(f => f.Faction == Faction.Atreides);
+            
+            Assert.Equal(4, harkonnen.Traitors.Count);
+            Assert.Equal(1, atreides.Traitors.Count);
+        }
+
+        [Fact]
+        public async Task ResolveAuction_ShouldPayEmperor_WhenOtherWins()
+        {
+             // Arrange
+            var gameId = 1;
+            var game = new Game { 
+                State = new GameState { 
+                    Phase = GamePhase.Bidding,
+                    IsBiddingRoundActive = true,
+                    BiddingCard = "Lasgun",
+                    CurrentBid = 5,
+                    HighBidderId = 1, // Atreides
+                    CurrentBidderId = 1 // Atreides passing/winning
+                } 
+            };
+            
+            var f1 = new FactionState { PlayerDiscordId = 1, PlayerName = "Atreides", Faction = Faction.Atreides, Spice = 10 };
+            var f2 = new FactionState { PlayerDiscordId = 2, PlayerName = "Emperor", Faction = Faction.Emperor, Spice = 0 };
+            
+            game.State.Factions.Add(f1);
+            game.State.Factions.Add(f2);
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            // Trigger Pass -> Logic checks winner -> calls ResolveAuctionWin
+            // We need to trigger winning condition. 
+            // PassBidAsync checks if HighBidder == CurrentBidder? No, that logic is:
+            // if (game.State.HighBidderId.HasValue && game.State.CurrentBidderId == game.State.HighBidderId)
+            // Wait, if it's my turn and I am the high bidder, I can't pass (I already bid).
+            // Usually, bidding continues until everyone ELSE passes.
+            // If I am high bidder, and it becomes my turn again (because everyone else passed), THEN I win.
+            // So logic in PassBidAsync at line 376 is:
+            // if (game.State.HighBidderId.HasValue && game.State.CurrentBidderId == game.State.HighBidderId) -> Win
+            
+            // So if Atreides (High Bidder) gets the turn, they win.
+            // We can call PassBidAsync(Atreides)? No, if I Pass, I assume I'm out.
+            // But if I am high bidder, I shouldn't pass.
+            // Logic check: "bidding is done... when the bid returns to the high bidder."
+            // So AdvanceBidder should happen, then Check.
+            // If it returns to HighBidder, they win immediately without action? 
+            // My implementation in PassBidAsync line 376 handles this AFTER a pass:
+            // 1. Player X passes.
+            // 2. AdvanceBidder(game) -> Sets Current to Next.
+            // 3. IF Current == HighBidder -> ResolveWin.
+            
+            // So: H=Atreides. Current=Harkonnen. Harkonnen Passes. Advance -> Atreides. Check -> Atreides Wins.
+            
+            // Setup: H=Atreides, Current=Emperor. Emperor Passes. Advance -> Atreides. Win.
+            game.State.CurrentBidderId = 2; // Emperor's turn to pass
+            
+            await _engine.PassBidAsync(gameId, 2);
+
+            // Assert
+            Assert.Equal(5, f1.Spice); // Paid 5 (10-5)
+            Assert.Equal(5, f2.Spice); // Received 5 (0+5)
+            Assert.Contains("Lasgun", f1.TreacheryCards);
+        }
+
+        [Fact]
+        public async Task ShipForces_ShouldApplyGuildRules()
+        {
+             // Arrange
+            var gameId = 1;
+            var game = new Game { 
+                State = new GameState { 
+                    Phase = GamePhase.ShipmentAndMovement,
+                    StormLocation = 5
+                } 
+            };
+            
+            var f1 = new FactionState { PlayerDiscordId = 1, PlayerName = "Atreides", Faction = Faction.Atreides, Spice = 10, Reserves = 10 };
+            var f2 = new FactionState { PlayerDiscordId = 2, PlayerName = "Guild", Faction = Faction.Guild, Spice = 10, Reserves = 10 };
+            
+            game.State.Factions.Add(f1);
+            game.State.Factions.Add(f2);
+            
+            // Map
+            var t1 = new Territory { Name = "Arrakeen", IsStronghold = true, Sector = 1 };
+            game.State.Map.Territories.Add(t1);
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act 1: Guild Ships to Stronghold (1 spice/force)
+            // Cost: 6 forces * 1 = 6. Half = 3.
+            await _engine.ShipForcesAsync(gameId, 2, "Arrakeen", 6);
+            
+            // Assert 1
+            Assert.Equal(7, f2.Spice); // 10 - 3 = 7
+            Assert.Equal(6, t1.FactionForces[Faction.Guild]);
+
+            // Act 2: Atreides Ships to Stronghold
+            // Cost: 2 forces * 1 = 2.
+            await _engine.ShipForcesAsync(gameId, 1, "Arrakeen", 2);
+            
+            // Assert 2
+            Assert.Equal(8, f1.Spice); // 10 - 2 = 8
+            Assert.Equal(9, f2.Spice); // 7 + 2 = 9 (Income)
+            Assert.Equal(2, t1.FactionForces[Faction.Atreides]);
         }
     }
 }

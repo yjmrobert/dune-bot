@@ -12,4 +12,5 @@ public interface IDiscordService
     Task<ulong> CreatePhaseThreadAsync(ulong guildId, ulong channelId, string threadName);
     Task ArchiveThreadAsync(ulong guildId, ulong threadId);
     Task SendThreadMessageAsync(ulong guildId, ulong threadId, string content);
+    Task SendDirectMessageAsync(ulong userId, string content);
 }

@@ -115,4 +115,62 @@ public class DiscordService : IDiscordService
             Console.WriteLine($"[Error] Sending message failed: {ex.Message}");
         }
     }
-}
+
+    public async Task<ulong> CreatePhaseThreadAsync(ulong guildId, ulong channelId, string threadName)
+    {
+        var guild = _client.GetGuild(guildId);
+        if (guild == null) return 0;
+        
+        var channel = guild.GetTextChannel(channelId);
+        if (channel == null) return 0;
+        
+        // AutoArchiveDuration.OneHour = 60
+        var thread = await channel.CreateThreadAsync(threadName, autoArchiveDuration: ThreadArchiveDuration.OneHour);
+        return thread.Id;
+    }
+
+    public async Task ArchiveThreadAsync(ulong guildId, ulong threadId)
+    {
+        var guild = _client.GetGuild(guildId);
+        if (guild == null) return;
+        
+        var thread = guild.GetThreadChannel(threadId);
+        if (thread != null)
+        {
+            await thread.ModifyAsync(p => p.Archived = true);
+        }
+    }
+
+    public async Task SendThreadMessageAsync(ulong guildId, ulong threadId, string content)
+    {
+        var guild = _client.GetGuild(guildId);
+        if (guild == null) return;
+        
+        var thread = guild.GetThreadChannel(threadId);
+        if (thread != null)
+        {
+            await thread.SendMessageAsync(content);
+        }
+    }
+
+    public async Task SendDirectMessageAsync(ulong userId, string content)
+    {
+        var user = _client.GetUser(userId);
+        if (user == null)
+        {
+             // Try to download if not in cache
+             user = await _client.Rest.GetUserAsync(userId) as SocketUser;
+        }
+        
+        if (user != null)
+        {
+             try 
+             {
+                await user.SendMessageAsync(content);
+             }
+             catch
+             {
+                 Console.WriteLine($"[Warning] Could not DM user {userId}. Privacy settings?");
+             }
+        }
+    }
