@@ -292,7 +292,7 @@ public class GameEngine
         await PostGameUpdate(game);
     }
 
-    private void ApplyStormDamage(Game game, int startSector, int moveAmount)
+    internal void ApplyStormDamage(Game game, int startSector, int moveAmount)
     {
         var sectorsHit = new List<int>();
         for (int i = 1; i <= moveAmount; i++)

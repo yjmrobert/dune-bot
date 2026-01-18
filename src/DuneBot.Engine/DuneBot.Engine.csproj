@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <InternalsVisibleTo Include="DuneBot.Specs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DuneBot.Domain\DuneBot.Domain.csproj" />
   </ItemGroup>
 
