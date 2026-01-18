@@ -192,5 +192,279 @@ namespace DuneBot.Tests
             Assert.Contains("**NEXUS!** Alliances may be formed/broken.", game.State.ActionLog);
             _mockRepo.Verify(r => r.UpdateGameAsync(game), Times.Once);
         }
+        [Fact]
+        public async Task AdvancePhase_FromChoam_ShouldStartBidding_AndCreateThread()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game 
+            { 
+                GuildId = 100,
+                ActionsChannelId = 200,
+                State = new GameState { Phase = GamePhase.ChoamCharity } 
+            };
+            game.State.Factions.Add(new FactionState { PlayerDiscordId = 1, PlayerName = "P1" });
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            _mockDecks.Setup(d => d.Draw(It.IsAny<List<string>>(), It.IsAny<List<string>>())).Returns("Lasgun");
+            _mockDiscord.Setup(d => d.CreatePhaseThreadAsync(100, 200, It.IsAny<string>())).ReturnsAsync(999ul);
+
+            // Act
+            await _engine.AdvancePhaseAsync(gameId);
+
+            // Assert
+            Assert.Equal(GamePhase.Bidding, game.State.Phase);
+            Assert.Equal("Lasgun", game.State.BiddingCard);
+            Assert.Equal(999ul, game.State.BiddingThreadId);
+            Assert.True(game.State.IsBiddingRoundActive);
+            _mockDiscord.Verify(d => d.CreatePhaseThreadAsync(100, 200, It.IsAny<string>()), Times.Once);
+            _mockDiscord.Verify(d => d.SendThreadMessageAsync(100, 999ul, It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task PlaceBid_ShouldUpdateState_AndPostToThread()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { GuildId = 100, State = new GameState 
+            { 
+                Phase = GamePhase.Bidding, 
+                IsBiddingRoundActive = true,
+                BiddingThreadId = 999ul,
+                CurrentBidderId = 1,
+                CurrentBid = 0
+            }};
+            game.State.Factions.Add(new FactionState { PlayerDiscordId = 1, PlayerName = "P1", Spice = 10 });
+            game.State.Factions.Add(new FactionState { PlayerDiscordId = 2, PlayerName = "P2", Spice = 10 });
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            await _engine.PlaceBidAsync(gameId, 1, 5);
+
+            // Assert
+            Assert.Equal(5, game.State.CurrentBid);
+            Assert.Equal(1ul, game.State.HighBidderId);
+            Assert.Equal(2ul, game.State.CurrentBidderId); // Rotated to P2
+            _mockDiscord.Verify(d => d.SendThreadMessageAsync(100, 999ul, "**P1** bids **5**."), Times.Once);
+        }
+
+        [Fact]
+        public async Task AdvancePhase_ChoamCharity_ShouldTopUpSpice()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.ChoamCharity } };
+            // P1 has 0 -> gets 2
+            game.State.Factions.Add(new FactionState { PlayerName = "P1", Spice = 0, Faction = Faction.Atreides });
+            // P2 has 1 -> gets 1 (total 2)
+            game.State.Factions.Add(new FactionState { PlayerName = "P2", Spice = 1, Faction = Faction.Harkonnen });
+            // P3 has 2 -> gets 0
+            game.State.Factions.Add(new FactionState { PlayerName = "P3", Spice = 2, Faction = Faction.Fremen });
+            // P4 has 10 -> gets 0
+            game.State.Factions.Add(new FactionState { PlayerName = "P4", Spice = 10, Faction = Faction.Emperor });
+
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            _mockDecks.Setup(d => d.Draw(It.IsAny<List<string>>(), It.IsAny<List<string>>())).Returns("Lasgun");
+            _mockDiscord.Setup(d => d.CreatePhaseThreadAsync(It.IsAny<ulong>(), It.IsAny<ulong>(), It.IsAny<string>())).ReturnsAsync(111ul);
+
+            // Act
+            await _engine.AdvancePhaseAsync(gameId);
+
+            // Assert
+            Assert.Equal(2, game.State.Factions[0].Spice);
+            Assert.Equal(2, game.State.Factions[1].Spice);
+            Assert.Equal(2, game.State.Factions[2].Spice); // Unchanged
+            Assert.Equal(10, game.State.Factions[3].Spice); // Unchanged
+            
+            Assert.Contains("**P1** received 2 spice from CHOAM Charity.", game.State.ActionLog);
+            Assert.Contains("**P2** received 1 spice from CHOAM Charity.", game.State.ActionLog);
+            Assert.DoesNotContain("**P3** received", game.State.ActionLog);
+        }
+
+        [Fact]
+        public async Task ReviveForces_ShouldSucceed_WhenValid()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.Revival } };
+            // P1 has 5 dead, 10 spice
+            var faction = new FactionState 
+            { 
+                PlayerDiscordId = 1, 
+                PlayerName = "P1", 
+                ForcesInTanks = 5, 
+                Spice = 10,
+                Faction = Faction.Atreides
+            };
+            game.State.Factions.Add(faction);
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            await _engine.ReviveForcesAsync(gameId, 1, 3); // Max allowed
+
+            // Assert
+            Assert.Equal(2, faction.ForcesInTanks); // 5 - 3
+            Assert.Equal(3, faction.Reserves);
+            Assert.Equal(4, faction.Spice); // 10 - (3 * 2)
+            Assert.Equal(3, faction.RevivedTroopsThisTurn);
+        }
+
+        [Fact]
+        public async Task ReviveForces_ShouldThrow_WhenLimitExceeded()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.Revival } };
+            var faction = new FactionState 
+            { 
+                PlayerDiscordId = 1, 
+                ForcesInTanks = 5, 
+                Spice = 10 
+            };
+            game.State.Factions.Add(faction);
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<System.Exception>(() => _engine.ReviveForcesAsync(gameId, 1, 4));
+        }
+
+        [Fact]
+        public async Task ReviveLeader_ShouldSucceed_WhenLeaderIsDead()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.Revival } };
+            var faction = new FactionState 
+            { 
+                PlayerDiscordId = 1, 
+                Spice = 10,
+                DeadLeaders = new List<string> { "Duncan Idaho" }
+            };
+            game.State.Factions.Add(faction);
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            await _engine.ReviveLeaderAsync(gameId, 1, "Duncan Idaho");
+
+            // Assert
+            Assert.DoesNotContain("Duncan Idaho", faction.DeadLeaders);
+            Assert.Equal(8, faction.Spice); // 10 - 2
+            Assert.Equal(8, faction.Spice); // 10 - 2
+        }
+
+        [Fact]
+        public async Task ShipForces_ShouldSucceed_WhenValid()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.ShipmentAndMovement, StormLocation = 18 } };
+            // P1 has 10 reserves, 10 spice
+            var faction = new FactionState 
+            { 
+                PlayerDiscordId = 1, 
+                PlayerName = "P1", 
+                Reserves = 10, 
+                Spice = 10,
+                Faction = Faction.Atreides
+            };
+            game.State.Factions.Add(faction);
+            
+            // Map with territory
+            game.State.Map.Territories.Add(new Territory { Name = "Arrakeen", Sector = 1, IsStronghold = true });
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            await _engine.ShipForcesAsync(gameId, 1, "Arrakeen", 2);
+
+            // Assert
+            Assert.Equal(8, faction.Reserves); // 10 - 2
+            Assert.Equal(8, faction.Spice); // 10 - (2 * 1) [Stronghold cost 1]
+            Assert.True(faction.HasShipped);
+            var territory = game.State.Map.Territories.First(t => t.Name == "Arrakeen");
+            Assert.Equal(2, territory.FactionForces[Faction.Atreides]);
+        }
+
+        [Fact]
+        public async Task MoveForces_ShouldSucceed_WhenAdjacent()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.ShipmentAndMovement, StormLocation = 18 } };
+            var faction = new FactionState 
+            { 
+                PlayerDiscordId = 1, 
+                Faction = Faction.Harkonnen
+            };
+            game.State.Factions.Add(faction);
+            
+            // Valid setup: Forces in Arrakeen, moving to Basin
+            var t1 = new Territory { Name = "Arrakeen", Sector = 1 };
+            t1.FactionForces[Faction.Harkonnen] = 5;
+            var t2 = new Territory { Name = "Imperial Basin (S2)", Sector = 2 };
+            
+            game.State.Map.Territories.Add(t1);
+            game.State.Map.Territories.Add(t2);
+            
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            // Mock Adjacency
+            _mockMap.Setup(m => m.IsReachable("Arrakeen", "Imperial Basin (S2)", It.IsAny<int>())).Returns(true);
+
+            // Act
+            await _engine.MoveForcesAsync(gameId, 1, "Arrakeen", "Imperial Basin (S2)", 3);
+
+            // Assert
+            Assert.Equal(2, t1.FactionForces[Faction.Harkonnen]); // 5 - 3
+            Assert.Equal(3, t2.FactionForces[Faction.Harkonnen]);
+            Assert.True(faction.HasMoved);
+        }
+
+
+        [Fact]
+        public async Task Battle_TraitorWin_ShouldEndBattleImmediately()
+        {
+            // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.Battle } };
+            
+            var f1 = new FactionState { PlayerDiscordId = 1, PlayerName = "Atreides", Faction = Faction.Atreides, Spice = 0 };
+            f1.Traitors.Add("Baron Harkonnen");
+            
+            var f2 = new FactionState { PlayerDiscordId = 2, PlayerName = "Harkonnen", Faction = Faction.Harkonnen, Spice = 10 };
+            
+            game.State.Factions.Add(f1);
+            game.State.Factions.Add(f2);
+            
+            var battle = new BattleState 
+            { 
+                TerritoryName = "Arrakeen", 
+                Faction1Id = 1, 
+                Faction2Id = 2, 
+                IsActive = true 
+            };
+            game.State.CurrentBattle = battle;
+            game.State.PendingBattles.Enqueue(battle); // Just to satisfy check if I used it logic.. wait I didn't use Pending check for logic
+            
+            // Map Setup
+            var territory = new Territory { Name = "Arrakeen" };
+            territory.FactionForces[Faction.Atreides] = 10;
+            territory.FactionForces[Faction.Harkonnen] = 10;
+            game.State.Map.Territories.Add(territory);
+
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            // P1 commits
+            await _engine.SubmitBattlePlanAsync(gameId, 1, "Paul Atreides", 5, null, null);
+            // P2 commits with Traitor
+            await _engine.SubmitBattlePlanAsync(gameId, 2, "Baron Harkonnen", 5, null, null);
+
+            // Assert
+            Assert.False(battle.IsActive);
+            // F1 should win (Has P2's leader as traitor)
+            Assert.Equal(5, f1.Spice); // Leader strength
+            Assert.DoesNotContain(Faction.Harkonnen, territory.FactionForces.Keys); // F2 wiped
+            Assert.Equal(10, territory.FactionForces[Faction.Atreides]); // F1 no loss
+        }
     }
 }

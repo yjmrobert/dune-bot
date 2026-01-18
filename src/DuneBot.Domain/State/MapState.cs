@@ -22,6 +22,6 @@ public class Territory
     public int SpiceBlowAmount { get; set; } // Current spice on territory
     
     // Occupants
-    public Dictionary<Faction, int> Forces { get; set; } = new();
+    public Dictionary<Faction, int> FactionForces { get; set; } = new();
     public Faction? ControlledBy { get; set; } // For stronghold win condition
 }

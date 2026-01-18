@@ -43,6 +43,21 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
             // Channel likely deleted, which is expected behavior
         }
     }
+
+    [SlashCommand("delete-all-games", "DANGER: Deletes ALL active Dune games")]
+    public async Task DeleteAllGames()
+    {
+        // respond ephemerally first
+        await RespondAsync("Deleting ALL games...", ephemeral: true);
+        
+        int count = await _gameManager.DeleteAllGamesAsync();
+        
+        try 
+        {
+            await ModifyOriginalResponseAsync(x => x.Content = $"Deleted {count} games.");
+        }
+        catch { }
+    }
 }
 
 public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
@@ -84,6 +99,111 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
+    [SlashCommand("bid", "Bid spice for the card")]
+    public async Task Bid(int gameId, int amount)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.PlaceBidAsync(gameId, Context.User.Id, amount);
+            await FollowupAsync($"Bid placed.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("revive-forces", "Revive forces from Tanks")]
+    public async Task ReviveForces(int gameId, int amount)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.ReviveForcesAsync(gameId, Context.User.Id, amount);
+            await FollowupAsync($"Revived {amount} forces.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("revive-leader", "Revive a leader from Tanks")]
+    public async Task ReviveLeader(int gameId, string leaderName)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.ReviveLeaderAsync(gameId, Context.User.Id, leaderName);
+            await FollowupAsync($"Revived {leaderName}.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("pass", "Pass bidding")]
+    public async Task Pass(int gameId)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.PassBidAsync(gameId, Context.User.Id);
+            await FollowupAsync($"Passed.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("ship", "Ship forces to a territory")]
+    public async Task Ship(int gameId, string territory, int amount)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.ShipForcesAsync(gameId, Context.User.Id, territory, amount);
+            await FollowupAsync($"Shipped {amount} to {territory}.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("move", "Move forces between territories")]
+    public async Task Move(int gameId, string from, string to, int amount)
+    {
+        await DeferAsync();
+        try 
+        {
+            await _engine.MoveForcesAsync(gameId, Context.User.Id, from, to, amount);
+            await FollowupAsync($"Moved {amount} from {from} to {to}.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}");
+        }
+    }
+
+    [SlashCommand("battle-commit", "Commit battle plan")]
+    public async Task BattleCommit(int gameId, string leader, int dial, string? weapon = null, string? defense = null)
+    {
+        await DeferAsync(ephemeral: true); // Must be secret!
+        try 
+        {
+            await _engine.SubmitBattlePlanAsync(gameId, Context.User.Id, leader, dial, weapon, defense);
+            await FollowupAsync($"Plan committed: {leader}, {dial} forces.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
     [SlashCommand("next-phase", "Force advance to next phase")]
     public async Task NextPhase(int gameId)
     {
@@ -118,5 +238,12 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
                 await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
             }
         }
+    }
+    [ComponentInteraction("dummy_button")]
+    public async Task DummyButtonHandler()
+    {
+        // Just defer to prevent "Interaction Failed"
+        await DeferAsync(ephemeral: true);
+        await FollowupAsync("Waiting for other players to join and the host to start the game...", ephemeral: true);
     }
 }

@@ -66,5 +66,29 @@ namespace DuneBot.Tests
             _mockDiscord.Verify(d => d.DeleteGameChannelsAsync(555, 666), Times.Once);
             _mockRepo.Verify(r => r.DeleteGameAsync(gameId), Times.Once);
         }
+        [Fact]
+        public async Task DeleteAllGames_ShouldIterateAndDeleteEach()
+        {
+            // Arrange
+            var games = new System.Collections.Generic.List<Game>
+            {
+                new Game { Id = 1, GuildId = 101, CategoryId = 201 },
+                new Game { Id = 2, GuildId = 102, CategoryId = 202 }
+            };
+            
+            _mockRepo.Setup(r => r.GetAllGamesAsync()).ReturnsAsync(games);
+            _mockRepo.Setup(r => r.GetGameAsync(1)).ReturnsAsync(games[0]);
+            _mockRepo.Setup(r => r.GetGameAsync(2)).ReturnsAsync(games[1]);
+
+            // Act
+            var count = await _manager.DeleteAllGamesAsync();
+
+            // Assert
+            Assert.Equal(2, count);
+            _mockDiscord.Verify(d => d.DeleteGameChannelsAsync(101, 201), Times.Once);
+            _mockDiscord.Verify(d => d.DeleteGameChannelsAsync(102, 202), Times.Once);
+            _mockRepo.Verify(r => r.DeleteGameAsync(1), Times.Once);
+            _mockRepo.Verify(r => r.DeleteGameAsync(2), Times.Once);
+        }
     }
 }

@@ -20,7 +20,19 @@ public class GameState
     public List<string> SpiceDeck { get; set; } = new();
     public List<string> SpiceDiscard { get; set; } = new();
     public List<string> TraitorDeck { get; set; } = new(); // Used during setup 
+
+    // Bidding Phase State
+    public string? BiddingCard { get; set; } // The card currently up for auction
+    public int CurrentBid { get; set; }
+    public ulong? HighBidderId { get; set; }
+    public ulong? CurrentBidderId { get; set; } // Whose turn to bid
+    public bool IsBiddingRoundActive { get; set; } // True if bidding is in progress 
+    public ulong? BiddingThreadId { get; set; } // ID of the specific Discord thread for this auction
     
+    // Battle Phase State
+    public Queue<BattleState> PendingBattles { get; set; } = new();
+    public BattleState? CurrentBattle { get; set; }
+
     // Logs for the renderer to display recent history
     public List<string> ActionLog { get; set; } = new();
 
@@ -37,7 +49,29 @@ public class FactionState
     public string PlayerName { get; set; } = string.Empty;
     public int Spice { get; set; }
     public int Reserves { get; set; } // Troops in reserve
+    public int ForcesInTanks { get; set; } // Dead troops available for revival
     public List<string> TreacheryCards { get; set; } = new();
     public List<string> Traitors { get; set; } = new();
+    public List<string> DeadLeaders { get; set; } = new(); // Leaders in the tanks
     public bool HasPassed { get; set; } // Track pass status for phases
+    public int RevivedTroopsThisTurn { get; set; } // Reset each turn
+    public bool HasShipped { get; set; } // Reset at Ship/Move phase
+    public bool HasMoved { get; set; } // Reset at Ship/Move phase
+}
+
+public class BattleState
+{
+    public string TerritoryName { get; set; } = string.Empty;
+    public ulong Faction1Id { get; set; }
+    public ulong Faction2Id { get; set; }
+    public bool IsActive { get; set; }
+    public Dictionary<ulong, BattlePlan> Plans { get; set; } = new();
+}
+
+public class BattlePlan
+{
+    public string LeaderName { get; set; } = string.Empty;
+    public int Dial { get; set; }
+    public string? Weapon { get; set; }
+    public string? Defense { get; set; }
 }

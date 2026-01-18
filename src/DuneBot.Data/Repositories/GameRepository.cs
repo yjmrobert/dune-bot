@@ -34,6 +34,23 @@ public class GameRepository : IGameRepository
         return game;
     }
 
+    public async Task<List<Game>> GetAllGamesAsync()
+    {
+        var games = await _context.Games.ToListAsync();
+        foreach (var game in games)
+        {
+            if (!string.IsNullOrEmpty(game.StateJson))
+            {
+                game.State = JsonSerializer.Deserialize<GameState>(game.StateJson) ?? new GameState();
+            }
+            else
+            {
+                game.State = new GameState();
+            }
+        }
+        return games;
+    }
+
     public async Task<Game> CreateGameAsync(Game game)
     {
         // Ensure state is serialized

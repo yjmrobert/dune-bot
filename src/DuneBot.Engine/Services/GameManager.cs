@@ -67,4 +67,14 @@ public class GameManager
         // 2. Delete from DB
         await _repository.DeleteGameAsync(gameId);
     }
+
+    public async Task<int> DeleteAllGamesAsync()
+    {
+        var games = await _repository.GetAllGamesAsync();
+        foreach (var game in games)
+        {
+            await DeleteGameAsync(game.Id);
+        }
+        return games.Count;
+    }
 }
