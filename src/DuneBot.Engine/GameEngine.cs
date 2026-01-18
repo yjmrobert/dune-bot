@@ -139,25 +139,6 @@ public class GameEngine
                 nextPhase = GamePhase.Storm;
                 game.State.Turn = 1;
                 break;
-            case GamePhase.MentatPause:
-                // End of Round
-                if (game.State.Turn >= 10)
-                {
-                    await EndGameAsync(game);
-                    return;
-                }
-                
-                // Storm Logic
-                int move = new Random().Next(1, 7); // d6
-                int oldSector = game.State.StormLocation;
-                int newSector = _mapService.CalculateNextStormSector(oldSector, move);
-                game.State.StormLocation = newSector;
-                
-                nextPhase = GamePhase.Storm;
-                game.State.Turn++;
-                game.State.ActionLog.Add($"--- Round {game.State.Turn} Started ---");
-                game.State.ActionLog.Add($"Storm moved {move} sectors from {oldSector} to {newSector}.");
-                break;
             case GamePhase.Storm:
                 // Handle Spice Blow
                 nextPhase = ResolveSpiceBlow(game);
@@ -236,44 +217,60 @@ public class GameEngine
                 break;
             case GamePhase.SpiceCollection:
                 // Implement Spice Collection (Harvest)
-                // Everyone with forces in territory with SpiceBlowAmount collects it.
-                // Limit: 2 spice per force (3 if Ornithopters? No, 2 normally. 3 if you have control of A/C? 
-                // Rule: "2 spice per force if you control Arrakeen or Carthag... otherwise 2 spice per force? No."
-                // Rule: "Collection rate is 2 spice per force if you occupy Arrakeen or Carthag. Otherwise 3 per force?
-                // Wait, typically 2 per force normally. 3 if you have city?
-                // Let's simplify: 2 per force.
-                // Harvest logic here...
-                // Only territories with SpiceBlowAmount > 0.
-                
                 foreach(var t in game.State.Map.Territories.Where(t => t.SpiceBlowAmount > 0))
                 {
-                    if (t.FactionForces.Any())
+                    if (t.FactionForces.Keys.Count == 1) // Only if uncontested
                     {
-                        // Multiple factions? No, storm/battle should have resolved this or cleared it?
-                        // If multiple factions, no collection happens usually? Or they share?
-                        // Battle phase precedes this. So only 1 faction should remain.
-                        if (t.FactionForces.Count == 1)
+                        var factionType = t.FactionForces.Keys.First();
+                        var count = t.FactionForces[factionType];
+                        var collectionRate = 2; 
+                        
+                        int potentialCollection = count * collectionRate;
+                        int actuallyCollected = Math.Min(t.SpiceBlowAmount, potentialCollection);
+                        
+                        if (actuallyCollected > 0)
                         {
-                            var factionType = t.FactionForces.Keys.First();
-                            var count = t.FactionForces[factionType];
-                            var collectionRate = 2; // Default
-                            // Check cities for rate boost?
-                            // MVP: 2 per force.
-                            
-                            int collected = Math.Min(t.SpiceBlowAmount, count * collectionRate);
-                            t.SpiceBlowAmount -= collected;
+                            t.SpiceBlowAmount -= actuallyCollected;
                             
                             var factionState = game.State.Factions.FirstOrDefault(f => f.Faction == factionType);
                             if (factionState != null)
                             {
-                                factionState.Spice += collected;
-                                game.State.ActionLog.Add($"**{factionState.PlayerName}** collected {collected} spice from {t.Name}.");
+                                factionState.Spice += actuallyCollected;
+                                game.State.ActionLog.Add($"**{factionState.PlayerName}** collected {actuallyCollected} spice from {t.Name}.");
                             }
                         }
+                    }
+                    else if (t.FactionForces.Keys.Count > 1)
+                    {
+                         game.State.ActionLog.Add($"Spice in **{t.Name}** is contested! No collection.");
                     }
                 }
                 
                 nextPhase = GamePhase.MentatPause;
+                break;
+                
+            case GamePhase.MentatPause:
+                // Win Condition Check at end of round
+                if (await CheckWinCondition(game)) return; 
+
+                // End of Round if not won
+                if (game.State.Turn >= 10)
+                {
+                    game.State.ActionLog.Add("Turn 10 Limit Reached. Guild wins? (MVP: Draw)");
+                    await EndGameAsync(game);
+                    return;
+                }
+                
+                // Storm Logic for Next Round
+                int move = new Random().Next(1, 7); // d6
+                int oldSector = game.State.StormLocation;
+                int newSector = _mapService.CalculateNextStormSector(oldSector, move);
+                game.State.StormLocation = newSector;
+                
+                nextPhase = GamePhase.Storm;
+                game.State.Turn++;
+                game.State.ActionLog.Add($"--- Round {game.State.Turn} Started ---");
+                game.State.ActionLog.Add($"Storm moved {move} sectors from {oldSector} to {newSector}.");
                 break;
 
             default:
@@ -601,6 +598,28 @@ public class GameEngine
         game.State.ActionLog.Add($"**{faction.PlayerName}** shipped {amount} forces to **{toTerritoryName}** for {totalCost} spice.");
         
         await _repository.UpdateGameAsync(game);
+    }
+
+    private async Task<bool> CheckWinCondition(Game game)
+    {
+        // 3 Strongholds to win
+        foreach (var faction in game.State.Factions)
+        {
+            int stringholdsControlled = game.State.Map.Territories
+                .Count(t => t.IsStronghold && t.FactionForces.ContainsKey(faction.Faction) && t.FactionForces.Keys.Count == 1);
+            
+            if (stringholdsControlled >= 3)
+            {
+                game.State.ActionLog.Add($"**GAME OVER!**");
+                game.State.ActionLog.Add($"**{faction.PlayerName}** wins with {stringholdsControlled} strongholds!");
+                
+                // We should probably post one last update before deleting?
+                await PostGameUpdate(game);
+                await EndGameAsync(game);
+                return true;
+            }
+        }
+        return false;
     }
     
     public async Task MoveForcesAsync(int gameId, ulong userId, string fromTerritoryName, string toTerritoryName, int amount)

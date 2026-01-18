@@ -466,5 +466,60 @@ namespace DuneBot.Tests
             Assert.DoesNotContain(Faction.Harkonnen, territory.FactionForces.Keys); // F2 wiped
             Assert.Equal(10, territory.FactionForces[Faction.Atreides]); // F1 no loss
         }
+
+        [Fact]
+        public async Task SpiceCollection_ShouldCollectCorrectAmount()
+        {
+             // Arrange
+            var gameId = 1;
+            var game = new Game { State = new GameState { Phase = GamePhase.SpiceCollection, Turn = 1 } };
+            
+            var f1 = new FactionState { PlayerDiscordId = 1, PlayerName = "Atreides", Faction = Faction.Atreides, Spice = 0 };
+            game.State.Factions.Add(f1);
+            
+            // Map Setup
+            var t1 = new Territory { Name = "The Great Flat", SpiceBlowAmount = 10 };
+            t1.FactionForces[Faction.Atreides] = 3; // 3 * 2 = 6 collection
+            game.State.Map.Territories.Add(t1);
+
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            await _engine.AdvancePhaseAsync(gameId);
+
+            // Assert
+            Assert.Equal(6, f1.Spice);
+            Assert.Equal(4, t1.SpiceBlowAmount); // 10 - 6 = 4
+            Assert.Equal(GamePhase.MentatPause, game.State.Phase);
+        }
+
+        [Fact]
+        public async Task WinCondition_ThreeStrongholds_ShouldEndGame()
+        {
+             // Arrange
+            var gameId = 1;
+            var game = new Game { Id = gameId, State = new GameState { Phase = GamePhase.MentatPause, Turn = 1 } };
+            
+            var f1 = new FactionState { PlayerDiscordId = 1, PlayerName = "Atreides", Faction = Faction.Atreides };
+            game.State.Factions.Add(f1);
+            
+            // Map Setup: Give 3 Strongholds
+            var s1 = new Territory { Name = "Arrakeen", IsStronghold = true }; s1.FactionForces[Faction.Atreides] = 1;
+            var s2 = new Territory { Name = "Carthag", IsStronghold = true }; s2.FactionForces[Faction.Atreides] = 1;
+            var s3 = new Territory { Name = "Sietch Tabr", IsStronghold = true }; s3.FactionForces[Faction.Atreides] = 1;
+            
+            game.State.Map.Territories.Add(s1);
+            game.State.Map.Territories.Add(s2);
+            game.State.Map.Territories.Add(s3);
+
+            _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
+            _mockRepo.Setup(r => r.DeleteGameAsync(gameId)).Returns(Task.CompletedTask).Verifiable();
+
+            // Act
+            await _engine.AdvancePhaseAsync(gameId);
+
+            // Assert
+            _mockRepo.Verify(r => r.DeleteGameAsync(gameId), Times.Once); // Game Deleted = Win
+        }
     }
 }
