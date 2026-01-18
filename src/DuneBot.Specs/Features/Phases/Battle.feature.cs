@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace DuneBot.Specs.Features
+namespace DuneBot.Specs.Features.Phases
 {
     using Reqnroll;
     using System;
@@ -19,7 +19,7 @@ namespace DuneBot.Specs.Features
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class GuildFactionFeature : object, Xunit.IClassFixture<GuildFactionFeature.FixtureData>, Xunit.IAsyncLifetime
+    public partial class BattleResolutionFeature : object, Xunit.IClassFixture<BattleResolutionFeature.FixtureData>, Xunit.IAsyncLifetime
     {
         
         private static Reqnroll.ITestRunner testRunner;
@@ -28,10 +28,10 @@ namespace DuneBot.Specs.Features
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "Guild.feature"
+#line 1 "Battle.feature"
 #line hidden
         
-        public GuildFactionFeature(GuildFactionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public BattleResolutionFeature(BattleResolutionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Guild Faction", "  In order to profit from the war\n  As the Guild Faction\n  I want to collect paym" +
-                    "ents for shipments", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Battle Resolution", "  In order to resolve conflicts\n  As a Game Engine\n  I want to determine the winn" +
+                    "er of a battle based on leaders, weapons, and defenses", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -77,15 +77,6 @@ namespace DuneBot.Specs.Features
             await testRunner.CollectScenarioErrorsAsync();
         }
         
-        public virtual async System.Threading.Tasks.Task FeatureBackgroundAsync()
-        {
-#line 6
-  #line hidden
-#line 7
-     await testRunner.GivenAsync("the game is in the \"ShipmentAndMovement\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
-#line hidden
-        }
-        
         async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
         {
             await this.TestInitializeAsync();
@@ -96,15 +87,15 @@ namespace DuneBot.Specs.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Guild receives payments when others ship")]
-        [Xunit.TraitAttribute("FeatureTitle", "Guild Faction")]
-        [Xunit.TraitAttribute("Description", "Guild receives payments when others ship")]
-        public async System.Threading.Tasks.Task GuildReceivesPaymentsWhenOthersShip()
+        [Xunit.SkippableFactAttribute(DisplayName="Basic Battle Winner")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Basic Battle Winner")]
+        public async System.Threading.Tasks.Task BasicBattleWinner()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Guild receives payments when others ship", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 9
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Basic Battle Winner", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 6
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -114,63 +105,41 @@ namespace DuneBot.Specs.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 6
-  await this.FeatureBackgroundAsync();
+#line 7
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 10
-    await testRunner.GivenAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
-#line hidden
-#line 11
-    await testRunner.AndAsync("\"Guild\" has 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+                Reqnroll.Table table6 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table6.AddRow(new string[] {
+                            "Atreides",
+                            "Duncan",
+                            "5",
+                            "None",
+                            "None",
+                            "1"});
+                table6.AddRow(new string[] {
+                            "Harkonnen",
+                            "Beast",
+                            "5",
+                            "None",
+                            "None",
+                            "5"});
+#line 8
+    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table6, "Given ");
 #line hidden
 #line 12
-    await testRunner.AndAsync("\"Atreides\" has 5 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 13
-    await testRunner.WhenAsync("\"Atreides\" ships 5 forces to \"Basin\" (Sector 8)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.ThenAsync("the winner should be \"Harkonnen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 14
-    await testRunner.ThenAsync("\"Atreides\" should have 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 15
-    await testRunner.AndAsync("\"Guild\" should have 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
-#line hidden
-            }
-            await this.ScenarioCleanupAsync();
-        }
-        
-        [Xunit.SkippableFactAttribute(DisplayName="Guild pays half for shipment")]
-        [Xunit.TraitAttribute("FeatureTitle", "Guild Faction")]
-        [Xunit.TraitAttribute("Description", "Guild pays half for shipment")]
-        public async System.Threading.Tasks.Task GuildPaysHalfForShipment()
-        {
-            string[] tagsOfScenario = ((string[])(null));
-            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Guild pays half for shipment", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 18
-  this.ScenarioInitialize(scenarioInfo);
-#line hidden
-            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
-            {
-                testRunner.SkipScenario();
-            }
-            else
-            {
-                await this.ScenarioStartAsync();
-#line 6
-  await this.FeatureBackgroundAsync();
-#line hidden
-#line 19
-    await testRunner.GivenAsync("\"Guild\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
-#line hidden
-#line 20
-    await testRunner.AndAsync("\"Guild\" has 6 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
-#line hidden
-#line 21
-    await testRunner.WhenAsync("\"Guild\" ships 6 forces to \"Basin\" (Sector 8)", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 22
-    await testRunner.ThenAsync("\"Guild\" should have 4 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.AndAsync("\"Atreides\" should lose all forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -183,12 +152,12 @@ namespace DuneBot.Specs.Features
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await GuildFactionFeature.FeatureSetupAsync();
+                await BattleResolutionFeature.FeatureSetupAsync();
             }
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await GuildFactionFeature.FeatureTearDownAsync();
+                await BattleResolutionFeature.FeatureTearDownAsync();
             }
         }
     }

@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace DuneBot.Specs.Features
+namespace DuneBot.Specs.Features.Phases
 {
     using Reqnroll;
     using System;
@@ -39,7 +39,7 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Bidding Phase", "  In order to acquire powerful Treachery Cards\n  As a Player\n  I want to bid spic" +
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Bidding Phase", "  In order to acquire powerful Treachery Cards\n  As a Player\n  I want to bid spic" +
                     "e in an auction", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }

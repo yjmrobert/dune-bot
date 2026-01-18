@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace DuneBot.Specs.Features
+namespace DuneBot.Specs.Features.Factions
 {
     using Reqnroll;
     using System;
@@ -39,7 +39,7 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Bene Gesserit Faction", "  In order to control the flow of battle\n  As the Bene Gesserit Faction\n  I want " +
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Bene Gesserit Faction", "  In order to control the flow of battle\n  As the Bene Gesserit Faction\n  I want " +
                     "to use the Voice to restrict opponent cards", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
@@ -117,26 +117,26 @@ namespace DuneBot.Specs.Features
 #line 6
   await this.FeatureBackgroundAsync();
 #line hidden
-                Reqnroll.Table table2 = new Reqnroll.Table(new string[] {
+                Reqnroll.Table table1 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Leader",
                             "Dial",
                             "Weapon",
                             "Defense"});
-                table2.AddRow(new string[] {
+                table1.AddRow(new string[] {
                             "BeneGesserit",
                             "Dame",
                             "1",
                             "None",
                             "None"});
-                table2.AddRow(new string[] {
+                table1.AddRow(new string[] {
                             "Atreides",
                             "Duncan",
                             "5",
                             "Lasgun",
                             "None"});
 #line 10
-    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table2, "Given ");
+    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table1, "Given ");
 #line hidden
 #line 14
     await testRunner.AndAsync("\"BeneGesserit\" uses Voice on \"Atreides\" to forbid \"Lasgun\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
@@ -172,26 +172,26 @@ namespace DuneBot.Specs.Features
 #line 6
   await this.FeatureBackgroundAsync();
 #line hidden
-                Reqnroll.Table table3 = new Reqnroll.Table(new string[] {
+                Reqnroll.Table table2 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Leader",
                             "Dial",
                             "Weapon",
                             "Defense"});
-                table3.AddRow(new string[] {
+                table2.AddRow(new string[] {
                             "BeneGesserit",
                             "Dame",
                             "1",
                             "None",
                             "None"});
-                table3.AddRow(new string[] {
+                table2.AddRow(new string[] {
                             "Atreides",
                             "Duncan",
                             "5",
                             "Lasgun",
                             "None"});
 #line 19
-    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table3, "Given ");
+    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table2, "Given ");
 #line hidden
 #line 23
     await testRunner.AndAsync("\"Atreides\" holds \"Shield\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");

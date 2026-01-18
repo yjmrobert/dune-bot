@@ -10,7 +10,7 @@
 // ------------------------------------------------------------------------------
 #region Designer generated code
 #pragma warning disable
-namespace DuneBot.Specs.Features
+namespace DuneBot.Specs.Features.Factions
 {
     using Reqnroll;
     using System;
@@ -19,7 +19,7 @@ namespace DuneBot.Specs.Features
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class FremenFactionFeature : object, Xunit.IClassFixture<FremenFactionFeature.FixtureData>, Xunit.IAsyncLifetime
+    public partial class EmperorFactionFeature : object, Xunit.IClassFixture<EmperorFactionFeature.FixtureData>, Xunit.IAsyncLifetime
     {
         
         private static Reqnroll.ITestRunner testRunner;
@@ -28,10 +28,10 @@ namespace DuneBot.Specs.Features
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "Fremen.feature"
+#line 1 "Emperor.feature"
 #line hidden
         
-        public FremenFactionFeature(FremenFactionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public EmperorFactionFeature(EmperorFactionFeature.FixtureData fixtureData, Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Fremen Faction", "  In order to survive and thrive on Arrakis\n  As the Fremen Faction\n  I want to u" +
-                    "se my native abilities to withstand the storm", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Emperor Faction", "  In order to leverage my immense wealth\n  As the Emperor Faction\n  I want to col" +
+                    "lect payments from other factions", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -87,14 +87,14 @@ namespace DuneBot.Specs.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Fremen survive storm in open sand")]
-        [Xunit.TraitAttribute("FeatureTitle", "Fremen Faction")]
-        [Xunit.TraitAttribute("Description", "Fremen survive storm in open sand")]
-        public async System.Threading.Tasks.Task FremenSurviveStormInOpenSand()
+        [Xunit.SkippableFactAttribute(DisplayName="Emperor receives payments")]
+        [Xunit.TraitAttribute("FeatureTitle", "Emperor Faction")]
+        [Xunit.TraitAttribute("Description", "Emperor receives payments")]
+        public async System.Threading.Tasks.Task EmperorReceivesPayments()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Fremen survive storm in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Emperor receives payments", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 6
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -106,22 +106,19 @@ namespace DuneBot.Specs.Features
             {
                 await this.ScenarioStartAsync();
 #line 7
-    await testRunner.GivenAsync("the current storm position is sector 3", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"Emperor\" is in the game with 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-                Reqnroll.Table table4 = new Reqnroll.Table(new string[] {
-                            "Faction",
-                            "Forces"});
-                table4.AddRow(new string[] {
-                            "Fremen",
-                            "5"});
 #line 8
-    await testRunner.AndAsync("the following forces are in \"Broken Land\" (Sector 4):", ((string)(null)), table4, "And ");
+    await testRunner.AndAsync("the \"Atreides\" faction has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 9
+    await testRunner.AndAsync("\"Atreides\" wins the auction for 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 10
+    await testRunner.WhenAsync("the auction is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-    await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 12
-    await testRunner.ThenAsync("\"Fremen\" should have 5 forces in \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("\"Emperor\" should have 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -134,12 +131,12 @@ namespace DuneBot.Specs.Features
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await FremenFactionFeature.FeatureSetupAsync();
+                await EmperorFactionFeature.FeatureSetupAsync();
             }
             
             async System.Threading.Tasks.Task Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await FremenFactionFeature.FeatureTearDownAsync();
+                await EmperorFactionFeature.FeatureTearDownAsync();
             }
         }
     }
