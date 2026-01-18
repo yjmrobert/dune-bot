@@ -272,6 +272,80 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
+        [Xunit.SkippableFactAttribute(DisplayName="Cannot move twice in same turn")]
+        [Xunit.TraitAttribute("FeatureTitle", "Movement Phase")]
+        [Xunit.TraitAttribute("Description", "Cannot move twice in same turn")]
+        public async System.Threading.Tasks.Task CannotMoveTwiceInSameTurn()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cannot move twice in same turn", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 43
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 44
+    await testRunner.GivenAsync("\"Atreides\" has 10 forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 45
+    await testRunner.AndAsync("\"Atreides\" has 5 forces in \"Imperial Basin (S3)\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 46
+    await testRunner.WhenAsync("\"Atreides\" moves 5 forces from \"Arrakeen\" to \"Imperial Basin (S3)\"", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 47
+    await testRunner.AndAsync("\"Atreides\" moves 3 forces from \"Imperial Basin (S3)\" to \"Old Gap\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 48
+    await testRunner.ThenAsync("the action should fail with message \"have already moved\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Cannot move 0 forces")]
+        [Xunit.TraitAttribute("FeatureTitle", "Movement Phase")]
+        [Xunit.TraitAttribute("Description", "Cannot move 0 forces")]
+        public async System.Threading.Tasks.Task CannotMove0Forces()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cannot move 0 forces", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 50
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 51
+    await testRunner.GivenAsync("\"Atreides\" has 10 forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 52
+    await testRunner.WhenAsync("\"Atreides\" moves 0 forces from \"Arrakeen\" to \"Imperial Basin (S3)\"", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 53
+    await testRunner.ThenAsync("the action should fail with message \"Amount must be positive\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
         [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
         [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, Xunit.IAsyncLifetime

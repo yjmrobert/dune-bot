@@ -23,6 +23,15 @@ Feature: Revival Phase
     And "Harkonnen" should have 3 forces in reserves
     And "Harkonnen" should have 7 forces in tanks
 
+  Scenario: Fremen revive forces for free
+    Given "Fremen" has 0 spice
+    And "Fremen" has 0 forces in reserves
+    And "Fremen" has 10 forces in tanks
+    When "Fremen" revives 3 forces
+    Then "Fremen" should have 0 spice
+    # Fremen revival is free (0 cost)
+    And "Fremen" should have 3 forces in reserves
+    And "Fremen" should have 7 forces in tanks
 
   Scenario: Cannot revive without enough spice
     Given "Atreides" has 1 spice

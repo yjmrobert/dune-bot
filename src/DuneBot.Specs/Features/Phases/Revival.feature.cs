@@ -182,15 +182,15 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Cannot revive without enough spice")]
+        [Xunit.SkippableFactAttribute(DisplayName="Fremen revive forces for free")]
         [Xunit.TraitAttribute("FeatureTitle", "Revival Phase")]
-        [Xunit.TraitAttribute("Description", "Cannot revive without enough spice")]
-        public async System.Threading.Tasks.Task CannotReviveWithoutEnoughSpice()
+        [Xunit.TraitAttribute("Description", "Fremen revive forces for free")]
+        public async System.Threading.Tasks.Task FremenReviveForcesForFree()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cannot revive without enough spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 27
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Fremen revive forces for free", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 26
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -203,16 +203,62 @@ namespace DuneBot.Specs.Features.Phases
 #line 6
   await this.FeatureBackgroundAsync();
 #line hidden
+#line 27
+    await testRunner.GivenAsync("\"Fremen\" has 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
 #line 28
-    await testRunner.GivenAsync("\"Atreides\" has 1 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.AndAsync("\"Fremen\" has 0 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 29
-    await testRunner.AndAsync("\"Atreides\" has \"Duncan\" in their dead leaders", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("\"Fremen\" has 10 forces in tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 30
-    await testRunner.WhenAsync("\"Atreides\" revives leader \"Duncan\"", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("\"Fremen\" revives 3 forces", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 31
+    await testRunner.ThenAsync("\"Fremen\" should have 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 33
+    await testRunner.AndAsync("\"Fremen\" should have 3 forces in reserves", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 34
+    await testRunner.AndAsync("\"Fremen\" should have 7 forces in tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Cannot revive without enough spice")]
+        [Xunit.TraitAttribute("FeatureTitle", "Revival Phase")]
+        [Xunit.TraitAttribute("Description", "Cannot revive without enough spice")]
+        public async System.Threading.Tasks.Task CannotReviveWithoutEnoughSpice()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cannot revive without enough spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 36
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 37
+    await testRunner.GivenAsync("\"Atreides\" has 1 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 38
+    await testRunner.AndAsync("\"Atreides\" has \"Duncan\" in their dead leaders", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 39
+    await testRunner.WhenAsync("\"Atreides\" revives leader \"Duncan\"", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 40
     await testRunner.ThenAsync("the action should fail with message \"Not enough spice\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

@@ -39,3 +39,15 @@ Feature: Movement Phase
     # So to go Arrakeen -> Imperial Basin (S2), destination is in storm.
     When "Atreides" moves 5 forces from "Arrakeen" to "Imperial Basin (S2)"
     Then the action should fail with message "Cannot move through Storm"
+
+  Scenario: Cannot move twice in same turn
+    Given "Atreides" has 10 forces in "Arrakeen"
+    And "Atreides" has 5 forces in "Imperial Basin (S3)"
+    When "Atreides" moves 5 forces from "Arrakeen" to "Imperial Basin (S3)"
+    And "Atreides" moves 3 forces from "Imperial Basin (S3)" to "Old Gap"
+    Then the action should fail with message "have already moved"
+
+  Scenario: Cannot move 0 forces
+    Given "Atreides" has 10 forces in "Arrakeen"
+    When "Atreides" moves 0 forces from "Arrakeen" to "Imperial Basin (S3)"
+    Then the action should fail with message "Amount must be positive"

@@ -716,6 +716,9 @@ public class GameEngine
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
         if (faction.HasMoved) throw new Exception("You have already moved this turn.");
 
+        // Validate amount
+        if (amount <= 0) throw new Exception("Amount must be positive.");
+
         // 1. Validate Locations
         var fromT = game.State.Map.Territories.FirstOrDefault(t => t.Name == fromTerritoryName);
         var toT = game.State.Map.Territories.FirstOrDefault(t => t.Name == toTerritoryName);
