@@ -19,30 +19,41 @@ public class GameManager
 
     public async Task<Game> CreateGameAsync(ulong guildId, string name)
     {
-        // 1. Create Channels via Discord Service
-        var channels = await _discordService.CreateGameChannelsAsync(guildId, name);
-
-        // 2. Create Game Entity
+        // 1. Create Placeholder Game Entity to get an ID
         var game = new Game
         {
             GuildId = guildId,
-            CategoryId = channels.CategoryId,
-            ActionsChannelId = channels.ActionsId,
-            MapChannelId = channels.MapId,
-            TableTalkChannelId = channels.TalkId,
-            State = new GameState() // Initial empty state
+            State = new GameState() 
         };
+        await _repository.CreateGameAsync(game); // This populates game.Id
 
-        // 3. Persist
-        await _repository.CreateGameAsync(game);
-        
-        // 4. Send Welcome Message
-        await _discordService.SendActionMessageAsync(guildId, channels.ActionsId, 
-            "**New Game Lobby Open!**\nJoin the game with `/join` and then `/start`.", 
-            "Wait for Start", 
-            "dummy_button"); // Dummy button or just text? Interface requires button. Let's use a "Refresh" or plain button.
-        
-        return game;
+        try 
+        {
+            // 2. Create Channels with ID prefix
+            var channels = await _discordService.CreateGameChannelsAsync(guildId, game.Id, name);
+
+            // 3. Update Game with Channel IDs
+            game.CategoryId = channels.CategoryId;
+            game.ActionsChannelId = channels.ActionsId;
+            game.MapChannelId = channels.MapId;
+            game.TableTalkChannelId = channels.TalkId;
+            
+            await _repository.UpdateGameAsync(game);
+            
+            // 4. Send Welcome Message
+            await _discordService.SendActionMessageAsync(guildId, channels.ActionsId, 
+                $"**New Game Lobby Open! (ID: {game.Id})**\nJoin the game with `/join` and then `/start`.", 
+                "Wait for Start", 
+                "dummy_button");
+
+            return game;
+        }
+        catch 
+        {
+            // Rollback if channel creation fails
+            await _repository.DeleteGameAsync(game.Id);
+            throw;
+        }
     }
 
     public async Task DeleteGameAsync(int gameId)

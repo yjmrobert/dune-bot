@@ -30,18 +30,20 @@ public class DiscordService : IDiscordService
         _client = client;
     }
 
-    public async Task<(ulong CategoryId, ulong ActionsId, ulong MapId, ulong TalkId)> CreateGameChannelsAsync(ulong guildId, string gameName)
+    public async Task<(ulong CategoryId, ulong ActionsId, ulong MapId, ulong TalkId)> CreateGameChannelsAsync(ulong guildId, int gameId, string gameName)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) throw new Exception($"Guild {guildId} not found, bot might not be ready.");
 
-        // Create Category
-        var category = await guild.CreateCategoryChannelAsync(gameName);
+        // Create Category with prefix
+        string categoryName = $"dg{gameId}-{gameName}";
+        var category = await guild.CreateCategoryChannelAsync(categoryName);
 
-        // Create Channels
-        var mapChannel = await guild.CreateTextChannelAsync("map-updates", p => p.CategoryId = category.Id);
-        var actionsChannel = await guild.CreateTextChannelAsync("actions", p => p.CategoryId = category.Id);
-        var talkChannel = await guild.CreateTextChannelAsync("table-talk", p => p.CategoryId = category.Id);
+        // Create Channels with prefix
+        // e.g., dg12-map-updates
+        var mapChannel = await guild.CreateTextChannelAsync($"dg{gameId}-map-updates", p => p.CategoryId = category.Id);
+        var actionsChannel = await guild.CreateTextChannelAsync($"dg{gameId}-actions", p => p.CategoryId = category.Id);
+        var talkChannel = await guild.CreateTextChannelAsync($"dg{gameId}-table-talk", p => p.CategoryId = category.Id);
 
         // Set Permissions (Example: Map read-only)
         // Todo: Refine permissions later.

@@ -25,7 +25,10 @@ builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameRenderer, JsonGameRenderer>();
 builder.Services.AddScoped<IDiscordService, DiscordService>();
 builder.Services.AddScoped<GameManager>();
+builder.Services.AddScoped<GameManager>();
 builder.Services.AddScoped<GameEngine>();
+builder.Services.AddSingleton<IMapService, MapService>();
+builder.Services.AddSingleton<IDeckService, DeckService>();
 
 // Hosted Service
 builder.Services.AddHostedService<Worker>();

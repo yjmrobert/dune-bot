@@ -11,7 +11,15 @@ public class GameState
     public MapState Map { get; set; } = new();
 
     // Board state, storm position, spice blows, etc will go here
+    // Board state, storm position, spice blows, etc will go here
     public int StormLocation { get; set; } 
+    
+    // Decks
+    public List<string> TreacheryDeck { get; set; } = new();
+    public List<string> TreacheryDiscard { get; set; } = new();
+    public List<string> SpiceDeck { get; set; } = new();
+    public List<string> SpiceDiscard { get; set; } = new();
+    public List<string> TraitorDeck { get; set; } = new(); // Used during setup 
     
     // Logs for the renderer to display recent history
     public List<string> ActionLog { get; set; } = new();
