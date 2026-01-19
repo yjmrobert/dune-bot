@@ -181,5 +181,33 @@ namespace DuneBot.Specs.Steps
         }
 
 
+        [Then(@"the battle should result in a tie")]
+        public void ThenTheBattleShouldResultInATie()
+        {
+            var log = _game.State.ActionLog.LastOrDefault(l => l.Contains("Tie!", System.StringComparison.OrdinalIgnoreCase) || l.Contains("tie.", System.StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(log);
+            Assert.False(_game.State.CurrentBattle.IsActive);
+        }
+
+        [Then(@"""(.*)"" should be in dead leaders for ""(.*)""")]
+        public void ThenShouldBeInDeadLeadersFor(string leaderName, string factionName)
+        {
+            var f = _game.State.Factions.First(x => x.PlayerName == factionName);
+            Assert.Contains(leaderName, f.DeadLeaders);
+        }
+
+        [Then(@"""(.*)"" should have won with 0 force loss")]
+        public void ThenShouldHaveWonWithZeroForceLoss(string winnerName)
+        {
+            // Verify winner
+            ThenTheWinnerShouldBe(winnerName);
+            
+            var factionEnum = (Faction)System.Enum.Parse(typeof(Faction), winnerName);
+            var battle = _game.State.CurrentBattle;
+            var t = _game.State.Map.Territories.First(x => x.Name == battle.TerritoryName);
+            
+            // In setup we gave 20 forces. If loss is 0, should still be 20.
+            Assert.Equal(20, t.FactionForces[factionEnum]);
+        }
     }
 }

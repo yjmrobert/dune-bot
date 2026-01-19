@@ -1071,7 +1071,55 @@ public class GameEngine
             return;
         }
 
-        // 2. Combat Logic (Weapon vs Defense)
+        // 2. Cheap Hero Check
+        // Cheap Hero = Leader with 0 dial automatically wins by sacrificing the leader
+        bool p1CheapHero = !string.IsNullOrEmpty(plan1.LeaderName) && plan1.Dial == 0;
+        bool p2CheapHero = !string.IsNullOrEmpty(plan2.LeaderName) && plan2.Dial == 0;
+
+        if (p1CheapHero && p2CheapHero)
+        {
+            game.State.ActionLog.Add("💀 Both players used Cheap Hero! Both leaders killed in mutual sacrifice. Battle is a tie.");
+            
+            // Kill both leaders
+            f1.DeadLeaders.Add(plan1.LeaderName);
+            f2.DeadLeaders.Add(plan2.LeaderName);
+            
+            // No forces lost (dial = 0 for both)
+            battle.IsActive = false;
+            return;
+        }
+        else if (p1CheapHero)
+        {
+            game.State.ActionLog.Add($"🎯 **{f1.PlayerName}** uses Cheap Hero! {plan1.LeaderName} sacrificed for victory.");
+            
+            // Kill P1's leader
+            f1.DeadLeaders.Add(plan1.LeaderName);
+            
+            // P1 wins, pays 0 forces (dial = 0)
+            WinBattle(game, battle, f1, f2, plan1, plan2, 0, false);
+            
+            // Capture opponent's leader if Harkonnen (opponent leader not killed by weapon)
+            HandleHarkonnenCapture(game, f1, f2, plan2, false);
+            
+            return;
+        }
+        else if (p2CheapHero)
+        {
+            game.State.ActionLog.Add($"🎯 **{f2.PlayerName}** uses Cheap Hero! {plan2.LeaderName} sacrificed for victory.");
+            
+            // Kill P2's leader
+            f2.DeadLeaders.Add(plan2.LeaderName);
+            
+            // P2 wins, pays 0 forces
+            WinBattle(game, battle, f2, f1, plan2, plan1, 0, false);
+            
+            // Capture opponent's leader if Harkonnen
+            HandleHarkonnenCapture(game, f2, f1, plan1, false);
+            
+            return;
+        }
+
+        // 3. Combat Logic (Weapon vs Defense)
         bool l1Dead = IsLeaderKilled(plan1.LeaderName, plan2.Weapon, plan1.Defense);
         bool l2Dead = IsLeaderKilled(plan2.LeaderName, plan1.Weapon, plan2.Defense);
         
@@ -1086,7 +1134,7 @@ public class GameEngine
             f2.DeadLeaders.Add(plan2.LeaderName);
         }
 
-        // 3. Calculate Score
+        // 4. Calculate Score
         // Score = Dial + (LeaderAlive ? Strength : 0)
         // MVP: Leader strength hardcoded to 5.
         double s1 = plan1.Dial + (l1Dead ? 0 : 5); 
@@ -1106,7 +1154,7 @@ public class GameEngine
         }
         else
         {
-             game.State.ActionLog.Add("Tie! aggressor loses? MVP: Both lose forces, defender keeps territory?");
+             game.State.ActionLog.Add("Tie! Defender may keep territory. Both lose dial forces.");
              // Simplification: Both lose dial.
              RemoveForces(game, battle.TerritoryName, f1.Faction, plan1.Dial);
              RemoveForces(game, battle.TerritoryName, f2.Faction, plan2.Dial);

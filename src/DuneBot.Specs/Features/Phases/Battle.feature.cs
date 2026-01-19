@@ -145,6 +145,186 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
+        [Xunit.SkippableFactAttribute(DisplayName="Cheap Hero - Win with 0 dial")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Cheap Hero - Win with 0 dial")]
+        public async System.Threading.Tasks.Task CheapHero_WinWith0Dial()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cheap Hero - Win with 0 dial", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 16
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 17
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+                Reqnroll.Table table7 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table7.AddRow(new string[] {
+                            "Atreides",
+                            "Duncan",
+                            "5",
+                            "None",
+                            "None",
+                            "0"});
+                table7.AddRow(new string[] {
+                            "Harkonnen",
+                            "Feyd-Rautha",
+                            "5",
+                            "None",
+                            "None",
+                            "5"});
+#line 18
+    await testRunner.GivenAsync("the following factions are in a battle in \"Carthag\":", ((string)(null)), table7, "Given ");
+#line hidden
+#line 22
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 23
+    await testRunner.ThenAsync("the winner should be \"Atreides\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 24
+    await testRunner.AndAsync("\"Duncan\" should be in dead leaders for \"Atreides\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 25
+    await testRunner.AndAsync("\"Atreides\" should have won with 0 force loss", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Both players use Cheap Hero - Tie")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Both players use Cheap Hero - Tie")]
+        public async System.Threading.Tasks.Task BothPlayersUseCheapHero_Tie()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Both players use Cheap Hero - Tie", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 27
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 28
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+                Reqnroll.Table table8 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table8.AddRow(new string[] {
+                            "Guild",
+                            "Guild Representative",
+                            "5",
+                            "None",
+                            "None",
+                            "0"});
+                table8.AddRow(new string[] {
+                            "Emperor",
+                            "Bashar",
+                            "5",
+                            "None",
+                            "None",
+                            "0"});
+#line 29
+    await testRunner.GivenAsync("the following factions are in a battle in \"Old Gap\":", ((string)(null)), table8, "Given ");
+#line hidden
+#line 33
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 34
+    await testRunner.ThenAsync("the battle should result in a tie", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 35
+    await testRunner.AndAsync("\"Guild Representative\" should be in dead leaders for \"Guild\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 36
+    await testRunner.AndAsync("\"Bashar\" should be in dead leaders for \"Emperor\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Cheap Hero overrides normal strength")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Cheap Hero overrides normal strength")]
+        public async System.Threading.Tasks.Task CheapHeroOverridesNormalStrength()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Cheap Hero overrides normal strength", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 38
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 39
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+                Reqnroll.Table table9 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table9.AddRow(new string[] {
+                            "Fremen",
+                            "Stilgar",
+                            "5",
+                            "None",
+                            "None",
+                            "0"});
+                table9.AddRow(new string[] {
+                            "Atreides",
+                            "Duncan",
+                            "5",
+                            "None",
+                            "None",
+                            "10"});
+#line 40
+    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table9, "Given ");
+#line hidden
+#line 44
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 45
+    await testRunner.ThenAsync("the winner should be \"Fremen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 46
+    await testRunner.AndAsync("\"Stilgar\" should be in dead leaders for \"Fremen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
         [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
         [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, Xunit.IAsyncLifetime
