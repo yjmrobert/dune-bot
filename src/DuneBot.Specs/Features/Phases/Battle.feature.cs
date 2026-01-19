@@ -325,6 +325,140 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
+        [Xunit.SkippableFactAttribute(DisplayName="Lasgun vs Shield - Atomic Explosion (Attacker Lasgun)")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Lasgun vs Shield - Atomic Explosion (Attacker Lasgun)")]
+        public async System.Threading.Tasks.Task LasgunVsShield_AtomicExplosionAttackerLasgun()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Lasgun vs Shield - Atomic Explosion (Attacker Lasgun)", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 48
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 49
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+                Reqnroll.Table table10 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table10.AddRow(new string[] {
+                            "Atreides",
+                            "Duncan",
+                            "5",
+                            "Lasgun",
+                            "None",
+                            "5"});
+                table10.AddRow(new string[] {
+                            "Harkonnen",
+                            "Beast",
+                            "5",
+                            "None",
+                            "Shield",
+                            "5"});
+#line 50
+    await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table10, "Given ");
+#line hidden
+#line 54
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 55
+    await testRunner.ThenAsync("the battle should result in a tie", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 56
+    await testRunner.AndAsync("\"Duncan\" should be in dead leaders for \"Atreides\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 57
+    await testRunner.AndAsync("\"Beast\" should be in dead leaders for \"Harkonnen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 58
+    await testRunner.AndAsync("\"Atreides\" should lose all forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 59
+    await testRunner.AndAsync("\"Harkonnen\" should lose all forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Lasgun vs Shield - Atomic Explosion (Defender Lasgun)")]
+        [Xunit.TraitAttribute("FeatureTitle", "Battle Resolution")]
+        [Xunit.TraitAttribute("Description", "Lasgun vs Shield - Atomic Explosion (Defender Lasgun)")]
+        public async System.Threading.Tasks.Task LasgunVsShield_AtomicExplosionDefenderLasgun()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Lasgun vs Shield - Atomic Explosion (Defender Lasgun)", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 61
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 62
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+                Reqnroll.Table table11 = new Reqnroll.Table(new string[] {
+                            "Faction",
+                            "Leader",
+                            "Strength",
+                            "Weapon",
+                            "Defense",
+                            "Dial"});
+                table11.AddRow(new string[] {
+                            "Atreides",
+                            "Duncan",
+                            "5",
+                            "None",
+                            "Shield",
+                            "5"});
+                table11.AddRow(new string[] {
+                            "Harkonnen",
+                            "Beast",
+                            "5",
+                            "Lasgun",
+                            "None",
+                            "5"});
+#line 63
+    await testRunner.GivenAsync("the following factions are in a battle in \"Carthag\":", ((string)(null)), table11, "Given ");
+#line hidden
+#line 67
+    await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 68
+    await testRunner.ThenAsync("the battle should result in a tie", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 69
+    await testRunner.AndAsync("\"Duncan\" should be in dead leaders for \"Atreides\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 70
+    await testRunner.AndAsync("\"Beast\" should be in dead leaders for \"Harkonnen\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 71
+    await testRunner.AndAsync("\"Atreides\" should lose all forces in \"Carthag\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 72
+    await testRunner.AndAsync("\"Harkonnen\" should lose all forces in \"Carthag\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
         [System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "1.0.0.0")]
         [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, Xunit.IAsyncLifetime

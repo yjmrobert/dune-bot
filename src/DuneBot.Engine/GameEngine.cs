@@ -1071,6 +1071,30 @@ public class GameEngine
             return;
         }
 
+        // 2. Atomic Explosion Check (Lasgun + Shield)
+        // If Lasgun meets Shield -> BOOM
+        bool p1Lasgun = plan1.Weapon?.Contains("Lasgun", StringComparison.OrdinalIgnoreCase) == true;
+        bool p1Shield = plan1.Defense?.Contains("Shield", StringComparison.OrdinalIgnoreCase) == true;
+        bool p2Lasgun = plan2.Weapon?.Contains("Lasgun", StringComparison.OrdinalIgnoreCase) == true;
+        bool p2Shield = plan2.Defense?.Contains("Shield", StringComparison.OrdinalIgnoreCase) == true;
+
+        bool atomicExplosion = (p1Lasgun && p2Shield) || (p2Lasgun && p1Shield);
+
+        if (atomicExplosion)
+        {
+             game.State.ActionLog.Add("💥 **LASGUN + SHIELD = ATOMIC EXPLOSION!** Both armies destroyed! Battle is a tie.");
+             
+             // Kill both leaders
+             if (!string.IsNullOrEmpty(plan1.LeaderName)) f1.DeadLeaders.Add(plan1.LeaderName);
+             if (!string.IsNullOrEmpty(plan2.LeaderName)) f2.DeadLeaders.Add(plan2.LeaderName);
+
+             // Destroy ALL forces in territory (not just dial)
+             ClearForces(game, battle.TerritoryName, f1.Faction);
+             ClearForces(game, battle.TerritoryName, f2.Faction);
+             
+             battle.IsActive = false;
+             return;
+        }
         // 2. Cheap Hero Check
         // Cheap Hero = Leader with 0 dial automatically wins by sacrificing the leader
         bool p1CheapHero = !string.IsNullOrEmpty(plan1.LeaderName) && plan1.Dial == 0;

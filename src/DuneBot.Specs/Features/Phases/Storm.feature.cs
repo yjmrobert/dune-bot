@@ -139,17 +139,17 @@ namespace DuneBot.Specs.Features.Phases
 #line 12
     await testRunner.GivenAsync("the current storm position is sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-                Reqnroll.Table table10 = new Reqnroll.Table(new string[] {
+                Reqnroll.Table table12 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Forces"});
-                table10.AddRow(new string[] {
+                table12.AddRow(new string[] {
                             "Atreides",
                             "5"});
-                table10.AddRow(new string[] {
+                table12.AddRow(new string[] {
                             "Harkonnen",
                             "3"});
 #line 13
-    await testRunner.AndAsync("the following forces are in \"Old Gap\" (Sector 3):", ((string)(null)), table10, "And ");
+    await testRunner.AndAsync("the following forces are in \"Old Gap\" (Sector 3):", ((string)(null)), table12, "And ");
 #line hidden
 #line 17
     await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
@@ -191,14 +191,14 @@ namespace DuneBot.Specs.Features.Phases
 #line 24
     await testRunner.GivenAsync("the current storm position is sector 1", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-                Reqnroll.Table table11 = new Reqnroll.Table(new string[] {
+                Reqnroll.Table table13 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Forces"});
-                table11.AddRow(new string[] {
+                table13.AddRow(new string[] {
                             "Atreides",
                             "5"});
 #line 25
-    await testRunner.AndAsync("the following forces are in \"Arrakeen\" (Sector 2):", ((string)(null)), table11, "And ");
+    await testRunner.AndAsync("the following forces are in \"Arrakeen\" (Sector 2):", ((string)(null)), table13, "And ");
 #line hidden
 #line 28
     await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
