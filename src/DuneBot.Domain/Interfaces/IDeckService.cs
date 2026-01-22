@@ -8,5 +8,5 @@ public interface IDeckService
     List<string> GetSpiceDeck();
     List<string> GetTraitorDeck();
     void Shuffle(List<string> deck);
-    string Draw(List<string> deck, List<string> discard);
+    string? Draw(List<string> deck, List<string> discard);
 }

@@ -14,19 +14,19 @@ public class DeckService : IDeckService
         // Full list of Treachery Cards
         var deck = new List<string>
         {
-            "Lasgun", "Chaumusky", "Ellaca Drug", "Gom Jabbar", "Hajr", "Kulon", 
-            "Maula Pistol", "Shield", "Snooper", "Stunner", "Tleilaxu Ghola", 
+            "Lasgun", "Chaumusky", "Ellaca Drug", "Gom Jabbar", "Hajr", "Kulon",
+            "Maula Pistol", "Shield", "Snooper", "Stunner", "Tleilaxu Ghola",
             "Truthtrance", "Weather Control", "Family Atomics",
-            
+
             // Weapons
-            "Crysknife", "Hunter-Seeker", "Slip Tip", "Stunner", 
-            
+            "Crysknife", "Hunter-Seeker", "Slip Tip", "Stunner",
+
             // Defenses
             "Shield", "Shield", "Snooper", "Snooper",
-            
+
             // Worthless
             "Baliset", "Jubba Cloak", "La La La", "Trip to Gamont",
-            "Kulon", "Chaumusky" 
+            "Kulon", "Chaumusky"
         };
         // Note: Simplified distribution for MVP
         return deck;
@@ -78,7 +78,7 @@ public class DeckService : IDeckService
         }
     }
 
-    public string Draw(List<string> deck, List<string> discard)
+    public string? Draw(List<string> deck, List<string> discard)
     {
         if (deck.Count == 0)
         {
@@ -94,7 +94,7 @@ public class DeckService : IDeckService
                 return null; // Empty
             }
         }
-        
+
         var card = deck[0];
         deck.RemoveAt(0);
         return card;

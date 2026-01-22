@@ -51,21 +51,8 @@ public class Worker : BackgroundService
             try 
             {
                  // In prod, use RegisterCommandsToGuildAsync for immediate updates, or global for slow updates
-                 var devGuildIdStr = _configuration["Discord:DevGuildId"];
-                 _logger.LogInformation($"Checking DevGuildId: '{devGuildIdStr}'");
-                 
-                 if (!string.IsNullOrEmpty(devGuildIdStr) && ulong.TryParse(devGuildIdStr, out var devGuildId))
-                 {
-                     _logger.LogInformation($"Attempting to register to Dev Guild: {devGuildId}...");
-                     await _interactionService.RegisterCommandsToGuildAsync(devGuildId);
-                     _logger.LogInformation($"SUCCESS: Commands registered to Dev Guild: {devGuildId}");
-                 }
-                 else
-                 {
-                     _logger.LogInformation("DevGuildId not configured or invalid. Falling back to Global.");
                      await _interactionService.RegisterCommandsGloballyAsync();
-                     _logger.LogInformation("Commands registered globally (may take up to 1h).");
-                 }
+                     _logger.LogInformation("Commands registered globally.");
             }
             catch(Exception ex)
             {

@@ -90,14 +90,13 @@ public class DiscordService : IDiscordService
         }
     }
 
-    public async Task SendActionMessageAsync(ulong guildId, ulong channelId, string message, string buttonLabel,
-        string buttonCustomId)
+    public async Task<ulong> SendActionMessageAsync(ulong guildId, ulong channelId, string message, params (string Label, string CustomId, string Style)[] buttons)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null)
         {
             Console.WriteLine($"[Error] Guild {guildId} not found in cache.");
-            return;
+            return 0;
         }
 
         var channel = guild.GetTextChannel(channelId);
@@ -109,21 +108,48 @@ public class DiscordService : IDiscordService
             else
             {
                 Console.WriteLine($"[Error] Channel {channelId} not found in guild {guild.Name}.");
-                return;
+                return 0;
             }
         }
 
         try
         {
-            var builder = new ComponentBuilder()
-                .WithButton(buttonLabel, buttonCustomId, ButtonStyle.Primary);
+            var builder = new ComponentBuilder();
+            foreach (var btn in buttons)
+            {
+                if (Enum.TryParse<ButtonStyle>(btn.Style, true, out var style))
+                {
+                    builder.WithButton(btn.Label, btn.CustomId, style);
+                }
+                else
+                {
+                    builder.WithButton(btn.Label, btn.CustomId, ButtonStyle.Primary);
+                }
+            }
 
-            await channel.SendMessageAsync(message, components: builder.Build());
+            var msg = await channel.SendMessageAsync(message, components: builder.Build());
             Console.WriteLine($"[Success] Sent Action Message to {channel.Name}");
+            return msg.Id;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[Error] Sending message failed: {ex.Message}");
+            return 0;
+        }
+    }
+
+    public async Task ModifyMessageAsync(ulong guildId, ulong channelId, ulong messageId, string newContent)
+    {
+        var guild = _client.GetGuild(guildId);
+        if (guild == null) return;
+
+        var channel = guild.GetTextChannel(channelId);
+        if (channel == null) return;
+
+        var message = await channel.GetMessageAsync(messageId) as IUserMessage;
+        if (message != null)
+        {
+            await message.ModifyAsync(x => x.Content = newContent);
         }
     }
 

@@ -16,7 +16,8 @@ public class GameEngine
     private readonly IMapService _mapService;
     private readonly IDeckService _deckService;
 
-    public GameEngine(IGameRepository repository, IDiscordService discordService, IGameRenderer renderer, IMapService mapService, IDeckService deckService)
+    public GameEngine(IGameRepository repository, IDiscordService discordService, IGameRenderer renderer,
+        IMapService mapService, IDeckService deckService)
     {
         _repository = repository;
         _discordService = discordService;
@@ -29,7 +30,7 @@ public class GameEngine
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Setup)
             throw new Exception("Cannot join game in progress.");
 
@@ -39,70 +40,77 @@ public class GameEngine
         if (game.State.Factions.Count >= 6)
             throw new Exception("Game full.");
 
-        // Add player to a 'pool' or assign empty faction placeholder
-        // valid factions: Atreides, Harkonnen, Fremen, etc.
-        // We defer assignment to StartGame, so just track participants for now.
-        // We'll use FactionState with Faction.None to track joined players.
-        game.State.Factions.Add(new FactionState 
-        { 
-            Faction = Faction.None, 
+        // Assign Random Faction
+        var takenFactions = game.State.Factions.Select(f => f.Faction).ToList();
+        var allFactions = Enum.GetValues<Faction>().Where(f => f != Faction.None).ToList();
+        var availableFactions = allFactions.Except(takenFactions).ToList();
+        
+        if (!availableFactions.Any()) throw new Exception("No factions available.");
+        
+        var randomFaction = availableFactions[new Random().Next(availableFactions.Count)];
+
+        game.State.Factions.Add(new FactionState
+        {
+            Faction = randomFaction,
             PlayerDiscordId = userId,
             PlayerName = username
         });
 
-        game.State.ActionLog.Add($"Player {username} joined the game.");
+        game.State.ActionLog.Add($"Player {username} joined as {randomFaction}.");
         await _repository.UpdateGameAsync(game);
+        
+        // Update Lobby Message
+        if (game.State.LobbyMessageId.HasValue)
+        {
+            var factionList = string.Join("\n", game.State.Factions.Select(f => $"- **{f.PlayerName}** ({f.Faction})"));
+            var msg = $"**Dune Game Lobby**\n**Players ({game.State.Factions.Count}/6):**\n{factionList}\n\nJoin the game and then start when ready.";
+            await _discordService.ModifyMessageAsync(game.GuildId, game.ActionsChannelId, game.State.LobbyMessageId.Value, msg);
+        }
     }
 
     public async Task StartGameAsync(int gameId)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Setup)
             throw new Exception("Game already started.");
 
-        if (game.State.Factions.Count < 1) // Allow 1 for testing, normally 2-6
+        if (game.State.Factions.Count < 1) 
             throw new Exception("Not enough players.");
 
-        // 1. Shuffle Factions
-        var availableFactions = Enum.GetValues<Faction>()
-            .Where(f => f != Faction.None)
-            .OrderBy(x => Guid.NewGuid()) // Random shuffle
-            .Take(game.State.Factions.Count)
-            .ToList();
-
-        // 2. Assign Factions
-        for (int i = 0; i < game.State.Factions.Count; i++)
+        // Factions are already assigned on join
+        foreach (var faction in game.State.Factions)
         {
-            var player = game.State.Factions[i];
-            player.Faction = availableFactions[i];
-            
             // Initial Setup defaults (simplify for now)
-            player.Spice = 10;
-            player.Reserves = 10;
+            faction.Spice = 10;
+            faction.Reserves = 10;
         }
 
         // 3. Initialize Map & Storm
         game.State.Map = _mapService.InitializeMap();
-        game.State.StormLocation = new Random().Next(1, 19); // 1-18
-        
+        var rnd = new Random();
+        int randomShift = rnd.Next(0, 19); // 0 to 18
+        int stormStart = 1 + randomShift;
+        if (stormStart > 18) stormStart -= 18;
+        game.State.StormLocation = stormStart;
+
         // 4. Initialize Decks
         game.State.TreacheryDeck = _deckService.GetTreacheryDeck();
         _deckService.Shuffle(game.State.TreacheryDeck);
-        
+
         game.State.SpiceDeck = _deckService.GetSpiceDeck();
         _deckService.Shuffle(game.State.SpiceDeck);
-        
+
         game.State.TraitorDeck = _deckService.GetTraitorDeck();
-        _deckService.Shuffle(game.State.TraitorDeck); 
-        
+        _deckService.Shuffle(game.State.TraitorDeck);
+
         // 5. Deal Traitors
         foreach (var faction in game.State.Factions)
         {
             // Harkonnen keeps 4, others keep 1 (MVP: Draw target amount directly)
             int count = (faction.Faction == Faction.Harkonnen) ? 4 : 1;
-            
+
             for (int k = 0; k < count; k++)
             {
                 var card = _deckService.Draw(game.State.TraitorDeck, new List<string>()); // No discard for setup
@@ -116,15 +124,15 @@ public class GameEngine
         game.State.ActionLog.Add($"Game Started! Storm is at Sector {game.State.StormLocation}.");
 
         await _repository.UpdateGameAsync(game);
-        
-        await PostGameUpdate(game); 
+
+        await PostGameUpdate(game);
     }
 
     public async Task AdvancePhaseAsync(int gameId)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         // Game End Check
         if (game.State.Turn > 10)
         {
@@ -160,10 +168,11 @@ public class GameEngine
                     {
                         int amount = 2 - faction.Spice;
                         faction.Spice = 2;
-                        game.State.ActionLog.Add($"**{faction.PlayerName}** received {amount} spice from CHOAM Charity.");
+                        game.State.ActionLog.Add(
+                            $"**{faction.PlayerName}** received {amount} spice from CHOAM Charity.");
                     }
                 }
-                
+
                 // After Choam, we start Bidding
                 await StartBiddingPhase(game);
                 nextPhase = GamePhase.Bidding;
@@ -173,6 +182,7 @@ public class GameEngine
                 StartRevivalPhase(game);
                 nextPhase = GamePhase.Revival;
                 break;
+            case GamePhase.Revival:
                 StartShipmentPhase(game);
                 nextPhase = GamePhase.ShipmentAndMovement;
                 break;
@@ -182,7 +192,7 @@ public class GameEngine
                 if (battles.Any())
                 {
                     foreach (var b in battles) game.State.PendingBattles.Enqueue(b);
-                    
+
                     StartNextBattle(game);
                     nextPhase = GamePhase.Battle;
                 }
@@ -191,18 +201,20 @@ public class GameEngine
                     // No battles, skip to Spice Collection
                     nextPhase = GamePhase.SpiceCollection;
                 }
+
                 break;
             case GamePhase.Battle:
-                if (game.State.PendingBattles.Count > 0 || (game.State.CurrentBattle != null && game.State.CurrentBattle.IsActive))
+                if (game.State.PendingBattles.Count > 0 ||
+                    (game.State.CurrentBattle != null && game.State.CurrentBattle.IsActive))
                 {
                     // Battles still active, don't advance phase automatically via this method unless resolved?
                     // Usually AdvancePhase is called by "Next Phase" button.
                     // If we are in Battle phase, we might want to block manual advance until battles are done?
                     // Or "Next Phase" checks if battles are done.
-                    
+
                     if (game.State.CurrentBattle != null && game.State.CurrentBattle.IsActive)
                         throw new Exception("Battle in progress. Resolve it first.");
-                        
+
                     if (game.State.PendingBattles.Count > 0)
                     {
                         StartNextBattle(game);
@@ -217,44 +229,46 @@ public class GameEngine
                 {
                     nextPhase = GamePhase.SpiceCollection;
                 }
+
                 break;
             case GamePhase.SpiceCollection:
                 // Implement Spice Collection (Harvest)
-                foreach(var t in game.State.Map.Territories.Where(t => t.SpiceBlowAmount > 0))
+                foreach (var t in game.State.Map.Territories.Where(t => t.SpiceBlowAmount > 0))
                 {
                     if (t.FactionForces.Keys.Count == 1) // Only if uncontested
                     {
                         var factionType = t.FactionForces.Keys.First();
                         var count = t.FactionForces[factionType];
-                        var collectionRate = 2; 
-                        
+                        var collectionRate = 2;
+
                         int potentialCollection = count * collectionRate;
                         int actuallyCollected = Math.Min(t.SpiceBlowAmount, potentialCollection);
-                        
+
                         if (actuallyCollected > 0)
                         {
                             t.SpiceBlowAmount -= actuallyCollected;
-                            
+
                             var factionState = game.State.Factions.FirstOrDefault(f => f.Faction == factionType);
                             if (factionState != null)
                             {
                                 factionState.Spice += actuallyCollected;
-                                game.State.ActionLog.Add($"**{factionState.PlayerName}** collected {actuallyCollected} spice from {t.Name}.");
+                                game.State.ActionLog.Add(
+                                    $"**{factionState.PlayerName}** collected {actuallyCollected} spice from {t.Name}.");
                             }
                         }
                     }
                     else if (t.FactionForces.Keys.Count > 1)
                     {
-                         game.State.ActionLog.Add($"Spice in **{t.Name}** is contested! No collection.");
+                        game.State.ActionLog.Add($"Spice in **{t.Name}** is contested! No collection.");
                     }
                 }
-                
+
                 nextPhase = GamePhase.MentatPause;
                 break;
-                
+
             case GamePhase.MentatPause:
                 // Win Condition Check at end of round
-                if (await CheckWinCondition(game)) return; 
+                if (await CheckWinCondition(game)) return;
 
                 // End of Round if not won
                 if (game.State.Turn >= 10)
@@ -263,16 +277,16 @@ public class GameEngine
                     await EndGameAsync(game);
                     return;
                 }
-                
+
                 // Storm Logic for Next Round
                 int move = new Random().Next(1, 7); // d6
                 int oldSector = game.State.StormLocation;
                 int newSector = _mapService.CalculateNextStormSector(oldSector, move);
                 game.State.StormLocation = newSector;
-                
+
                 // Storm Damage
                 ApplyStormDamage(game, oldSector, move);
-                
+
                 nextPhase = GamePhase.Storm;
                 game.State.Turn++;
                 game.State.ActionLog.Add($"--- Round {game.State.Turn} Started ---");
@@ -287,7 +301,7 @@ public class GameEngine
 
         game.State.Phase = nextPhase;
         game.State.ActionLog.Add($"Phase advanced to {game.State.Phase}.");
-        
+
         await _repository.UpdateGameAsync(game);
         await PostGameUpdate(game);
     }
@@ -301,12 +315,12 @@ public class GameEngine
             if (s > 18) s -= 18;
             sectorsHit.Add(s);
         }
-        
+
         foreach (var sector in sectorsHit)
         {
             // Find territories in this sector
             var territories = game.State.Map.Territories.Where(t => t.Sector == sector);
-            
+
             foreach (var t in territories)
             {
                 // Check Safe Zones (Shield Wall Assumption)
@@ -314,23 +328,24 @@ public class GameEngine
                 {
                     continue; // Safe
                 }
-                
+
                 // Kill forces
                 var factions = t.FactionForces.Keys.ToList();
                 foreach (var fType in factions)
                 {
                     if (fType == Faction.Fremen) continue; // Fremen Immune
-                    
+
                     int count = t.FactionForces[fType];
                     if (count > 0)
                     {
                         var faction = game.State.Factions.First(f => f.Faction == fType);
-                        
+
                         // Kill forces -> Tanks
                         faction.ForcesInTanks += count;
                         t.FactionForces.Remove(fType); // Wiped out
-                        
-                        game.State.ActionLog.Add($"**STORM** wiped out {count} {faction.PlayerName} troops in **{t.Name}**.");
+
+                        game.State.ActionLog.Add(
+                            $"**STORM** wiped out {count} {faction.PlayerName} troops in **{t.Name}**.");
                     }
                 }
             }
@@ -347,13 +362,13 @@ public class GameEngine
             game.State.CurrentCard = null;
             return;
         }
-        
+
         // 2. Setup Auction State
         game.State.CurrentCard = card;
         game.State.CurrentBid = 0;
         game.State.HighBidderId = null;
         game.State.IsBiddingRoundActive = true;
-        
+
         // 3. Create Thread
         var threadName = $"Bidding Round {game.State.Turn}";
         var threadId = await _discordService.CreatePhaseThreadAsync(game.GuildId, game.ActionsChannelId, threadName);
@@ -364,19 +379,19 @@ public class GameEngine
         {
             game.State.CurrentBidderId = game.State.Factions[0].PlayerDiscordId;
             var name = game.State.Factions[0].PlayerName;
-            
+
             string msg = $"**Bidding Started for {card}!**\n" +
                          $"Bidding starts with **{name}**.\n" +
                          $"Use `/bid amount` or `/pass`.";
-            
+
             await _discordService.SendThreadMessageAsync(game.GuildId, threadId, msg);
             game.State.ActionLog.Add($"Bidding started for **{card}** in thread.");
-            
+
             // Atreides Prescience
             var atreides = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Atreides);
             if (atreides != null && atreides.PlayerDiscordId.HasValue)
             {
-                await _discordService.SendDirectMessageAsync(atreides.PlayerDiscordId.Value, 
+                await _discordService.SendDirectMessageAsync(atreides.PlayerDiscordId.Value,
                     $"**[Atreides Prescience]** The card up for bid is: **{card}**.");
             }
         }
@@ -386,31 +401,32 @@ public class GameEngine
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Bidding || !game.State.IsBiddingRoundActive)
             throw new Exception("Not in bidding phase.");
-            
+
         if (game.State.CurrentBidderId != userId)
             throw new Exception("Not your turn to bid.");
-            
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
-        
+
         if (amount > faction.Spice)
             throw new Exception($"Not enough spice. You have {faction.Spice}.");
-            
+
         if (amount <= game.State.CurrentBid)
             throw new Exception($"Bid must be higher than {game.State.CurrentBid}.");
-            
+
         // Valid Bid
         game.State.CurrentBid = amount;
         game.State.HighBidderId = userId;
         game.State.ActionLog.Add($"**{faction.PlayerName}** bid **{amount}** spice.");
-        
+
         if (game.State.BiddingThreadId.HasValue)
-            await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value, $"**{faction.PlayerName}** bids **{amount}**.");
+            await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value,
+                $"**{faction.PlayerName}** bids **{amount}**.");
 
         AdvanceBidder(game);
-        
+
         await _repository.UpdateGameAsync(game);
         // await PostGameUpdate(game); 
     }
@@ -419,7 +435,7 @@ public class GameEngine
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.CurrentBidderId != userId)
             throw new Exception("Not your turn.");
 
@@ -427,20 +443,22 @@ public class GameEngine
         game.State.ActionLog.Add($"**{faction.PlayerName}** passed.");
 
         if (game.State.BiddingThreadId.HasValue)
-            await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value, $"**{faction.PlayerName}** passed.");
-        
+            await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value,
+                $"**{faction.PlayerName}** passed.");
+
         AdvanceBidder(game);
-        
+
         // Check for Winner
         if (game.State.HighBidderId.HasValue && game.State.CurrentBidderId == game.State.HighBidderId)
         {
             await ResolveAuctionWin(game);
         }
-        else if (!game.State.HighBidderId.HasValue && CheckIfAllPassed(game)) 
+        else if (!game.State.HighBidderId.HasValue && CheckIfAllPassed(game))
         {
             if (game.State.BiddingThreadId.HasValue)
-                await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value, "All players passed. Card returned to deck.");
-            
+                await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value,
+                    "All players passed. Card returned to deck.");
+
             game.State.IsBiddingRoundActive = false;
             if (game.State.BiddingThreadId.HasValue)
                 await _discordService.ArchiveThreadAsync(game.GuildId, game.State.BiddingThreadId.Value);
@@ -448,19 +466,19 @@ public class GameEngine
 
         await _repository.UpdateGameAsync(game);
     }
-    
+
     private void AdvanceBidder(Game game)
     {
         var currentIdx = game.State.Factions.FindIndex(f => f.PlayerDiscordId == game.State.CurrentBidderId);
         if (currentIdx == -1) return;
-        
+
         int nextIdx = (currentIdx + 1) % game.State.Factions.Count;
         game.State.CurrentBidderId = game.State.Factions[nextIdx].PlayerDiscordId;
     }
-    
+
     private bool CheckIfAllPassed(Game game)
     {
-        return false; 
+        return false;
     }
 
     internal async Task ResolveAuctionWin(Game game)
@@ -469,10 +487,10 @@ public class GameEngine
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == winnerId);
         var card = game.State.CurrentCard;
         int cost = game.State.CurrentBid;
-        
+
         faction.Spice -= cost;
         faction.TreacheryCards.Add(card!);
-        
+
         // Emperor Wealth: Receives payments for cards
         if (faction.Faction != Faction.Emperor)
         {
@@ -483,16 +501,16 @@ public class GameEngine
                 game.State.ActionLog.Add($"**{emperor.PlayerName}** (Emperor) received the payment.");
             }
         }
-        
+
         string winMsg = $"**{faction.PlayerName}** won **{card}** for **{cost}** spice!";
         game.State.ActionLog.Add(winMsg);
-        
+
         if (game.State.BiddingThreadId.HasValue)
         {
             await _discordService.SendThreadMessageAsync(game.GuildId, game.State.BiddingThreadId.Value, winMsg);
             await _discordService.ArchiveThreadAsync(game.GuildId, game.State.BiddingThreadId.Value);
         }
-        
+
         game.State.CurrentCard = null;
         game.State.CurrentBid = 0;
         game.State.HighBidderId = null;
@@ -504,7 +522,7 @@ public class GameEngine
     private void StartRevivalPhase(Game game)
     {
         // Reset revival limits
-        foreach(var f in game.State.Factions)
+        foreach (var f in game.State.Factions)
         {
             f.RevivedTroopsThisTurn = 0;
             // Free revival? Dune rules say 3 are free if they are your only troops... no, standard is:
@@ -514,66 +532,71 @@ public class GameEngine
             // Simplified: All pay 2 spice, except Fremen pay 0.
             // Revival limit is 3 forces + 1 leader.
         }
+
         game.State.ActionLog.Add("Revival Phase: Revive up to 3 forces and 1 leader.");
     }
-    
+
     public async Task ReviveForcesAsync(int gameId, ulong userId, int amount)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Revival) throw new Exception("Not in Revival phase.");
-        
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
-        
+
         if (amount <= 0) throw new Exception("Amount must be positive.");
-        if (faction.ForcesInTanks < amount) throw new Exception($"Not enough forces in Tanks. You have {faction.ForcesInTanks}.");
-        
-        int limit = 3; 
-        if (faction.RevivedTroopsThisTurn + amount > limit) throw new Exception($"Revival limit exceeded. You can revive {limit - faction.RevivedTroopsThisTurn} more.");
-        
+        if (faction.ForcesInTanks < amount)
+            throw new Exception($"Not enough forces in Tanks. You have {faction.ForcesInTanks}.");
+
+        int limit = 3;
+        if (faction.RevivedTroopsThisTurn + amount > limit)
+            throw new Exception(
+                $"Revival limit exceeded. You can revive {limit - faction.RevivedTroopsThisTurn} more.");
+
         int costPerForce = (faction.Faction == Faction.Fremen) ? 0 : 2;
         int totalCost = amount * costPerForce;
-        
-        if (faction.Spice < totalCost) throw new Exception($"Not enough spice. Cost: {totalCost}. You have {faction.Spice}.");
-        
+
+        if (faction.Spice < totalCost)
+            throw new Exception($"Not enough spice. Cost: {totalCost}. You have {faction.Spice}.");
+
         // Execute
         faction.Spice -= totalCost;
         faction.ForcesInTanks -= amount;
         faction.Reserves += amount;
         faction.RevivedTroopsThisTurn += amount;
-        
+
         game.State.ActionLog.Add($"**{faction.PlayerName}** revived {amount} forces to reserves.");
         await _repository.UpdateGameAsync(game);
     }
-    
+
     public async Task ReviveLeaderAsync(int gameId, ulong userId, string leaderName)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Revival) throw new Exception("Not in Revival phase.");
-        
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
-        
+
         // In real game, check limit 1 leader per turn. For now, assume if they haven't passed, they can do it once?
         // Let's rely on simple cost check for MVP. Leader limit is 1. We might track it later if needed.
-        
+
         if (!faction.DeadLeaders.Contains(leaderName))
             throw new Exception("Leader not in Tanks.");
-            
+
         int cost = 2; // Simplified cost
         // Leader cost is normally their strength.
-        
+
         if (faction.Spice < cost) throw new Exception($"Not enough spice. Cost: {cost}.");
-        
+
         faction.Spice -= cost;
         faction.DeadLeaders.Remove(leaderName);
         // Add back to alive leaders? We don't track alive leaders list explicitly yet, implied by not being in Dead?
         // Wait, FactionState doesn't have "Leaders" list. 
         // We need to implement Leaders tracking properly or just assume if not dead, they are alive.
         // For MVP, just removing from DeadLeaders is enough to make them "alive".
-        
+
         game.State.ActionLog.Add($"**{faction.PlayerName}** revived leader **{leaderName}**.");
         await _repository.UpdateGameAsync(game);
     }
@@ -603,25 +626,30 @@ public class GameEngine
             var territory = game.State.Map.Territories.FirstOrDefault(t => t.Name == card);
             if (territory != null)
             {
-                int spiceAmount = (territory.Name == "Broken Land" || territory.Name == "South Mesa" || territory.Name == "The Great Flat") ? 10 : 6;
+                int spiceAmount = (territory.Name == "Broken Land" || territory.Name == "South Mesa" ||
+                                   territory.Name == "The Great Flat")
+                    ? 10
+                    : 6;
                 // Add spice
                 territory.SpiceBlowAmount += spiceAmount;
                 game.State.ActionLog.Add($"Spice Blow in **{card}**! {spiceAmount} spice added.");
             }
+
             // Discard
             game.State.SpiceDiscard.Add(card);
-            
+
             return GamePhase.ChoamCharity; // Skip Nexus
         }
     }
 
     private void StartShipmentPhase(Game game)
     {
-        foreach(var f in game.State.Factions)
+        foreach (var f in game.State.Factions)
         {
             f.HasShipped = false;
             f.HasMoved = false;
         }
+
         game.State.ActionLog.Add("Shipment & Movement Phase Started.");
     }
 
@@ -629,12 +657,12 @@ public class GameEngine
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.ShipmentAndMovement) throw new Exception("Not in Shipment/Movement phase.");
-        
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
         if (faction.HasShipped) throw new Exception("You have already shipped this turn.");
-        
+
         // 1. Validate Territory && Storm
         var territory = game.State.Map.Territories.FirstOrDefault(t => t.Name == toTerritoryName);
         if (territory == null) throw new Exception("Territory not found.");
@@ -647,40 +675,42 @@ public class GameEngine
         // 3. Calculate Cost
         // Simplified: 1 spice/force if Stronghold (and you occupy it? No, usually if you are shipping TO it).
         // Rules: "1 spice per force to issue to a stronghold... 2 spice... to any other territory."
-        int costPerForce = territory.IsStronghold ? 1 : 2; 
+        int costPerForce = territory.IsStronghold ? 1 : 2;
         int totalCost = amount * costPerForce;
-        
+
         // Guild discount: "Guild pays half" (rounded up).
         if (faction.Faction == Faction.Guild)
         {
             totalCost = (int)Math.Ceiling(totalCost / 2.0);
         }
-        
-        if (faction.Spice < totalCost) throw new Exception($"Not enough spice. Cost: {totalCost}. You have {faction.Spice}.");
+
+        if (faction.Spice < totalCost)
+            throw new Exception($"Not enough spice. Cost: {totalCost}. You have {faction.Spice}.");
 
         // 4. Execute
         faction.Spice -= totalCost;
         faction.Reserves -= amount;
-        
+
         // Guild Income: If not Guild shipping, Guild receives payment
         if (faction.Faction != Faction.Guild)
         {
-             var guild = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Guild);
-             if (guild != null)
-             {
-                 guild.Spice += totalCost;
-                 game.State.ActionLog.Add($"**{guild.PlayerName}** (Guild) received shipment payment.");
-             }
+            var guild = game.State.Factions.FirstOrDefault(f => f.Faction == Faction.Guild);
+            if (guild != null)
+            {
+                guild.Spice += totalCost;
+                game.State.ActionLog.Add($"**{guild.PlayerName}** (Guild) received shipment payment.");
+            }
         }
-        
+
         if (!territory.FactionForces.ContainsKey(faction.Faction))
             territory.FactionForces[faction.Faction] = 0;
-            
+
         territory.FactionForces[faction.Faction] += amount;
-        
+
         faction.HasShipped = true;
-        game.State.ActionLog.Add($"**{faction.PlayerName}** shipped {amount} forces to **{toTerritoryName}** for {totalCost} spice.");
-        
+        game.State.ActionLog.Add(
+            $"**{faction.PlayerName}** shipped {amount} forces to **{toTerritoryName}** for {totalCost} spice.");
+
         await _repository.UpdateGameAsync(game);
     }
 
@@ -690,29 +720,32 @@ public class GameEngine
         foreach (var faction in game.State.Factions)
         {
             int stringholdsControlled = game.State.Map.Territories
-                .Count(t => t.IsStronghold && t.FactionForces.ContainsKey(faction.Faction) && t.FactionForces.Keys.Count == 1);
-            
+                .Count(t => t.IsStronghold && t.FactionForces.ContainsKey(faction.Faction) &&
+                            t.FactionForces.Keys.Count == 1);
+
             if (stringholdsControlled >= 3)
             {
                 game.State.ActionLog.Add($"**GAME OVER!**");
                 game.State.ActionLog.Add($"**{faction.PlayerName}** wins with {stringholdsControlled} strongholds!");
-                
+
                 // We should probably post one last update before deleting?
                 await PostGameUpdate(game);
                 await EndGameAsync(game);
                 return true;
             }
         }
+
         return false;
     }
-    
-    public async Task MoveForcesAsync(int gameId, ulong userId, string fromTerritoryName, string toTerritoryName, int amount)
+
+    public async Task MoveForcesAsync(int gameId, ulong userId, string fromTerritoryName, string toTerritoryName,
+        int amount)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.ShipmentAndMovement) throw new Exception("Not in Shipment/Movement phase.");
-        
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
         if (faction.HasMoved) throw new Exception("You have already moved this turn.");
 
@@ -722,56 +755,57 @@ public class GameEngine
         // 1. Validate Locations
         var fromT = game.State.Map.Territories.FirstOrDefault(t => t.Name == fromTerritoryName);
         var toT = game.State.Map.Territories.FirstOrDefault(t => t.Name == toTerritoryName);
-        
+
         if (fromT == null || toT == null) throw new Exception("Invalid territory.");
-        
+
         // 2. Validate Ownership/Presence
         if (!fromT.FactionForces.ContainsKey(faction.Faction) || fromT.FactionForces[faction.Faction] < amount)
             throw new Exception($"Not enough forces in {fromTerritoryName}.");
-            
+
         // 3. Validate Storm
         // Cannot move out of, into, or through storm.
         // Simple check: Is Start or End in Storm?
         if (fromT.Sector == game.State.StormLocation || toT.Sector == game.State.StormLocation)
             throw new Exception("Cannot move through Storm.");
-            
+
         // 4. Validate Reachability (Adjacency)
         // Range: 1 usually. 3 if Ornithopters.
         // Ornithopters: "If you have forces in Arrakeen or Carthag."
         bool hasOrnithopters = game.State.Map.Territories
-            .Any(t => (t.Name == "Arrakeen" || t.Name == "Carthag") && 
-                      t.FactionForces.ContainsKey(faction.Faction) && 
+            .Any(t => (t.Name == "Arrakeen" || t.Name == "Carthag") &&
+                      t.FactionForces.ContainsKey(faction.Faction) &&
                       t.FactionForces[faction.Faction] > 0);
-                      
+
         int maxMoves = hasOrnithopters ? 3 : 1;
-        
+
         // Fremen Movement: 2 spaces default
         if (faction.Faction == Faction.Fremen)
         {
             maxMoves = Math.Max(maxMoves, 2);
         }
-        
+
         if (!_mapService.IsReachable(fromTerritoryName, toTerritoryName, maxMoves))
             throw new Exception($"Destination unreachable (Max moves: {maxMoves}).");
 
         // 5. Execute
         fromT.FactionForces[faction.Faction] -= amount;
         if (fromT.FactionForces[faction.Faction] == 0) fromT.FactionForces.Remove(faction.Faction);
-        
+
         if (!toT.FactionForces.ContainsKey(faction.Faction))
             toT.FactionForces[faction.Faction] = 0;
         toT.FactionForces[faction.Faction] += amount;
-        
+
         faction.HasMoved = true;
-        game.State.ActionLog.Add($"**{faction.PlayerName}** moved {amount} forces from **{fromTerritoryName}** to **{toTerritoryName}**.");
-        
+        game.State.ActionLog.Add(
+            $"**{faction.PlayerName}** moved {amount} forces from **{fromTerritoryName}** to **{toTerritoryName}**.");
+
         await _repository.UpdateGameAsync(game);
     }
 
     private List<BattleState> DetectBattles(Game game)
     {
         var battles = new List<BattleState>();
-        foreach(var t in game.State.Map.Territories)
+        foreach (var t in game.State.Map.Territories)
         {
             if (t.FactionForces.Count >= 2)
             {
@@ -780,7 +814,7 @@ public class GameEngine
                 var keys = t.FactionForces.Keys.ToList();
                 var f1 = game.State.Factions.First(f => f.Faction == keys[0]);
                 var f2 = game.State.Factions.First(f => f.Faction == keys[1]);
-                
+
                 // Storm check? Battles don't happen in storm?
                 // If storm is over territory, forces are killed?
                 // Phase order: Storm -> Spice -> ... -> Shipment -> Battle.
@@ -788,7 +822,7 @@ public class GameEngine
                 // So forces in Storm should have been wiped already or are safe.
                 // Battle can happen in Storm if both survive? Rules say "No battle in storm"?
                 // MVP: Ignore storm check for battle generation for now.
-                
+
                 battles.Add(new BattleState
                 {
                     TerritoryName = t.Name,
@@ -798,60 +832,68 @@ public class GameEngine
                 });
             }
         }
+
         return battles;
     }
 
     private void StartNextBattle(Game game)
     {
         if (game.State.PendingBattles.Count == 0) return;
-        
+
         var battle = game.State.PendingBattles.Dequeue();
         battle.IsActive = true;
         game.State.CurrentBattle = battle;
-        
+
         var f1 = game.State.Factions.First(f => f.PlayerDiscordId == battle.Faction1Id);
         var f2 = game.State.Factions.First(f => f.PlayerDiscordId == battle.Faction2Id);
-        
-        game.State.ActionLog.Add($"**BATTLE** in **{battle.TerritoryName}**! **{f1.PlayerName}** vs **{f2.PlayerName}**.");
+
+        game.State.ActionLog.Add(
+            $"**BATTLE** in **{battle.TerritoryName}**! **{f1.PlayerName}** vs **{f2.PlayerName}**.");
         game.State.ActionLog.Add("Submit battle plans with `/battle commit`.");
     }
-    
-    public async Task SubmitBattlePlanAsync(int gameId, ulong userId, string leader, int dial, string? weapon, string? defense)
+
+    public async Task SubmitBattlePlanAsync(int gameId, ulong userId, string leader, int dial, string? weapon,
+        string? defense)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Battle) throw new Exception("Not in Battle phase.");
-        if (game.State.CurrentBattle == null || !game.State.CurrentBattle.IsActive) throw new Exception("No active battle.");
-        
+        if (game.State.CurrentBattle == null || !game.State.CurrentBattle.IsActive)
+            throw new Exception("No active battle.");
+
         var battle = game.State.CurrentBattle;
-        if (userId != battle.Faction1Id && userId != battle.Faction2Id) throw new Exception("You are not in this battle.");
-        
+        if (userId != battle.Faction1Id && userId != battle.Faction2Id)
+            throw new Exception("You are not in this battle.");
+
         var faction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
-        
+
         // Validation
         // 1. Leader owned? (Need check against available leaders... simplified: Check NOT in Tanks + valid name?)
         // We lack "Alive Leaders" list. We only have DeadLeaders.
         // Assume valid if not dead for MVP.
         if (faction.DeadLeaders.Contains(leader)) throw new Exception("Leader is dead.");
-        
+
         // Check if captured by anyone
         if (game.State.Factions.Any(f => f.CapturedLeaders.Contains(leader)))
             throw new Exception("Leader is captured!");
-            
+
         // 2. Dial limit (Must not exceed forces in territory)
         var territory = game.State.Map.Territories.First(t => t.Name == battle.TerritoryName);
-        if (!territory.FactionForces.ContainsKey(faction.Faction)) throw new Exception("You have no forces there?"); // Should not happen
+        if (!territory.FactionForces.ContainsKey(faction.Faction))
+            throw new Exception("You have no forces there?"); // Should not happen
         int maxForces = territory.FactionForces[faction.Faction];
         if (dial < 0 || dial > maxForces) throw new Exception($"Invalid dial. Max {maxForces}.");
-        
+
         // 3. Cards owned?
-        if (!string.IsNullOrEmpty(weapon) && !faction.TreacheryCards.Contains(weapon)) throw new Exception($"You don't have {weapon}.");
-        if (!string.IsNullOrEmpty(defense) && !faction.TreacheryCards.Contains(defense)) throw new Exception($"You don't have {defense}.");
+        if (!string.IsNullOrEmpty(weapon) && !faction.TreacheryCards.Contains(weapon))
+            throw new Exception($"You don't have {weapon}.");
+        if (!string.IsNullOrEmpty(defense) && !faction.TreacheryCards.Contains(defense))
+            throw new Exception($"You don't have {defense}.");
 
         // Save Plan
         if (!battle.Plans.ContainsKey(userId)) battle.Plans[userId] = new BattlePlan();
-        
+
         battle.Plans[userId] = new BattlePlan
         {
             LeaderName = leader,
@@ -859,100 +901,104 @@ public class GameEngine
             Weapon = weapon,
             Defense = defense
         };
-        
+
         // Check Voice
         ValidateVoice(battle, userId, battle.Plans[userId], faction);
-        
+
         // Check Prescience
         if (battle.PrescienceRequest.HasValue && battle.PrescienceRequest.Value.RequesterId != userId)
         {
             // The submitter is the opponent of the requester
             await RevealPrescienceInfo(game, battle, userId);
         }
-        
+
         game.State.ActionLog.Add($"**{faction.PlayerName}** committed battle plan.");
-        
+
         if (battle.Plans.Count == 2)
         {
             game.State.ActionLog.Add("Both plans committed! Resolving...");
             ResolveBattle(game, battle);
         }
-        
+
         await _repository.UpdateGameAsync(game);
     }
-    
+
     public async Task UseVoiceAsync(int gameId, ulong userId, ulong targetId, string type, bool mustPlay)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Battle) throw new Exception("Not in Battle phase.");
-        if (game.State.CurrentBattle == null || !game.State.CurrentBattle.IsActive) throw new Exception("No active battle.");
-        
+        if (game.State.CurrentBattle == null || !game.State.CurrentBattle.IsActive)
+            throw new Exception("No active battle.");
+
         var battle = game.State.CurrentBattle;
-        
+
         // Verify User is Bene Gesserit
         var userFaction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
         if (userFaction.Faction != Faction.BeneGesserit) throw new Exception("Only Bene Gesserit can use Voice.");
-        
+
         // Verify Target is in Battle
-        if (targetId != battle.Faction1Id && targetId != battle.Faction2Id) throw new Exception("Target not in battle.");
-        
+        if (targetId != battle.Faction1Id && targetId != battle.Faction2Id)
+            throw new Exception("Target not in battle.");
+
         // Check if Voice already used? Rules say "Before any battle plans are revealed" -> usually before commit.
         if (battle.VoiceRestriction.HasValue) throw new Exception("Voice already used this battle.");
-        
+
         // MVP: Type validation
         // Allow "Weapon", "Defense", or any non-empty string as card name?
         if (string.IsNullOrEmpty(type)) throw new Exception("Voice type cannot be empty.");
         // Removed strict "Weapon"/"Defense" check to allow card names.
-        
+
         battle.VoiceRestriction = (targetId, type, mustPlay);
-        
+
         string command = mustPlay ? "MUST play" : "Must NOT play";
         var targetFaction = game.State.Factions.First(f => f.PlayerDiscordId == targetId);
-        
-        game.State.ActionLog.Add($"**{userFaction.PlayerName}** uses Voice on **{targetFaction.PlayerName}**: {command} a {type}.");
+
+        game.State.ActionLog.Add(
+            $"**{userFaction.PlayerName}** uses Voice on **{targetFaction.PlayerName}**: {command} a {type}.");
         await _repository.UpdateGameAsync(game);
     }
-    
+
     public async Task UsePrescienceAsync(int gameId, ulong userId, string type)
     {
         var game = await _repository.GetGameAsync(gameId);
         if (game == null) throw new Exception("Game not found.");
-        
+
         if (game.State.Phase != GamePhase.Battle) throw new Exception("Not in Battle phase.");
         var battle = game.State.CurrentBattle;
         if (battle == null || !battle.IsActive) throw new Exception("No active battle.");
-        
+
         var userFaction = game.State.Factions.First(f => f.PlayerDiscordId == userId);
         if (userFaction.Faction != Faction.Atreides) throw new Exception("Only Atreides can use Prescience.");
-        
+
         if (battle.PrescienceRequest.HasValue) throw new Exception("Prescience already used this battle.");
-        
+
         if (type != "Leader" && type != "Weapon" && type != "Defense" && type != "Dial")
             throw new Exception("Invalid Prescience type. Choose: Leader, Weapon, Defense, Dial.");
-            
+
         battle.PrescienceRequest = (userId, type);
-        game.State.ActionLog.Add($"**{userFaction.PlayerName}** uses Prescience. They will see the opponent's **{type}**.");
-        
+        game.State.ActionLog.Add(
+            $"**{userFaction.PlayerName}** uses Prescience. They will see the opponent's **{type}**.");
+
         // If opponent already submitted (unlikely if they know rules, but possible in async), reveal now
         var opponentId = (battle.Faction1Id == userId) ? battle.Faction2Id : battle.Faction1Id;
         if (battle.Plans.ContainsKey(opponentId))
         {
             await RevealPrescienceInfo(game, battle, opponentId);
         }
-        
+
         await _repository.UpdateGameAsync(game);
     }
-    
+
     private async Task RevealPrescienceInfo(Game game, BattleState battle, ulong opponentId)
     {
         if (battle.PrescienceRequest == null) return;
-        
+
         var req = battle.PrescienceRequest.Value;
         var plan = battle.Plans[opponentId];
         string info = "None";
-        
+
         switch (req.Type)
         {
             case "Leader": info = plan.LeaderName; break;
@@ -960,8 +1006,8 @@ public class GameEngine
             case "Defense": info = plan.Defense ?? "None"; break;
             case "Dial": info = plan.Dial.ToString(); break;
         }
-        
-        await _discordService.SendDirectMessageAsync(req.RequesterId, 
+
+        await _discordService.SendDirectMessageAsync(req.RequesterId,
             $"**[Atreides Prescience]** Opponent's {req.Type} is: **{info}**.");
     }
 
@@ -972,23 +1018,25 @@ public class GameEngine
             var r = battle.VoiceRestriction.Value;
             // r.Type: "Weapon", "Defense", or Card Name
             // r.MustPlay: true/false
-            
+
             bool playedWeapon = !string.IsNullOrEmpty(plan.Weapon);
             bool playedDefense = !string.IsNullOrEmpty(plan.Defense);
-            
+
             if (r.Type == "Weapon")
             {
                 if (r.MustPlay)
                 {
                     // Must play weapon IF they have one.
-                    bool hasWeapon = faction.TreacheryCards.Any(c => c != "Lasgun"); // MVP: Simplistic check for "IsWeapon".
+                    bool hasWeapon =
+                        faction.TreacheryCards.Any(c => c != "Lasgun"); // MVP: Simplistic check for "IsWeapon".
                     // Real logic needs card metadata (IsWeapon, IsDefense).
                     // For MVP, if they didn't play one, we assume they might not have one?
                     // Rules: "If you have at least one... you must play one."
                     // We need to know if they HAVE one.
                     // Let's assume for MVP validation: If MustPlay=True and Plan=Empty, check hand.
                     // If hand has candidate, Error.
-                    if (!playedWeapon && faction.TreacheryCards.Count > 0) // Assume any card *could* be weapon for MVP? No, that's bad.
+                    if (!playedWeapon &&
+                        faction.TreacheryCards.Count > 0) // Assume any card *could* be weapon for MVP? No, that's bad.
                     {
                         // TODO: Better card metadata. For now, we trust player or assume all cards are potentially valid if we don't know?
                         // Let's fail if they have ANY cards and didn't play one? No.
@@ -1005,11 +1053,11 @@ public class GameEngine
             {
                 if (r.MustPlay)
                 {
-                     // Must play defense if able
+                    // Must play defense if able
                 }
                 else
                 {
-                     if (playedDefense) throw new Exception("Voice forbids playing a Defense!");
+                    if (playedDefense) throw new Exception("Voice forbids playing a Defense!");
                 }
             }
             else
@@ -1018,55 +1066,58 @@ public class GameEngine
                 bool playedIt = (plan.Weapon == r.Type) || (plan.Defense == r.Type);
                 if (r.MustPlay)
                 {
-                     if (!playedIt && faction.TreacheryCards.Contains(r.Type)) 
-                         throw new Exception($"Voice requires you to play {r.Type}!");
+                    if (!playedIt && faction.TreacheryCards.Contains(r.Type))
+                        throw new Exception($"Voice requires you to play {r.Type}!");
                 }
                 else
                 {
-                     if (playedIt) throw new Exception($"Voice forbids playing {r.Type}!");
+                    if (playedIt) throw new Exception($"Voice forbids playing {r.Type}!");
                 }
             }
         }
     }
-    
+
     private void ResolveBattle(Game game, BattleState battle)
     {
         var p1Id = battle.Faction1Id;
         var p2Id = battle.Faction2Id;
-        
+
         var plan1 = battle.Plans[p1Id];
         var plan2 = battle.Plans[p2Id];
-        
+
         var f1 = game.State.Factions.First(f => f.PlayerDiscordId == p1Id);
         var f2 = game.State.Factions.First(f => f.PlayerDiscordId == p2Id);
 
         // Helper to get logic
-        double GetLeaderStrength(string name) => 5; // MVP: All leaders 5. Refactor to real data later.
-        
-        game.State.ActionLog.Add($"**Resolution**: {f1.PlayerName} (L: {plan1.LeaderName}, W: {plan1.Weapon}, D: {plan1.Defense}, Dial: {plan1.Dial}) VS {f2.PlayerName} (L: {plan2.LeaderName}, W: {plan2.Weapon}, D: {plan2.Defense}, Dial: {plan2.Dial})");
+        // double GetLeaderStrength(string name) => 5; // MVP: All leaders 5. Refactor to real data later.
+
+        game.State.ActionLog.Add(
+            $"**Resolution**: {f1.PlayerName} (L: {plan1.LeaderName}, W: {plan1.Weapon}, D: {plan1.Defense}, Dial: {plan1.Dial}) VS {f2.PlayerName} (L: {plan2.LeaderName}, W: {plan2.Weapon}, D: {plan2.Defense}, Dial: {plan2.Dial})");
 
         // 1. Traitor Check
         bool f1Traitor = f1.Traitors.Contains(plan2.LeaderName); // P1 has P2's leader as traitor
         bool f2Traitor = f2.Traitors.Contains(plan1.LeaderName);
-        
+
         if (f1Traitor && f2Traitor)
         {
-             game.State.ActionLog.Add("Both leaders are TRAITORS! Both armies lost.");
-             // Both lose everything
-             ClearForces(game, battle.TerritoryName, f1.Faction);
-             ClearForces(game, battle.TerritoryName, f2.Faction);
-             battle.IsActive = false;
-             return;
+            game.State.ActionLog.Add("Both leaders are TRAITORS! Both armies lost.");
+            // Both lose everything
+            ClearForces(game, battle.TerritoryName, f1.Faction);
+            ClearForces(game, battle.TerritoryName, f2.Faction);
+            battle.IsActive = false;
+            return;
         }
         else if (f1Traitor)
         {
-            game.State.ActionLog.Add($"**{plan2.LeaderName}** is a TRAITOR for {f1.PlayerName}! {f1.PlayerName} wins automatically.");
+            game.State.ActionLog.Add(
+                $"**{plan2.LeaderName}** is a TRAITOR for {f1.PlayerName}! {f1.PlayerName} wins automatically.");
             WinBattle(game, battle, f1, f2, plan1, plan2, 0, true); // 0 cost
             return;
         }
         else if (f2Traitor)
         {
-            game.State.ActionLog.Add($"**{plan1.LeaderName}** is a TRAITOR for {f2.PlayerName}! {f2.PlayerName} wins automatically.");
+            game.State.ActionLog.Add(
+                $"**{plan1.LeaderName}** is a TRAITOR for {f2.PlayerName}! {f2.PlayerName} wins automatically.");
             WinBattle(game, battle, f2, f1, plan2, plan1, 0, true);
             return;
         }
@@ -1082,19 +1133,21 @@ public class GameEngine
 
         if (atomicExplosion)
         {
-             game.State.ActionLog.Add("💥 **LASGUN + SHIELD = ATOMIC EXPLOSION!** Both armies destroyed! Battle is a tie.");
-             
-             // Kill both leaders
-             if (!string.IsNullOrEmpty(plan1.LeaderName)) f1.DeadLeaders.Add(plan1.LeaderName);
-             if (!string.IsNullOrEmpty(plan2.LeaderName)) f2.DeadLeaders.Add(plan2.LeaderName);
+            game.State.ActionLog.Add(
+                "💥 **LASGUN + SHIELD = ATOMIC EXPLOSION!** Both armies destroyed! Battle is a tie.");
 
-             // Destroy ALL forces in territory (not just dial)
-             ClearForces(game, battle.TerritoryName, f1.Faction);
-             ClearForces(game, battle.TerritoryName, f2.Faction);
-             
-             battle.IsActive = false;
-             return;
+            // Kill both leaders
+            if (!string.IsNullOrEmpty(plan1.LeaderName)) f1.DeadLeaders.Add(plan1.LeaderName);
+            if (!string.IsNullOrEmpty(plan2.LeaderName)) f2.DeadLeaders.Add(plan2.LeaderName);
+
+            // Destroy ALL forces in territory (not just dial)
+            ClearForces(game, battle.TerritoryName, f1.Faction);
+            ClearForces(game, battle.TerritoryName, f2.Faction);
+
+            battle.IsActive = false;
+            return;
         }
+
         // 2. Cheap Hero Check
         // Cheap Hero = Leader with 0 dial automatically wins by sacrificing the leader
         bool p1CheapHero = !string.IsNullOrEmpty(plan1.LeaderName) && plan1.Dial == 0;
@@ -1102,57 +1155,61 @@ public class GameEngine
 
         if (p1CheapHero && p2CheapHero)
         {
-            game.State.ActionLog.Add("💀 Both players used Cheap Hero! Both leaders killed in mutual sacrifice. Battle is a tie.");
-            
+            game.State.ActionLog.Add(
+                "💀 Both players used Cheap Hero! Both leaders killed in mutual sacrifice. Battle is a tie.");
+
             // Kill both leaders
             f1.DeadLeaders.Add(plan1.LeaderName);
             f2.DeadLeaders.Add(plan2.LeaderName);
-            
+
             // No forces lost (dial = 0 for both)
             battle.IsActive = false;
             return;
         }
         else if (p1CheapHero)
         {
-            game.State.ActionLog.Add($"🎯 **{f1.PlayerName}** uses Cheap Hero! {plan1.LeaderName} sacrificed for victory.");
-            
+            game.State.ActionLog.Add(
+                $"🎯 **{f1.PlayerName}** uses Cheap Hero! {plan1.LeaderName} sacrificed for victory.");
+
             // Kill P1's leader
             f1.DeadLeaders.Add(plan1.LeaderName);
-            
+
             // P1 wins, pays 0 forces (dial = 0)
             WinBattle(game, battle, f1, f2, plan1, plan2, 0, false);
-            
+
             // Capture opponent's leader if Harkonnen (opponent leader not killed by weapon)
             HandleHarkonnenCapture(game, f1, f2, plan2, false);
-            
+
             return;
         }
         else if (p2CheapHero)
         {
-            game.State.ActionLog.Add($"🎯 **{f2.PlayerName}** uses Cheap Hero! {plan2.LeaderName} sacrificed for victory.");
-            
+            game.State.ActionLog.Add(
+                $"🎯 **{f2.PlayerName}** uses Cheap Hero! {plan2.LeaderName} sacrificed for victory.");
+
             // Kill P2's leader
             f2.DeadLeaders.Add(plan2.LeaderName);
-            
+
             // P2 wins, pays 0 forces
             WinBattle(game, battle, f2, f1, plan2, plan1, 0, false);
-            
+
             // Capture opponent's leader if Harkonnen
             HandleHarkonnenCapture(game, f2, f1, plan1, false);
-            
+
             return;
         }
 
         // 3. Combat Logic (Weapon vs Defense)
         bool l1Dead = IsLeaderKilled(plan1.LeaderName, plan2.Weapon, plan1.Defense);
         bool l2Dead = IsLeaderKilled(plan2.LeaderName, plan1.Weapon, plan2.Defense);
-        
-        if (l1Dead) 
+
+        if (l1Dead)
         {
             game.State.ActionLog.Add($"**{plan1.LeaderName}** killed!");
             f1.DeadLeaders.Add(plan1.LeaderName);
         }
-        if (l2Dead) 
+
+        if (l2Dead)
         {
             game.State.ActionLog.Add($"**{plan2.LeaderName}** killed!");
             f2.DeadLeaders.Add(plan2.LeaderName);
@@ -1161,11 +1218,11 @@ public class GameEngine
         // 4. Calculate Score
         // Score = Dial + (LeaderAlive ? Strength : 0)
         // MVP: Leader strength hardcoded to 5.
-        double s1 = plan1.Dial + (l1Dead ? 0 : 5); 
+        double s1 = plan1.Dial + (l1Dead ? 0 : 5);
         double s2 = plan2.Dial + (l2Dead ? 0 : 5);
-        
+
         game.State.ActionLog.Add($"Scores: {f1.PlayerName}={s1}, {f2.PlayerName}={s2}");
-        
+
         if (s1 > s2)
         {
             WinBattle(game, battle, f1, f2, plan1, plan2, plan1.Dial, false);
@@ -1178,18 +1235,18 @@ public class GameEngine
         }
         else
         {
-             game.State.ActionLog.Add("Tie! Defender may keep territory. Both lose dial forces.");
-             // Simplification: Both lose dial.
-             RemoveForces(game, battle.TerritoryName, f1.Faction, plan1.Dial);
-             RemoveForces(game, battle.TerritoryName, f2.Faction, plan2.Dial);
-             battle.IsActive = false;
+            game.State.ActionLog.Add("Tie! Defender may keep territory. Both lose dial forces.");
+            // Simplification: Both lose dial.
+            RemoveForces(game, battle.TerritoryName, f1.Faction, plan1.Dial);
+            RemoveForces(game, battle.TerritoryName, f2.Faction, plan2.Dial);
+            battle.IsActive = false;
         }
     }
-    
+
     private bool IsLeaderKilled(string leader, string? incomingWeapon, string? myDefense)
     {
         if (string.IsNullOrEmpty(incomingWeapon)) return false;
-        
+
         // MVP Logic: 
         // Weapon: "Lasgun", "Crysknife", "Maula Pistol" ? 
         // Defense: "Shield", "Snooper"?
@@ -1198,32 +1255,33 @@ public class GameEngine
         // "Projectile" needs "Shield". "Poison" needs "Snooper".
         // Let's assume input text standardizes type.
         // OR just simple: Weapon kills unless Defense is played.
-        
+
         if (string.IsNullOrEmpty(myDefense)) return true; // No defense = Dead
         return false; // Has defense = Alive (MVP)
     }
-    
-    private void WinBattle(Game game, BattleState battle, FactionState winner, FactionState loser, BattlePlan winnerPlan, BattlePlan loserPlan, int winnerCost, bool traitorWin)
+
+    private void WinBattle(Game game, BattleState battle, FactionState winner, FactionState loser,
+        BattlePlan winnerPlan, BattlePlan loserPlan, int winnerCost, bool traitorWin)
     {
         game.State.ActionLog.Add($"**{winner.PlayerName}** wins!");
-        
+
         // Winner pays forces (unless traitor win? Rules: Traitor win = no loss? check rules. Yes, immediate win, no battle fought.)
         if (!traitorWin)
             RemoveForces(game, battle.TerritoryName, winner.Faction, winnerCost);
-            
+
         // Loser loses ALL forces in territory
         ClearForces(game, battle.TerritoryName, loser.Faction);
-        
+
         // Spice Payout (if leader survived and not traitor)
         // If leader killed or traitor, no spice.
         // Traitor win: Winner gets spice for enemy leader strength? Yes.
-        
+
         winner.Spice += 5; // Leader strength
         game.State.ActionLog.Add($"**{winner.PlayerName}** collects 5 spice for the victory.");
 
         battle.IsActive = false;
     }
-    
+
     private void RemoveForces(Game game, string territoryName, Faction faction, int amount)
     {
         var t = game.State.Map.Territories.First(x => x.Name == territoryName);
@@ -1231,34 +1289,36 @@ public class GameEngine
         {
             t.FactionForces[faction] -= amount;
             if (t.FactionForces[faction] <= 0) t.FactionForces.Remove(faction);
-            
+
             // Refund to tanks? Yes.
             var fState = game.State.Factions.First(f => f.Faction == faction);
             fState.ForcesInTanks += amount;
         }
     }
-    
-    private void HandleHarkonnenCapture(Game game, FactionState winner, FactionState loser, BattlePlan loserPlan, bool loserLeaderDead)
+
+    private void HandleHarkonnenCapture(Game game, FactionState winner, FactionState loser, BattlePlan loserPlan,
+        bool loserLeaderDead)
     {
         if (winner.Faction == Faction.Harkonnen && !loserLeaderDead && !string.IsNullOrEmpty(loserPlan.LeaderName))
         {
             winner.CapturedLeaders.Add(loserPlan.LeaderName);
-            game.State.ActionLog.Add($"**{winner.PlayerName}** (Harkonnen) CAPTURED leader **{loserPlan.LeaderName}**!");
+            game.State.ActionLog.Add(
+                $"**{winner.PlayerName}** (Harkonnen) CAPTURED leader **{loserPlan.LeaderName}**!");
         }
     }
-    
+
     private void ClearForces(Game game, string territoryName, Faction faction)
     {
-         var t = game.State.Map.Territories.First(x => x.Name == territoryName);
-         if (t.FactionForces.ContainsKey(faction))
-         {
-             int amount = t.FactionForces[faction];
-             t.FactionForces.Remove(faction);
-             
-             // Refund
-             var fState = game.State.Factions.First(f => f.Faction == faction);
-             fState.ForcesInTanks += amount;
-         }
+        var t = game.State.Map.Territories.First(x => x.Name == territoryName);
+        if (t.FactionForces.ContainsKey(faction))
+        {
+            int amount = t.FactionForces[faction];
+            t.FactionForces.Remove(faction);
+
+            // Refund
+            var fState = game.State.Factions.First(f => f.Faction == faction);
+            fState.ForcesInTanks += amount;
+        }
     }
 
     private async Task EndGameAsync(Game game)
@@ -1278,7 +1338,7 @@ public class GameEngine
         // Send Interactive Phase Button
         string message = $"**Round {game.State.Turn}: {game.State.Phase} Phase**\nUse the button below to advance.";
         string btnLabel;
-        
+
         // Determine label based on current phase
         if (game.State.Phase == GamePhase.MentatPause)
         {
@@ -1291,6 +1351,14 @@ public class GameEngine
             btnLabel = $"Next Phase: {next}";
         }
 
-        await _discordService.SendActionMessageAsync(game.GuildId, game.ActionsChannelId, message, btnLabel, $"next-phase:{game.Id}");
+        // Add recent logs to the message
+        var recentLogs = game.State.ActionLog.TakeLast(5).ToList();
+        if (recentLogs.Any())
+        {
+            message += "\n\n**Recent Activity:**\n" + string.Join("\n", recentLogs);
+        }
+
+        await _discordService.SendActionMessageAsync(game.GuildId, game.ActionsChannelId, message, 
+            (btnLabel, $"next-phase:{game.Id}", "Primary"));
     }
 }

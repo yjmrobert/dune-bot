@@ -24,31 +24,34 @@ namespace DuneBot.Specs.Steps
             MockDeck = new Mock<IDeckService>();
             MapService = new DuneBot.Engine.Services.MapService();
 
-            Engine = new GameEngine(MockRepo.Object, MockDiscord.Object, MockRenderer.Object, MapService, MockDeck.Object);
-            
-            Game = new Game 
-            { 
-                State = new GameState 
-                { 
+            Engine = new GameEngine(MockRepo.Object, MockDiscord.Object, MockRenderer.Object, MapService,
+                MockDeck.Object);
+
+            Game = new Game
+            {
+                State = new GameState
+                {
                     Turn = 1,
                     // Default phase, can be overwritten
                     Phase = GamePhase.Setup
-                } 
+                }
             };
-            
+
             // Initialize Map
             Game.State.Map = MapService.InitializeMap();
-            
+
             // Setup default mock for DeckService.Draw to simulate drawing from decks
-            MockDeck.Setup(d => d.Draw(It.IsAny<System.Collections.Generic.List<string>>(), It.IsAny<System.Collections.Generic.List<string>>()))
-                    .Returns((System.Collections.Generic.List<string> deck, System.Collections.Generic.List<string> discard) => 
-                    {
-                        if (deck.Count == 0) return null;
-                        var card = deck[0];
-                        deck.RemoveAt(0);
-                        return card;
-                    });
-            
+            MockDeck.Setup(d => d.Draw(It.IsAny<System.Collections.Generic.List<string>>(),
+                    It.IsAny<System.Collections.Generic.List<string>>()))
+                .Returns((System.Collections.Generic.List<string> deck,
+                    System.Collections.Generic.List<string> discard) =>
+                {
+                    if (deck.Count == 0) return (string?)null;
+                    var card = deck[0];
+                    deck.RemoveAt(0);
+                    return card;
+                });
+
             MockRepo.Setup(r => r.GetGameAsync(It.IsAny<int>())).ReturnsAsync(Game);
             MockRepo.Setup(r => r.UpdateGameAsync(It.IsAny<Game>())).Returns(System.Threading.Tasks.Task.CompletedTask);
         }

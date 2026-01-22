@@ -60,8 +60,8 @@ namespace DuneBot.Tests
             {
                 var repo = new GameRepository(context);
                 var game = await repo.GetGameAsync(1);
-                game.State.Turn = 2;
-                await repo.UpdateGameAsync(game);
+                game!.State.Turn = 2;
+                await repo.UpdateGameAsync(game!);
             }
 
             // Verify
@@ -69,6 +69,7 @@ namespace DuneBot.Tests
             {
                 var repo = new GameRepository(context);
                 var savedGame = await repo.GetGameAsync(1);
+                Assert.NotNull(savedGame);
                 Assert.Equal(2, savedGame.State.Turn);
             }
         }

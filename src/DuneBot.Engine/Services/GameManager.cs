@@ -41,10 +41,13 @@ public class GameManager
             await _repository.UpdateGameAsync(game);
             
             // 4. Send Welcome Message
-            await _discordService.SendActionMessageAsync(guildId, channels.ActionsId, 
-                $"**New Game Lobby Open! (ID: {game.Id})**\nJoin the game with `/join` and then `/start`.", 
-                "Wait for Start", 
-                "dummy_button");
+            var msgId = await _discordService.SendActionMessageAsync(guildId, channels.ActionsId, 
+                $"**Dune Game Lobby**\n**Players (0/6):**\n*(Waiting for players...)*\n\nJoin the game and then start when ready.", 
+                ("Join Game", $"join-game:{game.Id}", "Success"),
+                ("Start Game", $"start-game:{game.Id}", "Success"));
+
+            game.State.LobbyMessageId = msgId;
+            await _repository.UpdateGameAsync(game);
 
             return game;
         }

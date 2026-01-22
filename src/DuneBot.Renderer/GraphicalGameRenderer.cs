@@ -16,7 +16,7 @@ namespace DuneBot.Renderer;
 public class GraphicalGameRenderer : IGameRenderer
 {
     private readonly string _addsetsPath;
-    private BoardLayout _layout;
+    private BoardLayout? _layout;
 
     public GraphicalGameRenderer()
     {
@@ -106,8 +106,8 @@ public class BoardLayout
 
 public class TerritoryLayout
 {
-    public string Name { get; set; }
-    public Point SpiceCoords { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Point SpiceCoords { get; set; } = new();
     public List<Point> ForceSlots { get; set; } = new();
 }
 

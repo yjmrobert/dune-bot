@@ -17,7 +17,11 @@ builder.Services.AddDbContext<DuneDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=dune.db"));
 
 // Discord
-builder.Services.AddSingleton<DiscordSocketClient>();
+builder.Services.AddSingleton<DiscordSocketClient>(sp => 
+    new DiscordSocketClient(new DiscordSocketConfig 
+    { 
+        GatewayIntents = Discord.GatewayIntents.AllUnprivileged & ~Discord.GatewayIntents.GuildInvites & ~Discord.GatewayIntents.GuildScheduledEvents 
+    }));
 builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
 
 // Services

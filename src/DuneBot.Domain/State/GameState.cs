@@ -14,6 +14,8 @@ public class GameState
     // Board state, storm position, spice blows, etc will go here
     public int StormLocation { get; set; } 
     
+    public ulong? LobbyMessageId { get; set; }
+    
     // Decks
     public List<string> TreacheryDeck { get; set; } = new();
     public List<string> TreacheryDiscard { get; set; } = new();

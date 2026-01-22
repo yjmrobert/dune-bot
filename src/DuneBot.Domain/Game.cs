@@ -18,5 +18,5 @@ public class Game
     public string StateJson { get; set; } = "{}";
 
     // Helper to get typed state (Not mapped to DB)
-    public GameState State { get; set; }
+    public GameState State { get; set; } = new();
 }

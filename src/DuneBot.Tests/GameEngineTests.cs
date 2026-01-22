@@ -100,7 +100,7 @@ namespace DuneBot.Tests
             Assert.All(game.State.Factions, f =>
             {
                 if (f.Faction == Faction.Harkonnen) Assert.Equal(4, f.Traitors.Count);
-                else Assert.Equal(1, f.Traitors.Count);
+                else Assert.Single(f.Traitors);
             });
             Assert.NotNull(game.State.Map);
             Assert.True(game.State.StormLocation >= 1 && game.State.StormLocation <= 18);
@@ -620,7 +620,7 @@ namespace DuneBot.Tests
             var atreides = game.State.Factions.First(f => f.Faction == Faction.Atreides);
 
             Assert.Equal(4, harkonnen.Traitors.Count);
-            Assert.Equal(1, atreides.Traitors.Count);
+            Assert.Single(atreides.Traitors);
         }
 
         [Fact]
