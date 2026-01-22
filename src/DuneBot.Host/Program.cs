@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = Host.CreateApplicationBuilder(args);
 
 // Configuration
-builder.Services.AddDbContext<DuneDbContext>(options => 
+builder.Services.AddDbContext<DuneDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=dune.db"));
 
 // Discord
@@ -22,7 +22,7 @@ builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<D
 
 // Services
 builder.Services.AddScoped<IGameRepository, GameRepository>();
-builder.Services.AddScoped<IGameRenderer, JsonGameRenderer>();
+builder.Services.AddScoped<IGameRenderer, GraphicalGameRenderer>();
 builder.Services.AddScoped<IDiscordService, DiscordService>();
 builder.Services.AddScoped<GameManager>();
 builder.Services.AddScoped<GameManager>();

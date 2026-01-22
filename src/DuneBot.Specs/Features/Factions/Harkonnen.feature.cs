@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Factions
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Harkonnen Faction", "  In order to crush my enemies\n  As the Harkonnen Faction\n  I want to use treache" +
-                    "ry to win battles", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Harkonnen Faction", "  In order to crush my enemies\r\n  As the Harkonnen Faction\r\n  I want to use treac" +
+                    "hery to win battles", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

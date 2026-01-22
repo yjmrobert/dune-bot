@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Phases
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Spice Collection Phase", "  In order to harvest spice from territories\n  As a Player\n  I want to collect sp" +
-                    "ice from territories I control", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Spice Collection Phase", "  In order to harvest spice from territories\r\n  As a Player\r\n  I want to collect " +
+                    "spice from territories I control", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

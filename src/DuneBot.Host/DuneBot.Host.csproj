@@ -22,4 +22,10 @@
     <ProjectReference Include="..\DuneBot.Data\DuneBot.Data.csproj" />
     <ProjectReference Include="..\DuneBot.Renderer\DuneBot.Renderer.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

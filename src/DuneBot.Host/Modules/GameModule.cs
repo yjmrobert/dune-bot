@@ -19,9 +19,9 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
     public async Task CreateGame(string name = "Dune Game")
     {
         await DeferAsync();
-        
+
         var game = await _gameManager.CreateGameAsync(Context.Guild.Id, name);
-        
+
         await FollowupAsync($"Game Created! ID: {game.Id}, Category: {game.CategoryId}");
     }
 
@@ -30,15 +30,15 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
     {
         // respond ephemerally first
         await RespondAsync($"Deleting game {gameId}...", ephemeral: true);
-        
+
         await _gameManager.DeleteGameAsync(gameId);
-        
-        try 
+
+        try
         {
             // Try to update the ephemeral message, but ignore if context is gone
             await ModifyOriginalResponseAsync(x => x.Content = $"Game {gameId} deleted.");
         }
-        catch 
+        catch
         {
             // Channel likely deleted, which is expected behavior
         }
@@ -49,14 +49,16 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
     {
         // respond ephemerally first
         await RespondAsync("Deleting ALL games...", ephemeral: true);
-        
+
         int count = await _gameManager.DeleteAllGamesAsync();
-        
-        try 
+
+        try
         {
             await ModifyOriginalResponseAsync(x => x.Content = $"Deleted {count} games.");
         }
-        catch { }
+        catch
+        {
+        }
     }
 }
 
@@ -69,14 +71,39 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
         _engine = engine;
     }
 
-    [SlashCommand("join", "Join a game")]
-    public async Task JoinGame(int gameId)
+    private int? GetGameIdFromContext()
+    {
+        // Try channel name first (e.g. "dg5-actions")
+        var channelMatch = System.Text.RegularExpressions.Regex.Match(Context.Channel.Name, @"^dg(\d+)-");
+        if (channelMatch.Success && int.TryParse(channelMatch.Groups[1].Value, out int channelId))
+        {
+            return channelId;
+        }
+
+        // Try category name if applicable
+        if (Context.Channel is Discord.WebSocket.SocketTextChannel textChannel && textChannel.Category != null)
+        {
+            var catMatch = System.Text.RegularExpressions.Regex.Match(textChannel.Category.Name, @"^dg(\d+)-");
+            if (catMatch.Success && int.TryParse(catMatch.Groups[1].Value, out int catId))
+            {
+                return catId;
+            }
+        }
+
+        return null;
+    }
+
+    [SlashCommand("start", "Start the game")]
+    public async Task StartGame(int? gameId = null)
     {
         await DeferAsync();
-        try 
+        try
         {
-            await _engine.RegisterPlayerAsync(gameId, Context.User.Id, Context.User.Username);
-            await FollowupAsync($"Joined game {gameId}!");
+            int? resolvedId = gameId ?? GetGameIdFromContext();
+            if (resolvedId == null) throw new Exception("Could not determine Game ID. Please specify it explicitly.");
+
+            await _engine.StartGameAsync(resolvedId.Value);
+            await FollowupAsync($"Game {resolvedId.Value} Started! Good luck.");
         }
         catch (Exception ex)
         {
@@ -84,14 +111,18 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
-    [SlashCommand("start", "Start the game")]
-    public async Task StartGame(int gameId)
+    [SlashCommand("join", "Join a game")]
+    public async Task JoinGame(int? gameId = null, IUser? user = null)
     {
         await DeferAsync();
         try
         {
-            await _engine.StartGameAsync(gameId);
-            await FollowupAsync($"Game {gameId} Started! Good luck.");
+            int? resolvedId = gameId ?? GetGameIdFromContext();
+            if (resolvedId == null) throw new Exception("Could not determine Game ID. Please specify it explicitly.");
+
+            var targetUser = user ?? Context.User;
+            await _engine.RegisterPlayerAsync(resolvedId.Value, targetUser.Id, targetUser.Username);
+            await FollowupAsync($"{targetUser.Mention} joined game {resolvedId.Value}!");
         }
         catch (Exception ex)
         {
@@ -103,7 +134,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task Bid(int gameId, int amount)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.PlaceBidAsync(gameId, Context.User.Id, amount);
             await FollowupAsync($"Bid placed.", ephemeral: true);
@@ -118,7 +149,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task ReviveForces(int gameId, int amount)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.ReviveForcesAsync(gameId, Context.User.Id, amount);
             await FollowupAsync($"Revived {amount} forces.", ephemeral: true);
@@ -133,7 +164,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task ReviveLeader(int gameId, string leaderName)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.ReviveLeaderAsync(gameId, Context.User.Id, leaderName);
             await FollowupAsync($"Revived {leaderName}.", ephemeral: true);
@@ -148,7 +179,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task Pass(int gameId)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.PassBidAsync(gameId, Context.User.Id);
             await FollowupAsync($"Passed.", ephemeral: true);
@@ -163,7 +194,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task Ship(int gameId, string territory, int amount)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.ShipForcesAsync(gameId, Context.User.Id, territory, amount);
             await FollowupAsync($"Shipped {amount} to {territory}.", ephemeral: true);
@@ -178,7 +209,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task Move(int gameId, string from, string to, int amount)
     {
         await DeferAsync();
-        try 
+        try
         {
             await _engine.MoveForcesAsync(gameId, Context.User.Id, from, to, amount);
             await FollowupAsync($"Moved {amount} from {from} to {to}.", ephemeral: true);
@@ -193,7 +224,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
     public async Task BattleCommit(int gameId, string leader, int dial, string? weapon = null, string? defense = null)
     {
         await DeferAsync(ephemeral: true); // Must be secret!
-        try 
+        try
         {
             await _engine.SubmitBattlePlanAsync(gameId, Context.User.Id, leader, dial, weapon, defense);
             await FollowupAsync($"Plan committed: {leader}, {dial} forces.", ephemeral: true);
@@ -239,6 +270,7 @@ public class GameplayModule : InteractionModuleBase<SocketInteractionContext>
             }
         }
     }
+
     [ComponentInteraction("dummy_button")]
     public async Task DummyButtonHandler()
     {

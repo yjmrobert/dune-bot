@@ -17,20 +17,21 @@ public class DiscordService : IDiscordService
     // FIX: We will inject a config or assume the first guild checks out.
     // For this step, I'll store the GuildId from the initial interaction or config. 
     // Ideally GameManager should accept a GuildId context. 
-    
+
     // For now, let's assume we pass the guild ID to the method, or we hardcode it for the single-server use case?
     // User didn't specify multi-server. I'll make GameManager allow passing a "ContextObject" or just update the interface?
     // Updating the interface is best.
 
     // WAIT, I cannot update the interface EASILY without changing GameManager. 
     // Let's rely on an injected configuration "HomeGuildId" for now to keep it simple.
-    
+
     public DiscordService(DiscordSocketClient client, Microsoft.Extensions.Configuration.IConfiguration config)
     {
         _client = client;
     }
 
-    public async Task<(ulong CategoryId, ulong ActionsId, ulong MapId, ulong TalkId)> CreateGameChannelsAsync(ulong guildId, int gameId, string gameName)
+    public async Task<(ulong CategoryId, ulong ActionsId, ulong MapId, ulong TalkId)> CreateGameChannelsAsync(
+        ulong guildId, int gameId, string gameName)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) throw new Exception($"Guild {guildId} not found, bot might not be ready.");
@@ -64,6 +65,7 @@ public class DiscordService : IDiscordService
             {
                 await channel.DeleteAsync();
             }
+
             await category.DeleteAsync();
         }
     }
@@ -76,14 +78,23 @@ public class DiscordService : IDiscordService
         var channel = guild.GetTextChannel(channelId);
         if (channel != null)
         {
-            await channel.SendMessageAsync(content);
+            // If the content is a file path, send the file
+            if (System.IO.File.Exists(content))
+            {
+                await channel.SendFileAsync(content, "game_board.png");
+            }
+            else
+            {
+                await channel.SendMessageAsync(content);
+            }
         }
     }
 
-    public async Task SendActionMessageAsync(ulong guildId, ulong channelId, string message, string buttonLabel, string buttonCustomId)
+    public async Task SendActionMessageAsync(ulong guildId, ulong channelId, string message, string buttonLabel,
+        string buttonCustomId)
     {
         var guild = _client.GetGuild(guildId);
-        if (guild == null) 
+        if (guild == null)
         {
             Console.WriteLine($"[Error] Guild {guildId} not found in cache.");
             return;
@@ -92,17 +103,17 @@ public class DiscordService : IDiscordService
         var channel = guild.GetTextChannel(channelId);
         if (channel == null)
         {
-             // Try to get via client directly as fallback
-             var c = _client.GetChannel(channelId) as SocketTextChannel;
-             if (c != null) channel = c;
-             else 
-             {
-                 Console.WriteLine($"[Error] Channel {channelId} not found in guild {guild.Name}.");
-                 return;
-             }
+            // Try to get via client directly as fallback
+            var c = _client.GetChannel(channelId) as SocketTextChannel;
+            if (c != null) channel = c;
+            else
+            {
+                Console.WriteLine($"[Error] Channel {channelId} not found in guild {guild.Name}.");
+                return;
+            }
         }
 
-        try 
+        try
         {
             var builder = new ComponentBuilder()
                 .WithButton(buttonLabel, buttonCustomId, ButtonStyle.Primary);
@@ -120,10 +131,10 @@ public class DiscordService : IDiscordService
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return 0;
-        
+
         var channel = guild.GetTextChannel(channelId);
         if (channel == null) return 0;
-        
+
         // AutoArchiveDuration.OneHour = 60
         var thread = await channel.CreateThreadAsync(threadName, autoArchiveDuration: ThreadArchiveDuration.OneHour);
         return thread.Id;
@@ -133,7 +144,7 @@ public class DiscordService : IDiscordService
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return;
-        
+
         var thread = guild.GetThreadChannel(threadId);
         if (thread != null)
         {
@@ -145,7 +156,7 @@ public class DiscordService : IDiscordService
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return;
-        
+
         var thread = guild.GetThreadChannel(threadId);
         if (thread != null)
         {
@@ -155,22 +166,23 @@ public class DiscordService : IDiscordService
 
     public async Task SendDirectMessageAsync(ulong userId, string content)
     {
-        var user = _client.GetUser(userId);
+        IUser? user = _client.GetUser(userId);
         if (user == null)
         {
-             // Try to download if not in cache
-             user = await _client.Rest.GetUserAsync(userId) as SocketUser;
+            // Try to download if not in cache
+            user = await _client.Rest.GetUserAsync(userId);
         }
-        
+
         if (user != null)
         {
-             try 
-             {
+            try
+            {
                 await user.SendMessageAsync(content);
-             }
-             catch
-             {
-                 Console.WriteLine($"[Warning] Could not DM user {userId}. Privacy settings?");
-             }
+            }
+            catch
+            {
+                Console.WriteLine($"[Warning] Could not DM user {userId}. Privacy settings?");
+            }
         }
     }
+}
