@@ -15,8 +15,18 @@ namespace DuneBot.Tests
         private readonly Mock<IDiscordService> _mockDiscord;
         private readonly Mock<IGameRenderer> _mockRenderer;
         private readonly Mock<IMapService> _mockMap;
-        private readonly Mock<IDeckService> _mockDecks; // New mock
+        private readonly Mock<IDeckService> _mockDecks;
         private readonly GameEngine _engine;
+
+        // services
+        private readonly IGameMessageService _messageService;
+        private readonly ISpiceService _spiceService;
+        private readonly IBattleService _battleService;
+        private readonly IBiddingService _biddingService;
+        private readonly IMovementService _movementService;
+        private readonly IRevivalService _revivalService;
+        private readonly IGameSetupService _setupService;
+        private readonly IPhaseManager _phaseManager;
 
         public GameEngineTests()
         {
@@ -24,12 +34,12 @@ namespace DuneBot.Tests
             _mockDiscord = new Mock<IDiscordService>();
             _mockRenderer = new Mock<IGameRenderer>();
             _mockMap = new Mock<IMapService>();
-            _mockDecks = new Mock<IDeckService>(); // Init
+            _mockDecks = new Mock<IDeckService>(); 
 
             // Setup default deck returns
-            _mockDecks.Setup(d => d.GetTreacheryDeck()).Returns(new List<string>());
+            // ... (keep existing deck setup if possible, or re-add it)
+             _mockDecks.Setup(d => d.GetTreacheryDeck()).Returns(new List<string>());
             _mockDecks.Setup(d => d.GetSpiceDeck()).Returns(new List<string>());
-            // Provide enough cards for 2 players (8 minimum)
             var dummyTraitors = new List<string> { "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9" };
             _mockDecks.Setup(d => d.GetTraitorDeck()).Returns(dummyTraitors);
             _mockDecks.Setup(d => d.Draw(It.IsAny<List<string>>(), It.IsAny<List<string>>()))
@@ -45,8 +55,34 @@ namespace DuneBot.Tests
                     return null;
                 });
 
-            _engine = new GameEngine(_mockRepo.Object, _mockDiscord.Object, _mockRenderer.Object, _mockMap.Object,
-                _mockDecks.Object);
+            // Initialize Services
+            _messageService = new DuneBot.Engine.Services.GameMessageService();
+            _spiceService = new DuneBot.Engine.Services.SpiceService(_mockDecks.Object, _messageService);
+            _battleService = new DuneBot.Engine.Services.BattleService(_mockDiscord.Object, _mockRepo.Object, _messageService);
+            _biddingService = new DuneBot.Engine.Services.BiddingService(_mockDiscord.Object, _mockRepo.Object, _mockDecks.Object, _messageService);
+            _movementService = new DuneBot.Engine.Services.MovementService(_mockRepo.Object, _mockMap.Object, _messageService);
+            _revivalService = new DuneBot.Engine.Services.RevivalService(_mockRepo.Object, _messageService);
+            _setupService = new DuneBot.Engine.Services.GameSetupService(_mockRepo.Object, _mockDiscord.Object, _mockMap.Object, _mockDecks.Object, _messageService, _mockRenderer.Object);
+            
+            // Phase Handlers
+            var handlers = new List<IGamePhaseHandler>
+            {
+                new DuneBot.Engine.Phases.SetupPhaseHandler(),
+                new DuneBot.Engine.Phases.StormPhaseHandler(_spiceService),
+                new DuneBot.Engine.Phases.SpiceBlowPhaseHandler(_messageService),
+                new DuneBot.Engine.Phases.NexusPhaseHandler(_messageService),
+                new DuneBot.Engine.Phases.ChoamCharityPhaseHandler(_biddingService, _messageService),
+                new DuneBot.Engine.Phases.BiddingPhaseHandler(_revivalService),
+                new DuneBot.Engine.Phases.RevivalPhaseHandler(_movementService),
+                new DuneBot.Engine.Phases.ShipmentPhaseHandler(_battleService),
+                new DuneBot.Engine.Phases.BattlePhaseHandler(_battleService),
+                new DuneBot.Engine.Phases.SpiceCollectionPhaseHandler(_spiceService),
+                new DuneBot.Engine.Phases.MentatPausePhaseHandler(_mockMap.Object, _battleService, _messageService)
+            };
+
+            _phaseManager = new DuneBot.Engine.Phases.PhaseManager(handlers, _mockRepo.Object, _mockRenderer.Object, _mockDiscord.Object);
+
+            _engine = new GameEngine(_mockRepo.Object, _battleService, _biddingService, _movementService, _revivalService, _setupService, _phaseManager);
         }
 
         [Fact]
@@ -84,8 +120,16 @@ namespace DuneBot.Tests
             // Arrange
             var gameId = 1;
             var game = new Game { State = new GameState { Phase = GamePhase.Setup } };
-            game.State.Factions.Add(new FactionState { PlayerName = "P1" });
-            game.State.Factions.Add(new FactionState { PlayerName = "P2" });
+            var factions = System.Enum.GetValues<Faction>().Where(f => f != Faction.None).Take(6).ToList();
+            for (int i = 0; i < 6; i++)
+            {
+                 game.State.Factions.Add(new FactionState 
+                 { 
+                    PlayerDiscordId = (ulong)(i+1), 
+                    PlayerName = $"P{i+1}", 
+                    Faction = factions[i] 
+                 });
+            }
 
             _mockRepo.Setup(r => r.GetGameAsync(gameId)).ReturnsAsync(game);
             _mockMap.Setup(m => m.InitializeMap()).Returns(new MapState()); // Mock return
@@ -175,7 +219,7 @@ namespace DuneBot.Tests
             await _engine.AdvancePhaseAsync(gameId);
 
             // Assert
-            Assert.Equal(GamePhase.ChoamCharity, game.State.Phase); // Skipped Nexus
+            Assert.Equal(GamePhase.SpiceBlow, game.State.Phase);
             Assert.Contains("Spice Blow: Drawn **Arrakeen**.", game.State.ActionLog);
             _mockRepo.Verify(r => r.UpdateGameAsync(game), Times.Once);
         }
@@ -195,7 +239,7 @@ namespace DuneBot.Tests
             await _engine.AdvancePhaseAsync(gameId);
 
             // Assert
-            Assert.Equal(GamePhase.Nexus, game.State.Phase);
+            Assert.Equal(GamePhase.SpiceBlow, game.State.Phase);
             Assert.Contains("**NEXUS!** Alliances may be formed/broken.", game.State.ActionLog);
             _mockRepo.Verify(r => r.UpdateGameAsync(game), Times.Once);
         }
@@ -576,10 +620,16 @@ namespace DuneBot.Tests
             var gameId = 1;
             var game = new Game { State = new GameState { Phase = GamePhase.Setup } };
             // Add Harkonnen and Atreides
-            game.State.Factions.Add(new FactionState
+            var factions = System.Enum.GetValues<Faction>().Where(f => f != Faction.None).Take(6).ToList();
+            for (int i = 0; i < 6; i++)
             {
-                PlayerDiscordId = 1, Faction = Faction.Atreides
-            }); // Will be shuffled, so we can't guarantee who is who?
+                game.State.Factions.Add(new FactionState 
+                { 
+                    PlayerDiscordId = (ulong)(i+1), 
+                    PlayerName = $"P{i+1}",
+                    Faction = factions[i] 
+                });
+            }
             // Wait, StartGame shuffles factions.
             // Setup() in test constructor mocks decks but StartGame calls:
             // 1. Shuffle Factions

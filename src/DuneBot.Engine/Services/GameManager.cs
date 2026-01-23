@@ -38,7 +38,8 @@ public class GameManager
             game.MapChannelId = channels.MapId;
             game.TableTalkChannelId = channels.TalkId;
             
-            await _repository.UpdateGameAsync(game);
+            // batch update with lobby message
+            // await _repository.UpdateGameAsync(game);
             
             // 4. Send Welcome Message
             var msgId = await _discordService.SendActionMessageAsync(guildId, channels.ActionsId, 

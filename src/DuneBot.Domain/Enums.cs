@@ -23,5 +23,6 @@ public enum GamePhase
     ShipmentAndMovement,
     Battle,
     SpiceCollection,
-    MentatPause // Optional pause if needed
+    MentatPause, // Optional pause if needed
+    Ended
 }

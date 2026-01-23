@@ -15,6 +15,8 @@ namespace DuneBot.Specs.Steps
         public Mock<IGameRenderer> MockRenderer { get; set; }
         public Mock<IDeckService> MockDeck { get; set; }
         public DuneBot.Engine.Services.MapService MapService { get; set; }
+        public DuneBot.Domain.Interfaces.IBiddingService BiddingService { get; set; }
+        public DuneBot.Domain.Interfaces.IBattleService BattleService { get; set; }
 
         public GameContext()
         {
@@ -24,8 +26,33 @@ namespace DuneBot.Specs.Steps
             MockDeck = new Mock<IDeckService>();
             MapService = new DuneBot.Engine.Services.MapService();
 
-            Engine = new GameEngine(MockRepo.Object, MockDiscord.Object, MockRenderer.Object, MapService,
-                MockDeck.Object);
+             // Services
+            var messageService = new DuneBot.Engine.Services.GameMessageService();
+            var spiceService = new DuneBot.Engine.Services.SpiceService(MockDeck.Object, messageService);
+            BattleService = new DuneBot.Engine.Services.BattleService(MockDiscord.Object, MockRepo.Object, messageService);
+            BiddingService = new DuneBot.Engine.Services.BiddingService(MockDiscord.Object, MockRepo.Object, MockDeck.Object, messageService);
+            var movementService = new DuneBot.Engine.Services.MovementService(MockRepo.Object, MapService, messageService);
+            var revivalService = new DuneBot.Engine.Services.RevivalService(MockRepo.Object, messageService);
+            var setupService = new DuneBot.Engine.Services.GameSetupService(MockRepo.Object, MockDiscord.Object, MapService, MockDeck.Object, messageService, MockRenderer.Object);
+            
+            var handlers = new System.Collections.Generic.List<IGamePhaseHandler>
+            {
+                new DuneBot.Engine.Phases.SetupPhaseHandler(),
+                new DuneBot.Engine.Phases.StormPhaseHandler(spiceService),
+                new DuneBot.Engine.Phases.SpiceBlowPhaseHandler(messageService),
+                new DuneBot.Engine.Phases.NexusPhaseHandler(messageService),
+                new DuneBot.Engine.Phases.ChoamCharityPhaseHandler(BiddingService, messageService),
+                new DuneBot.Engine.Phases.BiddingPhaseHandler(revivalService),
+                new DuneBot.Engine.Phases.RevivalPhaseHandler(movementService),
+                new DuneBot.Engine.Phases.ShipmentPhaseHandler(BattleService),
+                new DuneBot.Engine.Phases.BattlePhaseHandler(BattleService),
+                new DuneBot.Engine.Phases.SpiceCollectionPhaseHandler(spiceService),
+                new DuneBot.Engine.Phases.MentatPausePhaseHandler(MapService, BattleService, messageService)
+            };
+
+            var phaseManager = new DuneBot.Engine.Phases.PhaseManager(handlers, MockRepo.Object, MockRenderer.Object, MockDiscord.Object);
+
+            Engine = new GameEngine(MockRepo.Object, BattleService, BiddingService, movementService, revivalService, setupService, phaseManager);
 
             Game = new Game
             {

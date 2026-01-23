@@ -163,7 +163,7 @@ namespace DuneBot.Specs.Steps
              // OR we can make ResolveAuctionWin internal and call it.
              
              // Let's rely on internal exposure for clarity in "Resolved" step.
-             await _engine.ResolveAuctionWin(_game);
+             await _context.BiddingService.ResolveAuctionWin(_game);
         }
 
         [Then(@"the current bidder should be ""(.*)""")]

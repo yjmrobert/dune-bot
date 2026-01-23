@@ -73,7 +73,7 @@ namespace DuneBot.Specs.Steps
             int newSector = _mapService.CalculateNextStormSector(oldSector, amount);
             _game.State.StormLocation = newSector;
             
-            _engine.ApplyStormDamage(_game, oldSector, amount);
+            _context.BattleService.ApplyStormDamage(_game, oldSector, amount);
         }
 
         [Then(@"the new storm position should be sector (.*)")]
