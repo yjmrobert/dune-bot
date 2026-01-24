@@ -191,6 +191,13 @@ public class BattleService : IBattleService
                     continue; 
                 }
 
+                // 1. Remove Spice
+                if (t.SpiceBlowAmount > 0)
+                {
+                    game.State.ActionLog.Add($"**STORM** destroyed {t.SpiceBlowAmount} spice in **{t.Name}**.");
+                    t.SpiceBlowAmount = 0;
+                }
+
                 var factions = t.FactionForces.Keys.ToList();
                 foreach (var fType in factions)
                 {

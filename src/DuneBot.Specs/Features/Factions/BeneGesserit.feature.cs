@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Factions
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Bene Gesserit Faction", "  In order to control the flow of battle\r\n  As the Bene Gesserit Faction\r\n  I wan" +
-                    "t to use the Voice to restrict opponent cards", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Bene Gesserit Faction", "  In order to control the flow of battle\n  As the Bene Gesserit Faction\n  I want " +
+                    "to use the Voice to restrict opponent cards", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Factions
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Emperor Faction", "  In order to leverage my immense wealth\r\n  As the Emperor Faction\r\n  I want to c" +
-                    "ollect payments from other factions", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Emperor Faction", "  In order to leverage my immense wealth\n  As the Emperor Faction\n  I want to col" +
+                    "lect payments from other factions", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

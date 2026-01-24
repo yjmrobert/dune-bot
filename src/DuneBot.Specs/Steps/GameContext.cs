@@ -38,7 +38,7 @@ namespace DuneBot.Specs.Steps
             var handlers = new System.Collections.Generic.List<IGamePhaseHandler>
             {
                 new DuneBot.Engine.Phases.SetupPhaseHandler(),
-                new DuneBot.Engine.Phases.StormPhaseHandler(spiceService),
+                new DuneBot.Engine.Phases.StormPhaseHandler(spiceService, BattleService, MapService),
                 new DuneBot.Engine.Phases.SpiceBlowPhaseHandler(messageService),
                 new DuneBot.Engine.Phases.NexusPhaseHandler(messageService),
                 new DuneBot.Engine.Phases.ChoamCharityPhaseHandler(BiddingService, messageService),

@@ -14,71 +14,104 @@ namespace DuneBot.Specs.Steps
     public class SpiceSteps
     {
         private readonly GameContext _context;
-        // Mock Deck service needed? GameEngine calls _deckService.Draw?
-        // GameEngine lines 5xx likely have Spice Blow logic.
-        // Step 603: var territory = ... Name == card.
-        
-        // We typically mock DeckService.
         private readonly Mock<IDeckService> _mockDeck;
 
         public SpiceSteps(GameContext context)
         {
             _context = context;
-            _mockDeck = context.MockDeck; // Assuming GameContext exposes MockDeck (Step 25: Yes, it was set up in GameContext)
-            // Wait, GameContext.cs Step 122: _mockDeck private?
-            // "private Mock<IDeckService> _mockDeck;"
-            // But line 60: "public Mock<IDeckService> MockDeck => _mockDeck;" -> Check GameContext.cs
+            _mockDeck = context.MockDeck;
         }
 
         [Given(@"the next spice card A is ""(.*)""")]
         public void GivenTheNextSpiceCardAIs(string cardName)
         {
-             // Insert card at the beginning of the SpiceDeck so it's drawn first
              _context.Game.State.SpiceDeck.Insert(0, cardName);
         }
         
         [Given(@"the next spice card B is ""(.*)""")]
         public void GivenTheNextSpiceCardBIs(string cardName)
         {
-             // For scenarios testing just card B, add it to the deck
-             if (_context.Game.State.SpiceDeck.Count == 0)
-                 _context.Game.State.SpiceDeck.Add(cardName);
+             if (_context.Game.State.SpiceDeck.Count > 1) 
+                 _context.Game.State.SpiceDeck.Insert(1, cardName);
              else
-                 _context.Game.State.SpiceDeck.Insert(0, cardName); // Make it the next card to be drawn
+                 _context.Game.State.SpiceDeck.Add(cardName);
         }
+        
+        [Given(@"the next spice card C is ""(.*)""")]
+        public void GivenTheNextSpiceCardCIs(string cardName)
+        {
+             if (_context.Game.State.SpiceDeck.Count > 2)
+                 _context.Game.State.SpiceDeck.Insert(2, cardName); 
+             else
+                 _context.Game.State.SpiceDeck.Add(cardName);
+        }
+        
+        // Removed GivenTheCurrentStormPositionIsSector
+        
+        [Given(@"""(.*)"" \(Sector (\d+)\) is in the storm \(Sector (\d+)\)")]
+        public void GivenTerritoryIsInTheStorm(string territoryName, int tSector, int sSector)
+        {
+             var t = _context.Game.State.Map.Territories.FirstOrDefault(x => x.Name == territoryName);
+             if (t == null)
+             {
+                 t = new Territory { Name = territoryName, Sector = tSector };
+                 _context.Game.State.Map.Territories.Add(t);
+             }
+             t.Sector = tSector;
+             _context.Game.State.StormLocation = sSector;
+             Assert.Equal(t.Sector, _context.Game.State.StormLocation);
+        }
+        
+        [Given(@"the discard pile has ""(.*)"" on top")]
+        public void GivenTheDiscardPileHasOnTop(string cardName)
+        {
+             _context.Game.State.SpiceDiscard.Add(cardName);
+        }
+        
+        [Given(@"territory ""(.*)"" has (\d+) spice")]
+        public void GivenTerritoryHasSpice(string territoryName, int amount)
+        {
+             var t = _context.Game.State.Map.Territories.FirstOrDefault(x => x.Name == territoryName);
+             if (t == null)
+             {
+                 t = new Territory { Name = territoryName };
+                 _context.Game.State.Map.Territories.Add(t);
+             }
+             t.SpiceBlowAmount = amount;
+        }
+        
+        // Removed GivenHasForcesIn
+        
+        // Removed GivenTheGameIsInTurn
 
         [When(@"the spice blow is resolved")]
-        public async System.Threading.Tasks.Task WhenTheSpiceBlowIsResolved()
+        public void WhenTheSpiceBlowIsResolved()
         {
-            // Call Engine method
-            // "PerformSpiceBlowAsync"?
-            // We need to know the method name.
-            // GameEngine.cs line 5xx?
-            // "ResolveSpiceBlow"?
-            
-            // Assume method exists or exposed via RunPhase or public method.
-            // If internal, we rely on Phase Transition or explicit public method.
-            // GameEngine lines viewed didn't explicitly show public "ResolveSpiceBlow".
-            // It showed loop in `RunGameLoop`?
-            
-            // Assuming `RunPhaseAsync` handles it?
-            // Or `AdvancePhaseAsync`?
-            
-            // Let's try calling `engine.ResolveSpiceBlowAsync(...)`?
-            // I'll check GameEngine first via view_file or guess.
-            // Step 600 was inside a method returning GamePhase?
-            // "return GamePhase.ChoamCharity;"
-            
-            await _context.Engine.AdvancePhaseAsync(_context.Game.Id); // Advance FROM Spice phase SHOULD trigger spice blow logic.
+             var service = new DuneBot.Engine.Services.SpiceService(_context.MockDeck.Object, new DuneBot.Engine.Services.GameMessageService());
+             var nextPhase = service.ResolveSpiceBlow(_context.Game);
+             _context.Game.State.Phase = nextPhase;
         }
 
-
-        [Then(@"territory ""(.*)"" should have (.*) spice")]
+        [Then(@"territory ""(.*)"" should have (\d+) spice")]
         public void ThenTerritoryShouldHaveSpice(string territoryName, int amount)
         {
              var t = _context.Game.State.Map.Territories.FirstOrDefault(x => x.Name == territoryName);
              Assert.NotNull(t);
              Assert.Equal(amount, t.SpiceBlowAmount);
+        }
+        
+        // Removed ThenShouldHaveForcesIn
+        
+        [Then(@"the spice discard pile should contain ""(.*)""")]
+        public void ThenTheSpiceDiscardPileShouldContain(string cardName)
+        {
+             Assert.Contains(cardName, _context.Game.State.SpiceDiscard);
+        }
+        
+        [Then(@"a Nexus should occur")]
+        public void ThenANexusShouldOccur()
+        {
+             Assert.Equal(GamePhase.Nexus, _context.Game.State.Phase);
         }
     }
 }

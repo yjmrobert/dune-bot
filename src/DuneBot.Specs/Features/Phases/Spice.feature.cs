@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Phases
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Spice Phase", "  In order to gain resources\r\n  As the Game Engine\r\n  I want to spawn spice in te" +
-                    "rritories", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Spice Phase", "  In order to gain resources\n  As the Game Engine\n  I want to spawn spice in terr" +
+                    "itories", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -82,7 +82,7 @@ namespace DuneBot.Specs.Features.Phases
 #line 6
   #line hidden
 #line 7
-     await testRunner.GivenAsync("the game is in the \"Storm\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the game is in the \"Storm\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
         }
         
@@ -130,15 +130,15 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Spice Blow B adds spice")]
+        [Xunit.SkippableFactAttribute(DisplayName="Spice Blow obstructed by Storm")]
         [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
-        [Xunit.TraitAttribute("Description", "Spice Blow B adds spice")]
-        public async System.Threading.Tasks.Task SpiceBlowBAddsSpice()
+        [Xunit.TraitAttribute("Description", "Spice Blow obstructed by Storm")]
+        public async System.Threading.Tasks.Task SpiceBlowObstructedByStorm()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Spice Blow B adds spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 16
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Spice Blow obstructed by Storm", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 14
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -151,14 +151,155 @@ namespace DuneBot.Specs.Features.Phases
 #line 6
   await this.FeatureBackgroundAsync();
 #line hidden
-#line 17
-    await testRunner.GivenAsync("the next spice card B is \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line 15
+    await testRunner.GivenAsync("the next spice card A is \"The Great Flat\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 18
+#line 16
+    await testRunner.AndAsync("the current storm position is sector 12", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 20
+    await testRunner.AndAsync("\"The Great Flat\" (Sector 8) is in the storm (Sector 8)", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 21
     await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 19
+#line 22
+    await testRunner.ThenAsync("territory \"The Great Flat\" should have 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Shai-Hulud destroys forces and spice")]
+        [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
+        [Xunit.TraitAttribute("Description", "Shai-Hulud destroys forces and spice")]
+        public async System.Threading.Tasks.Task Shai_HuludDestroysForcesAndSpice()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Shai-Hulud destroys forces and spice", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 24
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 25
+    await testRunner.GivenAsync("the discard pile has \"Cielago Depression\" on top", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 26
+    await testRunner.AndAsync("territory \"Cielago Depression\" has 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 27
+    await testRunner.AndAsync("\"Atreides\" has 3 forces in \"Cielago Depression\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 28
+    await testRunner.AndAsync("the next spice card A is \"Shai-Hulud\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 29
+    await testRunner.AndAsync("the next spice card B is \"The Great Flat\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 30
+    await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 31
+    await testRunner.ThenAsync("territory \"Cielago Depression\" should have 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 32
+    await testRunner.AndAsync("\"Atreides\" should have 0 forces in \"Cielago Depression\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 33
+    await testRunner.AndAsync("territory \"The Great Flat\" should have 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Double Shai-Hulud causes multiple discards")]
+        [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
+        [Xunit.TraitAttribute("Description", "Double Shai-Hulud causes multiple discards")]
+        public async System.Threading.Tasks.Task DoubleShai_HuludCausesMultipleDiscards()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Double Shai-Hulud causes multiple discards", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 35
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 36
+    await testRunner.GivenAsync("the next spice card A is \"Shai-Hulud\"", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 37
+    await testRunner.AndAsync("the next spice card B is \"Shai-Hulud\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 38
+    await testRunner.AndAsync("the next spice card C is \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 39
+    await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 40
     await testRunner.ThenAsync("territory \"Broken Land\" should have 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 41
+    await testRunner.AndAsync("the spice discard pile should contain \"Shai-Hulud\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Nexus occurs after Shai-Hulud (Turn > 1)")]
+        [Xunit.TraitAttribute("FeatureTitle", "Spice Phase")]
+        [Xunit.TraitAttribute("Description", "Nexus occurs after Shai-Hulud (Turn > 1)")]
+        public async System.Threading.Tasks.Task NexusOccursAfterShai_HuludTurn1()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Nexus occurs after Shai-Hulud (Turn > 1)", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 43
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 6
+  await this.FeatureBackgroundAsync();
+#line hidden
+#line 44
+    await testRunner.GivenAsync("the game is in Turn 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 45
+    await testRunner.AndAsync("the next spice card A is \"Shai-Hulud\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 46
+    await testRunner.AndAsync("the next spice card B is \"Broken Land\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 47
+    await testRunner.WhenAsync("the spice blow is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 48
+    await testRunner.ThenAsync("a Nexus should occur", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

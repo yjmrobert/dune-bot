@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Factions
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Atreides Prescience in Battle", "  In order to gain advantage in combat\r\n  As Atreides\r\n  I want to see opponent\'s" +
-                    " battle plan elements", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Factions", "Atreides Prescience in Battle", "  In order to gain advantage in combat\n  As Atreides\n  I want to see opponent\'s b" +
+                    "attle plan elements", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

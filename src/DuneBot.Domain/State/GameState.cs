@@ -11,10 +11,10 @@ public class GameState
     public MapState Map { get; set; } = new();
 
     // Board state, storm position, spice blows, etc will go here
-    // Board state, storm position, spice blows, etc will go here
     public int StormLocation { get; set; } 
     
     public ulong? LobbyMessageId { get; set; }
+    public ulong? FirstPlayerId { get; set; }
     
     // Decks
     public List<string> TreacheryDeck { get; set; } = new();
@@ -60,6 +60,7 @@ public class FactionState
     public int RevivedTroopsThisTurn { get; set; } // Reset each turn
     public bool HasShipped { get; set; } // Reset at Ship/Move phase
     public bool HasMoved { get; set; } // Reset at Ship/Move phase
+    public int StartSector { get; set; } // The sector where the faction's token is placed (1-18)
 }
 
 public class BattleState

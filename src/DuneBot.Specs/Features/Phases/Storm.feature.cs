@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Phases
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Storm Phase", "  In order to simulate the harsh environment of Arrakis\r\n  As a Game Engine\r\n  I " +
-                    "want the storm to move blindly and destroy exposed forces", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "Storm Phase", "  In order to simulate the harsh environment of Arrakis\n  As a Game Engine\n  I wa" +
+                    "nt the storm to move blindly and destroy exposed forces", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         
@@ -87,14 +87,14 @@ namespace DuneBot.Specs.Features.Phases
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Storm moves randomly")]
+        [Xunit.SkippableFactAttribute(DisplayName="First Storm moves randomly from Sector 18")]
         [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Storm moves randomly")]
-        public async System.Threading.Tasks.Task StormMovesRandomly()
+        [Xunit.TraitAttribute("Description", "First Storm moves randomly from Sector 18")]
+        public async System.Threading.Tasks.Task FirstStormMovesRandomlyFromSector18()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm moves randomly", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("First Storm moves randomly from Sector 18", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 6
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -106,26 +106,26 @@ namespace DuneBot.Specs.Features.Phases
             {
                 await this.ScenarioStartAsync();
 #line 7
-    await testRunner.GivenAsync("the current storm position is sector 18", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("a new game is starting", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 8
-    await testRunner.WhenAsync("the storm moves 2 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the First Storm occurs", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 9
-    await testRunner.ThenAsync("the new storm position should be sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("the new storm position should be between 1 and 18", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Storm destroys forces in open sand")]
+        [Xunit.SkippableFactAttribute(DisplayName="Subsequent Storm moves between 1 and 10 sectors")]
         [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
-        [Xunit.TraitAttribute("Description", "Storm destroys forces in open sand")]
-        public async System.Threading.Tasks.Task StormDestroysForcesInOpenSand()
+        [Xunit.TraitAttribute("Description", "Subsequent Storm moves between 1 and 10 sectors")]
+        public async System.Threading.Tasks.Task SubsequentStormMovesBetween1And10Sectors()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm destroys forces in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Subsequent Storm moves between 1 and 10 sectors", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 11
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -139,6 +139,40 @@ namespace DuneBot.Specs.Features.Phases
 #line 12
     await testRunner.GivenAsync("the current storm position is sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
+#line 13
+    await testRunner.AndAsync("the game is in Turn 2", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 14
+    await testRunner.WhenAsync("the storm moves", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 15
+    await testRunner.ThenAsync("the new storm position should be between 3 and 12", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Storm destroys forces in open sand")]
+        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
+        [Xunit.TraitAttribute("Description", "Storm destroys forces in open sand")]
+        public async System.Threading.Tasks.Task StormDestroysForcesInOpenSand()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm destroys forces in open sand", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 17
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 18
+    await testRunner.GivenAsync("the current storm position is sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
                 Reqnroll.Table table12 = new Reqnroll.Table(new string[] {
                             "Faction",
                             "Forces"});
@@ -148,23 +182,57 @@ namespace DuneBot.Specs.Features.Phases
                 table12.AddRow(new string[] {
                             "Harkonnen",
                             "3"});
-#line 13
+#line 19
     await testRunner.AndAsync("the following forces are in \"Old Gap\" (Sector 3):", ((string)(null)), table12, "And ");
 #line hidden
-#line 17
+#line 23
     await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 18
+#line 24
     await testRunner.ThenAsync("\"Atreides\" should have 0 forces in \"Old Gap\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 19
+#line 25
     await testRunner.AndAsync("\"Harkonnen\" should have 0 forces in \"Old Gap\"", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 20
+#line 26
     await testRunner.AndAsync("\"Atreides\" should represent 5 forces in the tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 21
+#line 27
     await testRunner.AndAsync("\"Harkonnen\" should represent 3 forces in the tanks", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Storm removes Spice from sand sectors")]
+        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
+        [Xunit.TraitAttribute("Description", "Storm removes Spice from sand sectors")]
+        public async System.Threading.Tasks.Task StormRemovesSpiceFromSandSectors()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Storm removes Spice from sand sectors", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 29
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 30
+    await testRunner.GivenAsync("the current storm position is sector 2", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 31
+    await testRunner.AndAsync("\"Old Gap\" (Sector 3) has 5 Spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 32
+    await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 33
+    await testRunner.ThenAsync("\"Old Gap\" should have 0 Spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -178,7 +246,7 @@ namespace DuneBot.Specs.Features.Phases
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Forces in Safe Zones survive", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 23
+#line 35
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -188,7 +256,7 @@ namespace DuneBot.Specs.Features.Phases
             else
             {
                 await this.ScenarioStartAsync();
-#line 24
+#line 36
     await testRunner.GivenAsync("the current storm position is sector 1", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
                 Reqnroll.Table table13 = new Reqnroll.Table(new string[] {
@@ -197,14 +265,53 @@ namespace DuneBot.Specs.Features.Phases
                 table13.AddRow(new string[] {
                             "Atreides",
                             "5"});
-#line 25
+#line 37
     await testRunner.AndAsync("the following forces are in \"Arrakeen\" (Sector 2):", ((string)(null)), table13, "And ");
 #line hidden
-#line 28
+#line 40
     await testRunner.WhenAsync("the storm moves 1 sectors", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 29
+#line 41
     await testRunner.ThenAsync("\"Atreides\" should have 5 forces in \"Arrakeen\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="First Player is determined by Storm position")]
+        [Xunit.TraitAttribute("FeatureTitle", "Storm Phase")]
+        [Xunit.TraitAttribute("Description", "First Player is determined by Storm position")]
+        public async System.Threading.Tasks.Task FirstPlayerIsDeterminedByStormPosition()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("First Player is determined by Storm position", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 43
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+                Reqnroll.Table table14 = new Reqnroll.Table(new string[] {
+                            "Faction"});
+                table14.AddRow(new string[] {
+                            "Atreides"});
+                table14.AddRow(new string[] {
+                            "Harkonnen"});
+                table14.AddRow(new string[] {
+                            "Fremen"});
+#line 44
+    await testRunner.GivenAsync("the players are seated as follows:", ((string)(null)), table14, "Given ");
+#line hidden
+#line 49
+    await testRunner.WhenAsync("the storm moves to sector 15", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 50
+    await testRunner.ThenAsync("the First Player should be \"Atreides\"", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

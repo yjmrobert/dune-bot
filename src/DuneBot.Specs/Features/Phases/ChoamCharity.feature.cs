@@ -39,8 +39,8 @@ namespace DuneBot.Specs.Features.Phases
         public static async System.Threading.Tasks.Task FeatureSetupAsync()
         {
             testRunner = Reqnroll.TestRunnerManager.GetTestRunnerForAssembly(null, Reqnroll.xUnit.ReqnrollPlugin.XUnitParallelWorkerTracker.Instance.GetWorkerId());
-            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "CHOAM Charity Phase", "  In order to ensure all players have minimum spice\r\n  As the Game Engine\r\n  I wa" +
-                    "nt to provide charity to poor factions", ProgrammingLanguage.CSharp, featureTags);
+            Reqnroll.FeatureInfo featureInfo = new Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features/Phases", "CHOAM Charity Phase", "  In order to ensure all players have minimum spice\n  As the Game Engine\n  I want" +
+                    " to provide charity to poor factions", ProgrammingLanguage.CSharp, featureTags);
             await testRunner.OnFeatureStartAsync(featureInfo);
         }
         

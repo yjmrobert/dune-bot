@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DuneBot.Domain;
 using DuneBot.Domain.Interfaces;
 using DuneBot.Domain.State;
+using System.Collections.Generic;
 
 namespace DuneBot.Engine.Services;
 
@@ -20,43 +21,104 @@ public class SpiceService : ISpiceService
 
     public GamePhase ResolveSpiceBlow(Game game)
     {
-        var card = _deckService.Draw(game.State.SpiceDeck, game.State.SpiceDiscard);
-        if (card == null)
+        bool nexusOccurred = false;
+        
+        while (true)
         {
-            game.State.ActionLog.Add("Spice Blow: No cards left!");
-            // return GamePhase.ChoamCharity; // Removed return
-            return GamePhase.ChoamCharity; 
-        }
-
-        game.State.ActionLog.Add($"Spice Blow: Drawn **{card}**.");
-
-        if (card == "Shai-Hulud")
-        {
-            game.State.ActionLog.Add(_messageService.GetNexusMessage());
-            // Discard
-            game.State.SpiceDiscard.Add(card);
-            // Nexus logic would go here (e.g. devour forces in territory if we tracked discard properly)
-            return GamePhase.Nexus; 
-        }
-        else
-        {
-            // It's a territory
-            var territory = game.State.Map.Territories.FirstOrDefault(t => t.Name == card);
-            if (territory != null)
+            var card = _deckService.Draw(game.State.SpiceDeck, game.State.SpiceDiscard);
+            if (card == null)
             {
-                int spiceAmount = (territory.Name == "Broken Land" || territory.Name == "South Mesa" ||
-                                   territory.Name == "The Great Flat")
-                    ? 10
-                    : 6;
-                // Add spice
-                territory.SpiceBlowAmount += spiceAmount;
-                game.State.ActionLog.Add(_messageService.GetSpiceBlowMessage(card, spiceAmount));
+                game.State.ActionLog.Add("Spice Blow: No cards left!");
+                return nexusOccurred && game.State.Turn > 1 ? GamePhase.Nexus : GamePhase.ChoamCharity;
             }
 
-            // Discard
-            game.State.SpiceDiscard.Add(card);
+            game.State.ActionLog.Add($"Spice Blow: Drawn **{card}**.");
 
-            return GamePhase.ChoamCharity; // Skip Nexus
+            if (card == "Shai-Hulud")
+            {
+                game.State.ActionLog.Add(_messageService.GetNexusMessage());
+                
+                // Handle Shai-Hulud effect:
+                // "All spice and forces in the territory shown on the card now face up in the discard pile are removed"
+                // The "fail" pile is the existing discard pile *before* we add Shai-Hulud.
+                var lastTerritoryCard = game.State.SpiceDiscard.LastOrDefault();
+                
+                if (lastTerritoryCard != null && lastTerritoryCard != "Shai-Hulud")
+                {
+                    var territory = game.State.Map.Territories.FirstOrDefault(t => t.Name == lastTerritoryCard);
+                    if (territory != null)
+                    {
+                        // Remove Spice
+                        if (territory.SpiceBlowAmount > 0)
+                        {
+                            game.State.ActionLog.Add($"**Shai-Hulud** devours {territory.SpiceBlowAmount} spice in **{territory.Name}**!");
+                            territory.SpiceBlowAmount = 0;
+                        }
+
+                        // Remove Forces
+                        var factions = territory.FactionForces.Keys.ToList();
+                        foreach (var fType in factions)
+                        {
+                             // Fremen are safe from Shai-Hulud (usually, check rules. "Fremen forces are not devoured by Shai-Hulud")
+                             // Rulebook: "Fremen forces are never devoured by Shai-Hulud... they may ride the worm." 
+                             // We will implement "Devour" first, assume non-Fremen die.
+                             if (fType == Faction.Fremen) 
+                             {
+                                 game.State.ActionLog.Add($"**Fremen** ride the worm in **{territory.Name}**!");
+                                 continue;
+                             }
+                             
+                             int count = territory.FactionForces[fType];
+                             if (count > 0)
+                             {
+                                 var faction = game.State.Factions.First(f => f.Faction == fType);
+                                 faction.ForcesInTanks += count;
+                                 territory.FactionForces.Remove(fType);
+                                 game.State.ActionLog.Add($"**Shai-Hulud** devours {count} {faction.PlayerName} forces in **{territory.Name}**!");
+                             }
+                        }
+                    }
+                }
+
+                nexusOccurred = true;
+                
+                // Discard Shai-Hulud and continue loop
+                game.State.SpiceDiscard.Add(card);
+                continue; 
+            }
+            else
+            {
+                // It's a territory
+                
+                // Check Storm
+                var territory = game.State.Map.Territories.FirstOrDefault(t => t.Name == card);
+                if (territory != null)
+                {
+                    bool inStorm = territory.Sector == game.State.StormLocation;
+                    
+                    if (inStorm)
+                    {
+                         game.State.ActionLog.Add($"Spice Blow in **{card}** is swallowed by the **Storm**! No spice added.");
+                    }
+                    else
+                    {
+                        int spiceAmount = (territory.Name == "Broken Land" || territory.Name == "South Mesa" ||
+                                           territory.Name == "The Great Flat")
+                            ? 10
+                            : 6; // Simplification
+                            
+                         // Add spice
+                        territory.SpiceBlowAmount += spiceAmount;
+                        game.State.ActionLog.Add(_messageService.GetSpiceBlowMessage(card, spiceAmount));
+                    }
+                }
+
+                // Discard
+                game.State.SpiceDiscard.Add(card);
+
+                // Stop drawing
+                return nexusOccurred && game.State.Turn > 1 ? GamePhase.Nexus : GamePhase.ChoamCharity;
+            }
         }
     }
 
