@@ -1,0 +1,141 @@
+{
+  "Width": 2821,
+  "Height": 3107,
+  "Territories": [
+    {
+      "Name": "Cielago South",
+      "SpiceCoords": {
+        "X": 1466,
+        "Y": 2673
+      },
+      "SpiceAmount": 12,
+      "Storm Sector": 2
+    },
+    {
+      "Name": "Cielago North",
+      "SpiceCoords": {
+        "X": 1564,
+        "Y": 1948
+      },
+      "SpiceAmount": 8,
+      "Storm Sector": 3
+    },
+    {
+      "Name": "South Mesa",
+      "SpiceCoords": {
+        "X": 2493,
+        "Y": 1993
+      },
+      "SpiceAmount": 10,
+      "Storm Sector": 5
+    },
+    {
+      "Name": "Red Chasm",
+      "SpiceCoords": {
+        "X": 2600,
+        "Y": 1436
+      },
+      "SpiceAmount": 8,
+      "Storm Sector": 7
+    },
+    {
+      "Name": "The Minor Erg",
+      "SpiceCoords": {
+        "X": 1833,
+        "Y": 1345
+      },
+      "SpiceAmount": 8,
+      "Storm Sector": 8
+    },
+    {
+      "Name": "Sihaya Ridge",
+      "SpiceCoords": {
+        "X": 2243,
+        "Y": 703
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 9
+    },
+    {
+      "Name": "Old Gap",
+      "SpiceCoords": {
+        "X": 1697,
+        "Y": 430
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 10
+    },
+    {
+      "Name": "Broken Land",
+      "SpiceCoords": {
+        "X": 1000,
+        "Y": 500
+      },
+      "SpiceAmount": 8,
+      "Storm Sector": 12
+    },
+    {
+      "Name": "Hagga Basin",
+      "SpiceCoords": {
+        "X": 1098,
+        "Y": 1158
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 13
+    },
+    {
+      "Name": "Rock OutCroppings",
+      "SpiceCoords": {
+        "X": 481,
+        "Y": 878
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 14
+    },
+    {
+      "Name": "Funeral Plain",
+      "SpiceCoords": {
+        "X": 287,
+        "Y": 1320
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 15
+    },
+    {
+      "Name": "The Great Flat",
+      "SpiceCoords": {
+        "X": 263,
+        "Y": 1454
+      },
+      "SpiceAmount": 10,
+      "Storm Sector": 15
+    },
+    {
+      "Name": "Habbanya Erg",
+      "SpiceCoords": {
+        "X": 295,
+        "Y": 1832
+      },
+      "SpiceAmount": 8,
+      "Storm Sector": 16
+    },
+    {
+      "Name": "Wind Pass North",
+      "SpiceCoords": {
+        "X": 1182,
+        "Y": 1691
+      },
+      "SpiceAmount": 6,
+      "Storm Sector": 17
+    },
+    {
+      "Name": "Habbanya Ridge Flat",
+      "SpiceCoords": {
+        "X": 665,
+        "Y": 2411
+      },
+      "SpiceAmount": 10,
+      "Storm Sector": 18
+    }
+  ]
+}

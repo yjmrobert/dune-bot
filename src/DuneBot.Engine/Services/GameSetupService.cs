@@ -137,11 +137,12 @@ public class GameSetupService : IGameSetupService
         // For now, I'll copy the PostGameUpdate minimal logic or inject dependencies to do it.
         
         var content = _renderer.Render(game.State);
-        await _discordService.SendMapUpdateAsync(game.GuildId, game.MapChannelId, content);
+        var lastLog = game.State.ActionLog.LastOrDefault();
+        await _discordService.SendMapUpdateAsync(game.GuildId, game.MapChannelId, content, lastLog);
 
         // Send Interactive Phase Button
         string message = $"**Round {game.State.Turn}: {game.State.Phase} Phase**\nUse the button below to advance.";
-        string btnLabel = "Next Phase: Storm"; // Known next
+        string btnLabel = "Next Phase: Spice Blow"; // Known next
         
         // Add Phase Information
         message += "\n\n**Phase Information:**\n" + $"**Storm Sector:** {game.State.StormLocation}"; // Hardcoded for setup->storm transition

@@ -75,7 +75,8 @@ public class PhaseManager : IPhaseManager
     private async Task PostGameUpdate(Game game)
     {
         var content = _renderer.Render(game.State);
-        await _discordService.SendMapUpdateAsync(game.GuildId, game.MapChannelId, content);
+        var lastLog = game.State.ActionLog.LastOrDefault();
+        await _discordService.SendMapUpdateAsync(game.GuildId, game.MapChannelId, content, lastLog);
 
         string message = $"**Round {game.State.Turn}: {game.State.Phase} Phase**\nUse the button below to advance.";
         string btnLabel;

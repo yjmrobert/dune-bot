@@ -37,10 +37,9 @@ public class DeckService : IDeckService
         // Territories that have Spice Blows
         return new List<string>
         {
-            "Broken Land", "South Mesa", "Sietch Tabr", "Shield Wall", // etc
-            "Habbanya Ridge", "Red Chasm", "The Great Flat", "Habbanya Erg",
-            "The Minor Erg", "Tsimpo", "Cielago Depression", "Hagga Basin",
-            "Imperial Basin", "Arrakeen", "Carthag", // Some are Shai-Hulud triggers actually?
+            "Cielago South", "Cielago North", "South Mesa", "Red Chasm", "The Minor Erg",
+            "Sihaya Ridge", "Old Gap", "Broken Land", "Hagga Basin", "Rock OutCroppings",
+            "Funeral Plain", "The Great Flat", "Habbanya Erg", "Wind Pass North", "Habbanya Ridge Flat",
             "Shai-Hulud", "Shai-Hulud", "Shai-Hulud", "Shai-Hulud", "Shai-Hulud", "Shai-Hulud"
         };
     }

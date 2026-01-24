@@ -75,7 +75,49 @@ public class GraphicalGameRenderer : IGameRenderer
             Console.WriteLine($"[Warning] Storm overlay {stormFile} not found.");
         }
 
-        // 3. Draw Spice Blows (Future Step)
+        // 3. Draw Spice Blows
+        var spiceTokenPath = Path.Combine(_addsetsPath, "token_spice.png");
+        if (File.Exists(spiceTokenPath) && _layout != null)
+        {
+            using var spiceToken = Image.Load(spiceTokenPath);
+            // ... font loading ...
+            Font font;
+            try { font = SystemFonts.CreateFont("Arial", 40, FontStyle.Bold); }
+            catch {  
+                 var collection = new FontCollection();
+                 var family = collection.Add(Path.Combine(_addsetsPath, "font.ttf"));
+                 font = family.CreateFont(40, FontStyle.Bold);
+            }
+
+            foreach (var t in state.Map.Territories.Where(t => t.SpiceBlowAmount > 0))
+            {
+                var layoutItem = _layout.Territories.FirstOrDefault(l => l.Name.Equals(t.Name, StringComparison.OrdinalIgnoreCase));
+                if (layoutItem != null)
+                {
+                    var x = layoutItem.SpiceCoords.X - (spiceToken.Width / 2);
+                    var y = layoutItem.SpiceCoords.Y - (spiceToken.Height / 2);
+                    
+                    var location = new SixLabors.ImageSharp.Point(x, y);
+                    image.Mutate(ctx => ctx.DrawImage(spiceToken, location, 1f));
+
+                    // Render Number
+                    string text = t.SpiceBlowAmount.ToString();
+                    
+                    // Measure (Estimation)
+                    float estimatedWidth = text.Length * (font.Size * 0.6f); 
+                    float estimatedHeight = font.Size;
+                    
+                    float textX = x + spiceToken.Width - estimatedWidth - 10;
+                    float textY = y + spiceToken.Height - estimatedHeight - 10;
+                    var textLocation = new PointF(textX, textY);
+
+                    var brush = Brushes.Solid(Color.White);
+                    var pen = Pens.Solid(Color.Black, 4f);
+                    
+                    image.Mutate(ctx => ctx.DrawText(text, font, brush, pen, textLocation));
+                }
+            }
+        }
         // 4. Draw Forces (Future Step)
 
         // 5. Resize if too large (Max Width 1920)

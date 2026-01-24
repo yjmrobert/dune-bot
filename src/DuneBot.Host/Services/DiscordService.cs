@@ -70,7 +70,7 @@ public class DiscordService : IDiscordService
         }
     }
 
-    public async Task SendMapUpdateAsync(ulong guildId, ulong channelId, string content)
+    public async Task SendMapUpdateAsync(ulong guildId, ulong channelId, string content, string? message = null)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return;
@@ -81,11 +81,12 @@ public class DiscordService : IDiscordService
             // If the content is a file path, send the file
             if (System.IO.File.Exists(content))
             {
-                await channel.SendFileAsync(content, "game_board.png");
+                await channel.SendFileAsync(content, text: message);
             }
             else
             {
-                await channel.SendMessageAsync(content);
+                string fullMessage = string.IsNullOrEmpty(message) ? content : $"{message}\n{content}";
+                await channel.SendMessageAsync(fullMessage);
             }
         }
     }
