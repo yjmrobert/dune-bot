@@ -10,6 +10,7 @@ public interface IGameMessageService
     string GetSpiceBlowMessage(string card, int amount);
     string GetNexusMessage();
     string GetChoamCharityMessage(string playerName, int amount);
+    string GetChoamCharityPromptMessage();
     string GetShipmentPaymentMessage(string recipientName, string factionName);
     string GetShipmentMessage(string playerName, int amount, string territoryName, int cost);
     string GetMovementMessage(string playerName, int amount, string from, string to);

@@ -26,43 +26,27 @@ public class PhaseManager : IPhaseManager
 
     public async Task AdvancePhaseAsync(Game game)
     {
-        // 1. Get Handler for Current Phase
         var handler = _handlers.First(h => h.Phase == game.State.Phase);
-
-        // 2. Determine Next Phase
         var nextPhase = handler.GetNextPhase(game);
-
-        // 3. Update Phase
         game.State.Phase = nextPhase;
         
-        // 4. Run Logic for NEW Phase (e.g. if we switched to Storm, storm happens immediately?)
-        // Wait, original logic: 
-        // Case Storm: ResolveSpiceBlow -> Next = SpiceBlow.
-        // So "Storm" logic happened *before* switch? No.
-        // Original: "switch(currentPhase) { case Setup: next = Storm... }"
-        // Then it sets phase = next.
-        // Then it posts update.
-        // BUT, some logic happened inside the case block (e.g. resolve spice blow).
-        // So "RunPhaseAsync" should run logic for the *Current* phase before transitioning?
-        // Let's check my handlers.
-        // StormHandler: RunPhase -> ResolveSpiceBlow. NextPhase -> SpiceBlow.
-        // So yes, we run current handler's logic first.
-
+        // Find new handler
+        handler = _handlers.First(h => h.Phase == game.State.Phase);
         await handler.RunPhaseAsync(game);
 
-        
         if (game.State.Phase == GamePhase.Ended)
         {
-             // Game Over - cleanup
              await _discordService.DeleteGameChannelsAsync(game.GuildId, game.CategoryId);
              await _repository.DeleteGameAsync(game.Id);
              return;
         }
 
-        // Update DB
         await _repository.UpdateGameAsync(game);
+        await PostGameUpdate(game);
+    }
 
-        // Post Update
+    public async Task ForceGameUpdateAsync(Game game)
+    {
         await PostGameUpdate(game);
     }
 
@@ -88,13 +72,19 @@ public class PhaseManager : IPhaseManager
         else
         {
             var handler = _handlers.First(h => h.Phase == game.State.Phase);
-            var next = handler.GetNextPhase(game); // Prediction for label
+            var next = handler.GetNextPhase(game); 
             btnLabel = $"Next Phase: {next}";
         }
 
         message += "\n\n**Phase Information:**\n" + GetCurrentPhaseInfo(game);
 
-        await _discordService.SendActionMessageAsync(game.GuildId, game.ActionsChannelId, message, 
-            (btnLabel, $"next-phase:{game.Id}", "Primary"));
+        var buttons = new List<(string Label, string CustomId, string Style)>();
+        if (game.State.Phase == GamePhase.ChoamCharity)
+        {
+            buttons.Add(("Claim Charity", $"claim-charity:{game.Id}", "Success"));
+        }
+        buttons.Add((btnLabel, $"next-phase:{game.Id}", "Primary"));
+
+        await _discordService.SendActionMessageAsync(game.GuildId, game.ActionsChannelId, message, buttons.ToArray());
     }
 }

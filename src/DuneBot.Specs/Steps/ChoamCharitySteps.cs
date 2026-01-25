@@ -1,8 +1,6 @@
-using DuneBot.Domain;
-using DuneBot.Domain.State;
-using Reqnroll;
 using System.Linq;
-using Xunit;
+using Reqnroll;
+using DuneBot.Specs.Steps;
 
 namespace DuneBot.Specs.Steps
 {
@@ -16,11 +14,24 @@ namespace DuneBot.Specs.Steps
             _context = context;
         }
 
-        [When(@"the CHOAM charity is applied")]
-        public async System.Threading.Tasks.Task WhenTheCHOAMCharityIsApplied()
+        // Feature says: When "Atreides" claims CHOAM charity
+        [When(@"""(.*)"" claims CHOAM charity")]
+        public async System.Threading.Tasks.Task WhenClaimsCHOAMCharity(string factionName)
         {
-            // Advance phase will trigger CHOAM charity logic
-            await _context.Engine.AdvancePhaseAsync(_context.Game.Id);
+            var faction = _context.Game.State.Factions.First(f => f.PlayerName == factionName);
+            if (faction.PlayerDiscordId == null) 
+            {
+                faction.PlayerDiscordId = (ulong)faction.Faction; 
+            }
+
+            try
+            {
+                await _context.Engine.ClaimCharityAsync(_context.Game.Id, faction.PlayerDiscordId.Value);
+            }
+            catch
+            {
+                // Ignore error so we can test "no change" scenario
+            }
         }
     }
 }

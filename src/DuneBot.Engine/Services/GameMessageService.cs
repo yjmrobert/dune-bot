@@ -39,6 +39,11 @@ public class GameMessageService : IGameMessageService
         return $"**{playerName}** received {amount} spice from CHOAM Charity.";
     }
 
+    public string GetChoamCharityPromptMessage()
+    {
+        return "If you have 0 or 1 spice, you may claim CHOAM Charity to reach 2 spice.";
+    }
+
     public string GetShipmentPaymentMessage(string recipientName, string factionName)
     {
         return $"**{recipientName}** ({factionName}) received shipment payment.";

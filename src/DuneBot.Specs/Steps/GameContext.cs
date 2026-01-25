@@ -42,7 +42,7 @@ namespace DuneBot.Specs.Steps
                 new DuneBot.Engine.Phases.SpiceBlowPhaseHandler(messageService),
                 new DuneBot.Engine.Phases.NexusPhaseHandler(messageService),
                 new DuneBot.Engine.Phases.ChoamCharityPhaseHandler(BiddingService, messageService),
-                new DuneBot.Engine.Phases.BiddingPhaseHandler(revivalService),
+                new DuneBot.Engine.Phases.BiddingPhaseHandler(revivalService, BiddingService),
                 new DuneBot.Engine.Phases.RevivalPhaseHandler(movementService),
                 new DuneBot.Engine.Phases.ShipmentPhaseHandler(BattleService),
                 new DuneBot.Engine.Phases.BattlePhaseHandler(BattleService),
@@ -52,7 +52,7 @@ namespace DuneBot.Specs.Steps
 
             var phaseManager = new DuneBot.Engine.Phases.PhaseManager(handlers, MockRepo.Object, MockRenderer.Object, MockDiscord.Object);
 
-            Engine = new GameEngine(MockRepo.Object, BattleService, BiddingService, movementService, revivalService, setupService, phaseManager);
+            Engine = new GameEngine(MockRepo.Object, BattleService, BiddingService, movementService, revivalService, setupService, phaseManager, messageService);
 
             Game = new Game
             {

@@ -9,18 +9,20 @@ namespace DuneBot.Engine.Phases;
 public class BiddingPhaseHandler : IGamePhaseHandler
 {
     private readonly IRevivalService _revivalService;
+    private readonly IBiddingService _biddingService;
 
-    public BiddingPhaseHandler(IRevivalService revivalService)
+    public BiddingPhaseHandler(IRevivalService revivalService, IBiddingService biddingService)
     {
         _revivalService = revivalService;
+        _biddingService = biddingService;
     }
 
     public GamePhase Phase => GamePhase.Bidding;
 
-    public Task RunPhaseAsync(Game game)
+    public async Task RunPhaseAsync(Game game)
     {
-        _revivalService.StartRevivalPhase(game);
-        return Task.CompletedTask;
+        await _biddingService.StartBiddingPhase(game);
+        // Revival happens after Bidding is done.
     }
 
     public GamePhase GetNextPhase(Game game)

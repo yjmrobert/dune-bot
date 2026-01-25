@@ -82,7 +82,7 @@ namespace DuneBot.Specs.Features.Phases
 #line 6
   #line hidden
 #line 7
-     await testRunner.GivenAsync("the game is in the \"ChoamCharity\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the game is in the \"ChoamCharity\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
         }
         
@@ -121,7 +121,7 @@ namespace DuneBot.Specs.Features.Phases
     await testRunner.GivenAsync("\"Atreides\" has 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 11
-    await testRunner.WhenAsync("the CHOAM charity is applied", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("\"Atreides\" claims CHOAM charity", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 12
     await testRunner.ThenAsync("\"Atreides\" should have 2 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
@@ -155,7 +155,7 @@ namespace DuneBot.Specs.Features.Phases
     await testRunner.GivenAsync("\"Harkonnen\" has 1 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 16
-    await testRunner.WhenAsync("the CHOAM charity is applied", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("\"Harkonnen\" claims CHOAM charity", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 17
     await testRunner.ThenAsync("\"Harkonnen\" should have 2 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
@@ -164,14 +164,14 @@ namespace DuneBot.Specs.Features.Phases
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Faction with 2 or more spice receives no charity")]
+        [Xunit.SkippableFactAttribute(DisplayName="Faction with 2 or more spice cannot claim charity")]
         [Xunit.TraitAttribute("FeatureTitle", "CHOAM Charity Phase")]
-        [Xunit.TraitAttribute("Description", "Faction with 2 or more spice receives no charity")]
-        public async System.Threading.Tasks.Task FactionWith2OrMoreSpiceReceivesNoCharity()
+        [Xunit.TraitAttribute("Description", "Faction with 2 or more spice cannot claim charity")]
+        public async System.Threading.Tasks.Task FactionWith2OrMoreSpiceCannotClaimCharity()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Faction with 2 or more spice receives no charity", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            Reqnroll.ScenarioInfo scenarioInfo = new Reqnroll.ScenarioInfo("Faction with 2 or more spice cannot claim charity", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 19
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -189,7 +189,7 @@ namespace DuneBot.Specs.Features.Phases
     await testRunner.GivenAsync("\"Guild\" has 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 21
-    await testRunner.WhenAsync("the CHOAM charity is applied", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("\"Guild\" claims CHOAM charity", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 22
     await testRunner.ThenAsync("\"Guild\" should have 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");

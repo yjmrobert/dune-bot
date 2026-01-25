@@ -20,18 +20,9 @@ public class ChoamCharityPhaseHandler : IGamePhaseHandler
 
     public async Task RunPhaseAsync(Game game)
     {
-        foreach (var faction in game.State.Factions)
-        {
-            if (faction.Spice < 2)
-            {
-                int amount = 2 - faction.Spice;
-                faction.Spice = 2;
-                game.State.ActionLog.Add(_messageService.GetChoamCharityMessage(faction.PlayerName, amount));
-            }
-        }
-        
-        // Start Bidding for next phase
-        await _biddingService.StartBiddingPhase(game);
+        // Phase is now manual. Wait for claims.
+        game.State.ActionLog.Add(_messageService.GetChoamCharityPromptMessage());
+        await Task.CompletedTask;
     }
 
     public GamePhase GetNextPhase(Game game)
