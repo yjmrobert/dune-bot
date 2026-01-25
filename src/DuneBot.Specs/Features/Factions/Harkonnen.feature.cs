@@ -82,7 +82,7 @@ namespace DuneBot.Specs.Features.Factions
 #line 6
   #line hidden
 #line 7
-     await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the game is in the \"Battle\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
         }
         
@@ -139,7 +139,7 @@ namespace DuneBot.Specs.Features.Factions
     await testRunner.GivenAsync("the following factions are in a battle in \"Arrakeen\":", ((string)(null)), table4, "Given ");
 #line hidden
 #line 14
-    await testRunner.AndAsync("the \"Harkonnen\" faction has 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("\"Harkonnen\" has 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 15
     await testRunner.WhenAsync("the battle is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");

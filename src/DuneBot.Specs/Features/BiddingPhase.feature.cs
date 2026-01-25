@@ -440,7 +440,7 @@ namespace DuneBot.Specs.Features
     await testRunner.AndAsync("\"Emperor\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 73
-    await testRunner.AndAsync("\"Atreides\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("\"Fremen\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 74
     await testRunner.ThenAsync("\"Atreides\" should win the auction", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
@@ -510,12 +510,9 @@ namespace DuneBot.Specs.Features
     await testRunner.AndAsync("\"Fremen\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 90
-    await testRunner.AndAsync("\"Atreides\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
-#line hidden
-#line 91
     await testRunner.ThenAsync("card 1 should be sold", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 92
+#line 91
     await testRunner.AndAsync("it should be \"Harkonnen\" turn to bid", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
             }

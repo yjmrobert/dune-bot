@@ -70,7 +70,7 @@ Feature: Bidding Phase
     And "Atreides" places a bid of 2
     And "Harkonnen" passes
     And "Emperor" passes
-    And "Atreides" passes
+    And "Fremen" passes
     Then "Atreides" should win the auction
     And "Atreides" should have 8 spice
     And "Emperor" should have 12 spice
@@ -87,6 +87,5 @@ Feature: Bidding Phase
     And "Harkonnen" passes
     And "Emperor" passes
     And "Fremen" passes
-    And "Atreides" passes
     Then card 1 should be sold
     And it should be "Harkonnen" turn to bid

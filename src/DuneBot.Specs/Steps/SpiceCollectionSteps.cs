@@ -31,8 +31,9 @@ namespace DuneBot.Specs.Steps
         [When(@"spice collection is resolved")]
         public async System.Threading.Tasks.Task WhenSpiceCollectionIsResolved()
         {
-            // Advance phase will trigger spice collection logic
-            await _context.Engine.AdvancePhaseAsync(_context.Game.Id);
+            // Call logic directly because phase manager advances before running automated logic
+            _context.SpiceService.CollectSpice(_context.Game);
+            await System.Threading.Tasks.Task.CompletedTask;
         }
 
         [Then(@"""(.*)"" should have (.*) spice remaining")]

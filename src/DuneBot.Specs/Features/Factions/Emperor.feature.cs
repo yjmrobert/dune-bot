@@ -106,19 +106,37 @@ namespace DuneBot.Specs.Features.Factions
             {
                 await this.ScenarioStartAsync();
 #line 7
-    await testRunner.GivenAsync("the \"Emperor\" is in the game with 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("a game with 4 factions: Atreides, Harkonnen, Emperor, Fremen", ((string)(null)), ((Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 8
-    await testRunner.AndAsync("the \"Atreides\" faction has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("the game is in the \"Bidding\" phase", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 9
-    await testRunner.AndAsync("\"Atreides\" wins the auction for 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("\"Atreides\" has 10 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 10
-    await testRunner.WhenAsync("the auction is resolved", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("\"Emperor\" has 0 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 11
-    await testRunner.ThenAsync("\"Emperor\" should have 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+    await testRunner.WhenAsync("the Bidding Phase starts", ((string)(null)), ((Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 12
+    await testRunner.AndAsync("\"Atreides\" places a bid of 5", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 13
+    await testRunner.AndAsync("\"Harkonnen\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 14
+    await testRunner.AndAsync("\"Emperor\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 15
+    await testRunner.AndAsync("\"Fremen\" passes", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 16
+    await testRunner.ThenAsync("\"Atreides\" should win the auction", ((string)(null)), ((Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 17
+    await testRunner.AndAsync("\"Emperor\" should have 5 spice", ((string)(null)), ((Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
