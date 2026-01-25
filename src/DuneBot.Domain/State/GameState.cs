@@ -10,7 +10,7 @@ public class GameState
     
     public MapState Map { get; set; } = new();
 
-    // Board state, storm position, spice blows, etc will go here
+    // Board state
     public int StormLocation { get; set; } 
     
     public ulong? LobbyMessageId { get; set; }
@@ -30,6 +30,11 @@ public class GameState
     public ulong? CurrentBidderId { get; set; } // Whose turn to bid
     public bool IsBiddingRoundActive { get; set; } // True if bidding is in progress 
     public ulong? BiddingThreadId { get; set; } // ID of the specific Discord thread for this auction
+    
+    // [NEW] Auction Queue and Rotation
+    public List<string> AuctionQueue { get; set; } = new(); 
+    public ulong? AuctionInitialBidderId { get; set; } // The player who started bidding for the CURRENT card
+    public List<ulong> PlayersEligibleToBid { get; set; } = new(); // List of player IDs eligible (Hand < 4)
     
     // Battle Phase State
     public Queue<BattleState> PendingBattles { get; set; } = new();
