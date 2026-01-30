@@ -1,26 +1,12 @@
-export interface Coordinate {
-    x: number;
-    y: number;
-}
-
-export interface SectorDefinition {
-    sector: number; // The Storm Sector (1-18)
-    forceAnchor: Coordinate; // Where troops are rendered
-    spiceCoord?: Coordinate; // Where spice is rendered (if applicable)
-}
-
-export interface TerritoryData {
-    name: string;
-    isStronghold: boolean;
-    neighbors: string[];
-    sectors: SectorDefinition[];
-}
-
-import MAP_LOCATIONS from './map_locations.json';
-
-const LOCATIONS = MAP_LOCATIONS as Record<string, Record<string, { force: { x: number, y: number }, spice?: { x: number, y: number } }>>;
-
-function getSectors(name: string): SectorDefinition[] {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.STRONGHOLDS = exports.BOARD_MAP = void 0;
+const map_locations_json_1 = __importDefault(require("./map_locations.json"));
+const LOCATIONS = map_locations_json_1.default;
+function getSectors(name) {
     const data = LOCATIONS[name];
     if (!data) {
         console.warn(`No location data for ${name}`);
@@ -35,8 +21,7 @@ function getSectors(name: string): SectorDefinition[] {
         };
     }).sort((a, b) => a.sector - b.sector);
 }
-
-export const BOARD_MAP: Record<string, TerritoryData> = {
+exports.BOARD_MAP = {
     // --- Strongholds ---
     "Arrakeen": {
         name: "Arrakeen",
@@ -68,7 +53,6 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         neighbors: ["Habbanya Ridge"],
         sectors: getSectors("Habbanya Sietch")
     },
-
     // --- Basins / Other ---
     "Imperial Basin": {
         name: "Imperial Basin",
@@ -106,7 +90,6 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         neighbors: ["Habbanya Ridge"],
         sectors: getSectors("The Great Flat")
     },
-
     // --- Imported from board_layout.json ---
     "Cielago South": {
         name: "Cielago South",
@@ -181,5 +164,4 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         sectors: getSectors("Wind Pass North")
     }
 };
-
-export const STRONGHOLDS = Object.values(BOARD_MAP).filter(t => t.isStronghold).map(t => t.name); // No change needed here if we only look at name/isStronghold
+exports.STRONGHOLDS = Object.values(exports.BOARD_MAP).filter(t => t.isStronghold).map(t => t.name); // No change needed here if we only look at name/isStronghold

@@ -1,26 +1,24 @@
-import { GameState } from "../types";
-import { BOARD_MAP } from "../constants/map";
-import { BoardService } from "../services/BoardService";
-
-export class MentatPauseEngine {
-    resolveMentatPause(state: GameState): string[] {
-        const logs: string[] = [];
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MentatPauseEngine = void 0;
+const map_1 = require("../constants/map");
+const BoardService_1 = require("../services/BoardService");
+class MentatPauseEngine {
+    resolveMentatPause(state) {
+        const logs = [];
         logs.push("Mentat Pause...");
-
         // 1. Check Win Conditions
-        const strongholdCounts = new Map<string, number>();
-
+        const strongholdCounts = new Map();
         for (const tName in state.boardState) {
-            const t = BOARD_MAP[tName];
-            if (!t || !t.isStronghold) continue;
-
+            const t = map_1.BOARD_MAP[tName];
+            if (!t || !t.isStronghold)
+                continue;
             const controller = this.getController(state, tName);
             if (controller) {
                 const current = strongholdCounts.get(controller) || 0;
                 strongholdCounts.set(controller, current + 1);
             }
         }
-
         // Standard rules: 3 strongholds to win
         // (Ignoring Alliance/Guild/Fremen special rules for MVP)
         for (const [factionId, count] of strongholdCounts.entries()) {
@@ -30,7 +28,6 @@ export class MentatPauseEngine {
                 return logs;
             }
         }
-
         // 2. Check Turn Limit
         if (state.turn >= 10) {
             logs.push("Turn 10 reached without a winner. Game Over.");
@@ -41,7 +38,6 @@ export class MentatPauseEngine {
             state.phase = "Game Over";
             return logs;
         }
-
         // 3. Advance Turn
         state.turn += 1;
         state.phase = "Storm";
@@ -53,12 +49,11 @@ export class MentatPauseEngine {
             // Ideally we clear 'hasShipped', 'hasMoved' boolean flags if we added them to FactionState.
             // Looking at FactionState type... checked earlier.
         }
-
         logs.push(`Advancing to Turn ${state.turn}, Storm Phase.`);
         return logs;
     }
-
-    private getController(state: GameState, territoryName: string): string | null {
-        return BoardService.getController(state, territoryName);
+    getController(state, territoryName) {
+        return BoardService_1.BoardService.getController(state, territoryName);
     }
 }
+exports.MentatPauseEngine = MentatPauseEngine;
