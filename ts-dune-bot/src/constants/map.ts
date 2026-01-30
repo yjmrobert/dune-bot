@@ -23,7 +23,7 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         isStronghold: true,
         neighbors: ["Imperial Basin", "Old Gap", "Rim Wall West"],
         sectors: [
-            { sector: 10, forceAnchor: { x: 0, y: 0 } },
+            { sector: 10, forceAnchor: { x: 1800, y: 600 } },
         ]
     },
     "Carthag": {
@@ -31,31 +31,31 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         isStronghold: true,
         neighbors: ["Imperial Basin", "Hagga Basin", "Tsimpo", "Arsunt"],
         sectors: [
-            { sector: 11, forceAnchor: { x: 0, y: 0 } },
+            { sector: 11, forceAnchor: { x: 1421, y: 702 } },
         ]
     },
     "Sietch Tabr": {
         name: "Sietch Tabr",
         isStronghold: true,
-        neighbors: ["Hagga Basin", "Shield Wall"],
+        neighbors: ["Rock Outcroppings", "Plastic Basin", "Bight of the Cliff"],
         sectors: [
-            { sector: 14, forceAnchor: { x: 0, y: 0 } }
+            { sector: 14, forceAnchor: { x: 510, y: 1000 } }
         ]
     },
     "Tuek's Sietch": {
         name: "Tuek's Sietch",
         isStronghold: true,
-        neighbors: ["Pasty Mesa", "False Wall South"],
+        neighbors: ["Pasty Mesa", "False Wall South", "South Mesa"],
         sectors: [
-            { sector: 5, forceAnchor: { x: 0, y: 0 } }
+            { sector: 5, forceAnchor: { x: 2331120, y: 1984 } }
         ]
     },
     "Habbanya Sietch": { 
         name: "Habbanya Sietch",
         isStronghold: true,
-        neighbors: ["Habbanya Ridge"],
+        neighbors: ["Habbanya Ridge Flat"],
         sectors: [
-            { sector: 6, forceAnchor: { x: 0, y: 0 } }
+            { sector: 6, forceAnchor: { x: 553, y: 2041 } }
         ]
     },
 
@@ -65,9 +65,9 @@ export const BOARD_MAP: Record<string, TerritoryData> = {
         isStronghold: false,
         neighbors: ["Arrakeen", "Carthag", "Shield Wall"],
         sectors: [
-            { sector: 1, forceAnchor: { x: 0, y: 0 } },
-            { sector: 2, forceAnchor: { x: 0, y: 0 } },
-            { sector: 3, forceAnchor: { x: 0, y: 0 } }
+            { sector: 9, forceAnchor: { x: 1681, y: 1142 } },
+            { sector: 10, forceAnchor: { x: 1631, y: 844 } },
+            { sector: 11, forceAnchor: { x: 1487, y: 955 } }
         ]
     },
     "Hagga Basin": {
