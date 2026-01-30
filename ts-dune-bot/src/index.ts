@@ -3,6 +3,7 @@ import { config } from "./config";
 import { commands } from "./commands";
 import { DiscordService } from "./services/DiscordService";
 import { GameManager } from "./engine/GameManager";
+import { GameEngine } from "./engine/GameEngine";
 
 const client = new Client({
     intents: [
@@ -15,6 +16,7 @@ const client = new Client({
 // Services
 const discordService = new DiscordService(client);
 const gameManager = new GameManager(discordService);
+const gameEngine = new GameEngine();
 
 client.once(Events.ClientReady, async c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
@@ -40,7 +42,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
 
         try {
-            await command.execute(interaction, gameManager);
+            // Check if command needs gameEngine (hacky check for now, ideally strictly typed)
+            if (["join-game", "start-game", "next-phase"].includes(interaction.commandName)) {
+                // @ts-ignore
+                await command.execute(interaction, gameEngine);
+            } else {
+                await command.execute(interaction, gameManager);
+            }
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
@@ -52,10 +60,31 @@ client.on(Events.InteractionCreate, async (interaction) => {
         return;
     }
 
-    // 2. Buttons (Placeholder for now)
+    // 2. Buttons
     if (interaction.isButton()) {
-        console.log(`Button clicked: ${interaction.customId}`);
-        // TODO: Delegate to a Button Handler / Interaction Service
+        const [action, param] = interaction.customId.split(":");
+        const gameId = parseInt(param);
+
+        try {
+            if (action === "join-game") {
+                const result = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
+                await interaction.reply({ content: result, ephemeral: true });
+            } else if (action === "start-game") {
+                await interaction.deferReply({ ephemeral: true });
+                await gameEngine.startGame(gameId);
+                await interaction.editReply("Game Started!");
+            } else if (action === "next-phase") {
+                await interaction.deferReply({ ephemeral: true });
+                const newState = await gameEngine.advancePhase(gameId);
+                await interaction.editReply(`Advanced to phase: ${newState.phase}`);
+            }
+        } catch (error: any) {
+            if (interaction.deferred || interaction.replied) {
+                await interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true });
+            } else {
+                await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+            }
+        }
     }
 });
 

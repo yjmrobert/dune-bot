@@ -9,7 +9,17 @@ export class GameManager {
         // 1. Create Placeholder Game to get ID
         const initialState: GameState = {
             phase: "Setup",
-            turn: 0
+            turn: 0,
+            stormLocation: 0,
+            factions: [],
+            actionLog: [],
+            auctionQueue: [],
+            currentBid: 0,
+            isBiddingRoundActive: false,
+            spiceDeck: [],
+            spiceDiscard: [],
+            nexusActive: false,
+            boardState: {}
         };
 
         const game = await prisma.game.create({
