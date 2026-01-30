@@ -9,6 +9,7 @@ import { BattleEngine } from "./BattleEngine";
 import { SpiceCollectionEngine } from "./SpiceCollectionEngine";
 import { MentatPauseEngine } from "./MentatPauseEngine";
 import { FACTION_LEADERS } from "../constants/leaders";
+import { BoardService } from "../services/BoardService";
 
 // Utility to get random item from array
 function sample<T>(arr: T[]): T {
@@ -269,10 +270,12 @@ export class GameEngine {
         const state = JSON.parse(game.stateJson) as GameState;
 
         // Identify combatants
-        const forces = state.boardState[territoryName]?.forces || {};
+        // Identify combatants
+        // Identify combatants
+        const forces = BoardService.getForces(state, territoryName);
         const participants = Object.keys(forces).filter(f => forces[f] > 0);
         if (participants.length < 2) throw new Error("Not enough factions for battle.");
-        
+
         // Simple logic: First 2 are fighting. 
         // Real logic: Aggressor is current turn player. Defender is... well, depends on who they moved into.
         // For MVP Test: Pass simple args or infer.
