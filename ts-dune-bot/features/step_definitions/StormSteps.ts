@@ -40,6 +40,8 @@ Given('a new game is starting', async function () {
         isBiddingRoundActive: false,
         spiceDeck: [],
         spiceDiscard: [],
+        treacheryDeck: [],
+        treacheryDiscard: [],
         nexusActive: false,
         boardState: {}
     };
@@ -72,7 +74,7 @@ Given('the current storm position is sector {int}', async function (location: nu
         const initialState: GameState = {
             phase: "Setup",
             turn: 0, stormLocation: location, factions: [], actionLog: [], auctionQueue: [], currentBid: 0, isBiddingRoundActive: false, boardState: {},
-            spiceDeck: [], spiceDiscard: [], nexusActive: false
+            spiceDeck: [], spiceDiscard: [], treacheryDeck: [], treacheryDiscard: [], nexusActive: false
         };
         const game = await prisma.game.create({
             data: { guildId: "test-storm-2", stateJson: JSON.stringify(initialState), categoryId: "c", actionsChannelId: "a", mapChannelId: "m", tableTalkChannelId: "t" }
@@ -122,7 +124,7 @@ Given('the following forces are in {string} \\(Sector {int}):', async function (
             state.factions.push({
                 faction: row['Faction'] as any,
                 playerDiscordId: "d", playerName: row['Faction'],
-                spice: 0, reserves: 0, traitors: [], hand: []
+                spice: 0, reserves: 0, forcesInTanks: 0, leaders: [], traitors: [], hand: []
             });
         }
     }
@@ -155,7 +157,7 @@ Given('the players are seated as follows:', async function (dataTable: any) {
         const initialState: GameState = {
             phase: "Setup",
             turn: 0, stormLocation: 0, factions: [], actionLog: [], auctionQueue: [], currentBid: 0, isBiddingRoundActive: false, boardState: {},
-            spiceDeck: [], spiceDiscard: [], nexusActive: false
+            spiceDeck: [], spiceDiscard: [], treacheryDeck: [], treacheryDiscard: [], nexusActive: false
         };
         const game = await prisma.game.create({
             data: { guildId: "test-storm-3", stateJson: JSON.stringify(initialState), categoryId: "c", actionsChannelId: "a", mapChannelId: "m", tableTalkChannelId: "t" }
@@ -174,7 +176,7 @@ Given('the players are seated as follows:', async function (dataTable: any) {
             faction: row['Faction'] as any,
             playerDiscordId: `d-${row['Faction']}`,
             playerName: row['Faction'],
-            spice: 0, reserves: 0, traitors: [], hand: []
+            spice: 0, reserves: 0, forcesInTanks: 0, leaders: [], traitors: [], hand: []
         });
     }
     await saveState(TestContext.gameId, state);

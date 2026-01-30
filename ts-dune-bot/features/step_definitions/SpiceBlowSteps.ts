@@ -31,7 +31,7 @@ async function ensureGame() {
     if (TestContext.gameId === 0) {
         const initialState: GameState = {
             phase: "Storm", turn: 1, stormLocation: 0, factions: [], actionLog: [], auctionQueue: [], currentBid: 0,
-            isBiddingRoundActive: false, boardState: {}, spiceDeck: [], spiceDiscard: [], nexusActive: false
+            isBiddingRoundActive: false, boardState: {}, spiceDeck: [], spiceDiscard: [], treacheryDeck: [], treacheryDiscard: [], nexusActive: false
         };
         const game = await prisma.game.create({
             data: { guildId: "test-spice", stateJson: JSON.stringify(initialState), categoryId: "c", actionsChannelId: "a", mapChannelId: "m", tableTalkChannelId: "t" }
@@ -108,11 +108,29 @@ Given('territory {string} has {int} spice', async function (tName: string, amoun
     await saveState(TestContext.gameId, state);
 });
 
-Given('{string} has {int} forces in {string}', async function (faction: string, count: number, tName: string) {
+Given('{string} has {int} forces in {string}', async function (factionName: string, count: number, tName: string) {
     await ensureGame();
     const state = await getState(TestContext.gameId);
+
+    // Ensure faction exists
+    let faction = state.factions.find(f => f.faction === factionName);
+    if (!faction) {
+        faction = {
+            faction: factionName as any,
+            playerDiscordId: `d-${factionName}`,
+            playerName: factionName,
+            spice: 0,
+            reserves: 0,
+            forcesInTanks: 0,
+            leaders: [],
+            traitors: [],
+            hand: []
+        };
+        state.factions.push(faction);
+    }
+
     if (!state.boardState[tName]) state.boardState[tName] = { name: tName, spice: 0, forces: {} };
-    state.boardState[tName].forces[faction] = count;
+    state.boardState[tName].forces[factionName] = count;
     await saveState(TestContext.gameId, state);
 });
 

@@ -30,6 +30,8 @@ Given('a new game is created with ID {int}', async function (id: number) {
         isBiddingRoundActive: false,
         spiceDeck: [],
         spiceDiscard: [],
+        treacheryDeck: [],
+        treacheryDiscard: [],
         nexusActive: false,
         boardState: {}
     };
@@ -123,13 +125,16 @@ Then('the Storm should be at a valid sector', async function () {
     expect(state.stormLocation).to.be.lessThan(19);
 });
 
-Then('Treachery Deck should be shuffled', function () {
-    // Implementation specific - for MVP we just check if traitors were dealt maybe?
-    // or mocked deck
+Then('Treachery Deck should be shuffled', async function () {
+    const game = await prisma.game.findUnique({ where: { id: TestContext.gameId } });
+    const state = JSON.parse(game!.stateJson) as GameState;
+    expect(state.treacheryDeck.length).to.be.greaterThan(0);
 });
 
-Then('Spice Deck should be shuffled', function () {
-    // Implementation specific
+Then('Spice Deck should be shuffled', async function () {
+    const game = await prisma.game.findUnique({ where: { id: TestContext.gameId } });
+    const state = JSON.parse(game!.stateJson) as GameState;
+    expect(state.spiceDeck.length).to.be.greaterThan(0);
 });
 
 Then('the start request should be rejected', function () {
@@ -150,7 +155,7 @@ Given('the game is in the {string} phase', async function (phase: string) {
             currentBid: 0,
             isBiddingRoundActive: false,
             boardState: {},
-            spiceDeck: [], spiceDiscard: [], nexusActive: false
+            spiceDeck: [], spiceDiscard: [], treacheryDeck: [], treacheryDiscard: [], nexusActive: false
         };
         const game = await prisma.game.create({
             data: { guildId: "test-common", stateJson: JSON.stringify(initialState), categoryId: "c", actionsChannelId: "a", mapChannelId: "m", tableTalkChannelId: "t" }

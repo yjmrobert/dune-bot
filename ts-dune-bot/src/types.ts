@@ -26,12 +26,20 @@ export interface SpiceCard {
     sector?: number; // For storm check
 }
 
+export interface LeaderState {
+    name: string;
+    strength: number;
+    isDead: boolean; // true if in Tleilaxu Tanks
+}
+
 export interface FactionState {
     faction: Faction;
     playerDiscordId: string;
     playerName: string;
     spice: number;
     reserves: number;
+    forcesInTanks: number;
+    leaders: LeaderState[];
     traitors: string[]; // Keeping it simple: list of card names or IDs
     hand: TreacheryCard[];
 }
@@ -57,10 +65,32 @@ export interface GameState {
     // Spice Blow State
     spiceDeck: SpiceCard[];
     spiceDiscard: SpiceCard[];
+    treacheryDeck: TreacheryCard[];
+    treacheryDiscard: TreacheryCard[];
     nexusActive: boolean;
 
     // Board State
     boardState: Record<string, TerritoryState>; // Key: Territory Name
+
+    // Battle State
+    battleState?: BattleStateData;
+    winnerId?: string;
+}
+
+export interface BattlePlan {
+    leaderName: string;
+    weaponName?: string;
+    defenseName?: string;
+    dial: number;
+}
+
+export interface BattleStateData {
+    territory: string;
+    aggressorId: string;
+    defenderId: string;
+    plans: Record<string, BattlePlan>;
+    resolved: boolean;
+    winnerId?: string;
 }
 
 export interface TerritoryState {

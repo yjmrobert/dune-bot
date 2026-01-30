@@ -35,7 +35,7 @@ Given('a game with {int} factions: {string}, {string}, {string}, {string}', asyn
         const initialState: GameState = {
             phase: "Setup", turn: 0, stormLocation: 0, factions: [], actionLog: [],
             auctionQueue: [], currentBid: 0, isBiddingRoundActive: false, boardState: {},
-            spiceDeck: [], spiceDiscard: [], nexusActive: false
+            spiceDeck: [], spiceDiscard: [], treacheryDeck: [], treacheryDiscard: [], nexusActive: false
         };
         const game = await prisma.game.create({
             data: { guildId: "test-bidding", stateJson: JSON.stringify(initialState), categoryId: "c", actionsChannelId: "a", mapChannelId: "m", tableTalkChannelId: "t" }
@@ -54,6 +54,8 @@ Given('a game with {int} factions: {string}, {string}, {string}, {string}', asyn
             playerName: f,
             spice: 10,
             reserves: 0,
+            forcesInTanks: 0,
+            leaders: [],
             traitors: [],
             hand: []
         });
@@ -116,20 +118,63 @@ Then('{int} cards should be dealt for auction', async function (count: number) {
     expect(total).to.equal(count);
 });
 
+
 Then('{string} should not be eligible to bid', async function (factionName: string) {
-    // This is implicit in the game logic (they shouldn't be picked as next bidder)
-    // But how do we test "eligible to bid"?
-    // Maybe check if they are in rotation? Or just if they can bid?
-    // The scenario implies we check the rule.
-    // Actually, "should not be eligible to bid" probably means they were skipped in card dealing count
-    // OR that they must pass. 
-    // Let's assume it checks logic. For now, valid step is check hand size >= 4?
-    // Or check if they are banned from bidding engine?
+    const state = await getState(TestContext.gameId);
+    // If they are not eligible, they should not be the current bidder
+    const faction = state.factions.find(f => f.faction === factionName);
+    // Also, strictly speaking, the engine shouldn't pick them.
+    // If the phase started, currentBidderId should be someone else.
+    expect(state.currentBidderId).to.not.equal(faction?.playerDiscordId);
 });
 
 Then('{string} should be eligible to bid', async function (factionName: string) {
-    //
+    // If they are eligible and it's their turn (or they are in queue), 
+    // in the specific scenario where only one is eligible, they MUST be the current bidder.
+    const state = await getState(TestContext.gameId);
+    const faction = state.factions.find(f => f.faction === factionName);
+    expect(state.currentBidderId).to.equal(faction?.playerDiscordId);
 });
+
+Then('{string} should win the auction', async function (factionName: string) {
+    const state = await getState(TestContext.gameId);
+    const found = state.actionLog.some(log => log.includes(`${factionName} won`));
+    expect(found).to.be.true;
+});
+
+Given('there are {int} cards up for auction', async function (count: number) {
+    const state = await getState(TestContext.gameId);
+    state.auctionQueue = [];
+    for (let i = 1; i <= count; i++) {
+        state.auctionQueue.push({ id: i, name: `Card ${i}`, type: "Weapon", description: "desc", isWeapon: true, isDefense: false, isSpecial: false });
+    }
+    await saveState(TestContext.gameId, state);
+});
+
+Then('card {int} should be sold', async function (cardId: number) {
+    const state = await getState(TestContext.gameId);
+    // Card should not be in queue and not be current card (if auction ended)
+    const inQueue = state.auctionQueue.find(c => c.id === cardId);
+    const isCurrent = state.currentCard?.id === cardId;
+    expect(inQueue).to.be.undefined;
+    expect(isCurrent).to.be.false;
+});
+
+Given('{string} is second', async function (factionName: string) {
+    const state = await getState(TestContext.gameId);
+    expect(state.factions[1].faction).to.equal(factionName);
+});
+
+Given('{string} is third', async function (factionName: string) {
+    const state = await getState(TestContext.gameId);
+    expect(state.factions[2].faction).to.equal(factionName);
+});
+
+Given('{string} is fourth', async function (factionName: string) {
+    const state = await getState(TestContext.gameId);
+    expect(state.factions[3].faction).to.equal(factionName);
+});
+
 
 Given('{string} is the First Player', async function (factionName: string) {
     const state = await getState(TestContext.gameId);
@@ -139,11 +184,7 @@ Given('{string} is the First Player', async function (factionName: string) {
 
 Given('{string} is first', async function (factionName: string) {
     const state = await getState(TestContext.gameId);
-    // Reorder factions array or set firstPlayerId
-    // If factions are [A, H, E, F], setting Atreides as first means order is A, H, E, F
     state.firstPlayerId = `discord-${factionName}`;
-
-    // Also likely need to clear hands
     state.factions.forEach(f => f.hand = []);
     await saveState(TestContext.gameId, state);
 });
@@ -190,10 +231,6 @@ Given('{string} has {int} spice', async function (factionName: string, amount: n
     await saveState(TestContext.gameId, state);
 });
 
-Given('{string} is second', async function (factionName: string) { /* Assumed order in list */ });
-Given('{string} is third', async function (factionName: string) { /* Assumed order in list */ });
-Given('{string} is fourth', async function (factionName: string) { /* Assumed order in list */ });
-
 Then('the current bid should be {int}', async function (amount: number) {
     const state = await getState(TestContext.gameId);
     expect(state.currentBid).to.equal(amount);
@@ -213,14 +250,6 @@ When('{string} passes', async function (factionName: string) {
     }
 });
 
-Then('{string} should win the auction', async function (factionName: string) {
-    const state = await getState(TestContext.gameId);
-    // We check log or hand?
-    // The scenarios says "Atreides should have 1 Treachery Cards".
-    // We can check that.
-    // Also "Winning" implies phase/card moved.
-});
-
 Then('{string} should have {int} spice', async function (factionName: string, amount: number) {
     const state = await getState(TestContext.gameId);
     const faction = state.factions.find(f => f.faction === factionName);
@@ -231,20 +260,4 @@ Then('{string} should have {int} Treachery Cards', async function (factionName: 
     const state = await getState(TestContext.gameId);
     const faction = state.factions.find(f => f.faction === factionName);
     expect(faction?.hand.length).to.equal(count);
-});
-
-Given('there are {int} cards up for auction', async function (count: number) {
-    // This is setup state
-    const state = await getState(TestContext.gameId);
-    state.auctionQueue = [];
-    // fill queue
-    for (let i = 0; i < count; i++) state.auctionQueue.push({ id: 100 + i, name: `Card ${100 + i}` } as any);
-    await saveState(TestContext.gameId, state);
-});
-
-Then('card {int} should be sold', async function (cardId: number) {
-    const state = await getState(TestContext.gameId);
-    // Check if card is no longer in queue and someone has it
-    // Or queue size
-    // expect(state.auctionQueue.find(c => c.id === cardId)).to.be.undefined;
 });

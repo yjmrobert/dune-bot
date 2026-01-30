@@ -250,6 +250,22 @@ const cards = [
     }
 ];
 
+
+
+const spiceCards = [
+    { name: "Great Flat", type: "Territory", amount: 10, sector: 8 },
+    { name: "Hagga Basin", type: "Territory", amount: 6, sector: 11 },
+    { name: "Imperial Basin", type: "Territory", amount: 10, sector: 12 },
+    { name: "Red Chasm", type: "Territory", amount: 8, sector: 7 },
+    { name: "The Minor Erg", type: "Territory", amount: 8, sector: 9 },
+    { name: "Cielago South", type: "Territory", amount: 6, sector: 15 },
+    { name: "Cielago North", type: "Territory", amount: 6, sector: 16 },
+    { name: "South Mesa", type: "Territory", amount: 10, sector: 2 },
+    { name: "Shai-Hulud #1", type: "Shai-Hulud", amount: null, sector: null },
+    { name: "Shai-Hulud #2", type: "Shai-Hulud", amount: null, sector: null },
+    { name: "Shai-Hulud #3", type: "Shai-Hulud", amount: null, sector: null }
+];
+
 async function main() {
     console.log('Seeding Treachery Cards...');
     for (const card of cards) {
@@ -259,6 +275,16 @@ async function main() {
             create: card,
         })
     }
+
+    console.log('Seeding Spice Cards...');
+    for (const card of spiceCards) {
+        await prisma.spiceCard.upsert({
+            where: { name: card.name },
+            update: card,
+            create: card,
+        })
+    }
+
     console.log('Seeding finished.');
 }
 

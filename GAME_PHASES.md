@@ -291,3 +291,45 @@ Uncollected spice remains where it is for future turns.
 2.  **Alliance Win**: If the required number of strongholds is 4 and the two players in an Alliance separately occupy a total of at least **4 strongholds** with one or more forces at the end of a turn, that Alliance wins the game.
     *   *Example: If the Atreides are in an Alliance with the Fremen, and the Fremen occupy Sietch Tabr and Carthag and the Atreides occupy Tuek’s Sietch and Arrakeen during the Mentat Pause Phase, they win the game together.*
 3.  **Continuation**: If there are no winners, players mull over their positions on the board, consider their options and, when they are ready, move the turn marker to the next position on the Turn Track to begin the next turn.
+
+## Alliances (Nexus)
+
+Once a Shai-Hulud (sandworm) card is turned over on the second or subsequent turns, at the end of the Spice Blow and NEXUS Phase, a Nexus occurs. During a Nexus, all players have a chance to make, join or break Alliances. Once players have had a chance to do so, play continues.
+
+### Forming an Alliance
+
+*   **Basics**: No more than two players may be in an Alliance and the win condition is now 4 instead of 3 strongholds.
+*   **Discussion**: Players may discuss among themselves the advantages and disadvantages of allying, and with whom.
+*   **Transparency**: The members of the Alliance must be revealed to all. Alliances cannot be secret. Swap Alliance Cards as a reminder of who are in an Alliance.
+*   **Limits**: Several Alliances can be formed during a Nexus, but no player can be a member of more than one Alliance. Once all players have had a chance to ally, no further Alliances can be made until the next Nexus.
+
+### Breaking An Alliance
+
+*   **Breaking**: Any player may break an Alliance during a Nexus. Players just announce that they are breaking from an Alliance.
+*   **Joining Another**: Players who break from an Alliance have an opportunity to immediately join or form a new Alliance.
+
+### How an Alliance Functions
+
+*   **Winning**: Allied players’ forces are considered the same for the purposes of victory. If together their joint forces hold 4 strongholds in the Mentat Pause Phase, they have jointly won the game.
+*   **Constraint**: Allies may not enter any territory (except the Polar Sink) in which one of their allies already has a force and, thus, may never battle one another.
+*   **Ally Secrecy**: Allies may discuss and share strategy and information secretly at any time.
+*   **Bidding**: During the Bidding Phase, allies may help each other by paying some or all of the cost of each other’s Treachery Cards so that a player can bid more spice than they actually have.
+*   **Movement**: During the Movement Phase, allies may pay for each other’s shipments.
+*   **Shared Advantages**: Allies may assist one another as specified on their player sheets.
+
+> [!NOTE]
+> If for any reason two factions who became allies during the last turn occupy the same territory at the beginning of the next turn, one of those factions must move out of that territory during the Shipment and Movement Phase. If the first faction to ship and move does not move out of the territory, the second faction must move out or lose those forces to the Tleilaxu Tanks.
+
+## Secrecy
+
+Players are never required to keep their cards, spice holdings, or the traitors they selected secret. They are never obligated to reveal this information either.
+
+All spice holdings should be kept behind the Player Shield. The number of Treachery Cards held must be kept open during the Bidding Phase, but can be kept secret at all other times.
+
+## Bribery
+
+Players who are not members of the same Alliance can make any kind of verbal deals or bribes between one another. Once made, these deals and bribes must be stated aloud and must be honored. A player cannot renege on a deal or bribe. Spice can be part of the bribe or deal.
+
+A deal or bribe cannot involve the transfer or gift of Treachery Cards, leaders, forces, or faction advantages. This leaves secret information, future actions, and, of course, spice.
+
+A player cannot make a deal or bribe that would contravene the rules or the player’s faction powers. These are the only limitations.
