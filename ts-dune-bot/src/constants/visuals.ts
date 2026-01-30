@@ -6,7 +6,6 @@ export interface Point {
 }
 
 export const ASSET_PATHS = {
-    layout: path.join(process.cwd(), 'assets', 'board_layout.json'),
     mapBackground: path.join(process.cwd(), 'assets', 'board_base.png'), 
     spiceIcon: path.join(process.cwd(), 'assets', 'token_spice.png'),
     stormOverlayPrefix: path.join(process.cwd(), 'assets', 'storm_'), // storm_01.png etc

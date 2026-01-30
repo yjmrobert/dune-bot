@@ -96,5 +96,5 @@ export interface BattleStateData {
 export interface TerritoryState {
     name: string;
     spice: number;
-    forces: Record<string, number>; // FactionId -> Count
+    forces: Record<number, Record<string, number>>; // SectorId -> (FactionId -> Count)
 }

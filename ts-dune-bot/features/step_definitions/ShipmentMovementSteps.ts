@@ -74,13 +74,13 @@ Given('the storm is at sector {int} \\(Blocking Shield Wall)', async function (s
 Given('{string} occupies sector {int}', function (name: string, sector: number) {
     const t = BOARD_MAP[name];
     if (!t) throw new Error("Map error");
-    if (!t.sectors.includes(sector)) throw new Error(`Map constant mismatch: ${name} does not have sector ${sector}`);
+    if (!t.sectors.some(s => s.sector === sector)) throw new Error(`Map constant mismatch: ${name} does not have sector ${sector}`);
 });
 
 When('{string} ships {int} forces to {string}', async function (factionName: string, count: number, territoryName: string) {
     const t = BOARD_MAP[territoryName];
     // Default sector: First one
-    const sector = t.sectors[0];
+    const sector = t.sectors[0].sector;
     try {
         await engine.shipForces(TestContext.gameId, `d-${factionName}`, territoryName, sector, count);
     } catch (e: any) {
@@ -98,8 +98,18 @@ When('{string} ships {int} forces to {string} \\(Sector {int})', async function 
 
 Then('{string} should have {int} {string} forces', async function (territoryName: string, count: number, factionName: string) {
     const state = await getState(TestContext.gameId);
-    const actual = state.boardState[territoryName]?.forces[factionName] || 0;
-    expect(actual).to.equal(count);
+    const territory = state.boardState[territoryName];
+    if (!territory) {
+        expect(0).to.equal(count);
+        return;
+    }
+    
+    // Sum forces across all sectors
+    let total = 0;
+    for (const sectorForces of Object.values(territory.forces)) {
+        total += sectorForces[factionName] || 0;
+    }
+    expect(total).to.equal(count);
 });
 
 // {string} has {int} forces in {string} MATCHES STEPS IN SPICEBLOWSTEPS
@@ -123,14 +133,32 @@ Given('{string} is adjacent to {string}', function (t1: string, t2: string) {
 Given('{string} controls {string}', async function (factionName: string, territoryName: string) {
     const state = await getState(TestContext.gameId);
     if (!state.boardState[territoryName]) state.boardState[territoryName] = { name: territoryName, spice: 0, forces: {} };
-    state.boardState[territoryName].forces[factionName] = 1; // Just ensures presence
+    
+    // Default to first sector
+    const t = BOARD_MAP[territoryName];
+    const defaultSector = t.sectors[0].sector;
+
+    if (!state.boardState[territoryName].forces[defaultSector]) {
+        state.boardState[territoryName].forces[defaultSector] = {};
+    }
+    state.boardState[territoryName].forces[defaultSector][factionName] = 1;
     await saveState(TestContext.gameId, state);
 });
 
 Given('{string} does not control {string} or {string}', async function (factionName: string, t1: string, t2: string) {
     const state = await getState(TestContext.gameId);
-    if (state.boardState[t1]) delete state.boardState[t1].forces[factionName];
-    if (state.boardState[t2]) delete state.boardState[t2].forces[factionName];
+    
+    // Helper to remove faction from all sectors in a territory
+    const removeFaction = (tName: string) => {
+        if (state.boardState[tName]) {
+            for (const sector in state.boardState[tName].forces) {
+                 delete state.boardState[tName].forces[sector][factionName];
+            }
+        }
+    };
+
+    removeFaction(t1);
+    removeFaction(t2);
     await saveState(TestContext.gameId, state);
 });
 

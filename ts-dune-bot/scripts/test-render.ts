@@ -25,28 +25,28 @@ async function main() {
                 name: "Hagga Basin",
                 spice: 3,
                 forces: {
-                    [Faction.Atreides]: 10
+                    3: { [Faction.Atreides]: 10 } // Atreides in Sector 3
                 }
             },
             "The Great Flat": {
                 name: "The Great Flat",
                 spice: 12,
                 forces: {
-                    [Faction.Harkonnen]: 5
+                    15: { [Faction.Harkonnen]: 5 } // Harkonnen in Sector 15
                 }
             },
             "Old Gap": {
                 name: "Old Gap",
                 spice: 0,
                 forces: {
-                    [Faction.Fremen]: 15
+                    10: { [Faction.Fremen]: 15 }
                 }
             },
             "Broken Land": {
-                name: "Broken Land", // Testing another one
+                name: "Broken Land",
                 spice: 6,
                 forces: {
-                    [Faction.Guild]: 2
+                    12: { [Faction.Guild]: 2 }
                 }
             }
         }
