@@ -78,16 +78,7 @@ export class DiscordService {
         await category.delete().catch(() => { });
     }
 
-    async sendGameView(
-        guildId: string,
-        channelId: string,
-        view: GameView
-    ): Promise<string> {
-        const guild = await this.getGuild(guildId);
-        const channel = guild.channels.cache.get(channelId) as TextChannel;
-
-        if (!channel) throw new Error("Channel not found");
-
+    private createComponents(view: GameView): ActionRowBuilder<ButtonBuilder>[] {
         const components: ActionRowBuilder<ButtonBuilder>[] = [];
 
         if (view.buttons.length > 0) {
@@ -106,6 +97,20 @@ export class DiscordService {
             });
             components.push(row);
         }
+        return components;
+    }
+
+    async sendGameView(
+        guildId: string,
+        channelId: string,
+        view: GameView
+    ): Promise<string> {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId) as TextChannel;
+
+        if (!channel) throw new Error("Channel not found");
+
+        const components = this.createComponents(view);
 
         const message = await channel.send({
             content: view.content || "",
@@ -115,6 +120,31 @@ export class DiscordService {
         });
 
         return message.id;
+    }
+
+    async updateGameView(
+        guildId: string,
+        channelId: string,
+        messageId: string,
+        view: GameView
+    ): Promise<void> {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId) as TextChannel;
+        if (!channel) throw new Error("Channel not found");
+
+        try {
+            const message = await channel.messages.fetch(messageId);
+            if (!message) throw new Error("Message not found");
+
+            const components = this.createComponents(view);
+
+            await message.edit({
+                content: view.content || "",
+                components: components
+            });
+        } catch (e) {
+            console.error(`Failed to update game view message ${messageId}:`, e);
+        }
     }
 
     async sendImageView(
@@ -137,6 +167,36 @@ export class DiscordService {
         });
 
         return message.id;
+    }
+
+    async updateImageView(
+        guildId: string,
+        channelId: string,
+        messageId: string,
+        view: ImageView
+    ): Promise<string> {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId) as TextChannel;
+
+        if (!channel) throw new Error("Channel not found");
+
+        // Convert ImageView to Buffer
+        const renderer = new MapRenderer();
+        const buffer = await renderer.render(view);
+        const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
+
+        try {
+            const message = await channel.messages.fetch(messageId);
+            if (!message) throw new Error("Message not found");
+
+            await message.edit({
+                files: [attachment]
+            });
+            return message.id;
+        } catch (e) {
+            console.error(`Failed to update map view message ${messageId}:`, e);
+            throw e;
+        }
     }
 
     async editMessage(guildId: string, channelId: string, messageId: string, content: string) {

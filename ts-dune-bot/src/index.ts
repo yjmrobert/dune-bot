@@ -142,15 +142,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
                 // Update View
                 if (game && game.actionsChannelId) {
-                    await discordService.sendGameView(
+                    await discordService.updateGameView(
                         game.guildId,
                         game.actionsChannelId,
+                        interaction.message.id,
                         renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
                     );
                 }
 
-                // Update Map
-                await MapService.updateMap(game, newState, discordService);
+
             } else if (action === "spice-blow") {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 

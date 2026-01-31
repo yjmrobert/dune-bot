@@ -15,6 +15,7 @@ model Game {
   mapChannelId       String
   tableTalkChannelId String
   stateJson          String
+  mapMessageId       String?
 }
 
 model TreacheryCard {

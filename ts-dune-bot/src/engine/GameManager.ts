@@ -95,7 +95,11 @@ export class GameManager {
         if (!game) return;
 
         // 1. Delete Channels
-        await this.discordService.deleteGameChannels(game.guildId, game.categoryId);
+        try {
+            await this.discordService.deleteGameChannels(game.guildId, game.categoryId);
+        } catch (e) {
+            console.warn(`Failed to delete channels for game ${gameId} (Guild: ${game.guildId}). Continuing with DB deletion.`, e);
+        }
 
         // 2. Delete from DB
         await prisma.game.delete({ where: { id: gameId } });
@@ -223,7 +227,7 @@ export class GameManager {
 
         // 2. Update Map
         await MapService.updateMap(
-            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            game,
             newState,
             this.discordService
         );
@@ -249,7 +253,7 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            game,
             newState,
             this.discordService
         );
@@ -274,7 +278,7 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            game,
             newState,
             this.discordService
         );
