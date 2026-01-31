@@ -25,6 +25,7 @@ export type GameAction =
     | "SHIP" | "MOVE"
     | "ATTACK" | "SUBMIT_PLAN" | "REVEAL_PLAN" | "RESOLVE_BATTLES" | "TRAITOR"
     | "START_GAME" | "JOIN_GAME"
+    | "PICK_TRAITOR"
     | "MOVE_STORM"
     | "SPICE_BLOW"
     | "COLLECT_SPICE"
@@ -54,12 +55,14 @@ export interface FactionState {
     forcesInTanks: number;
     leaders: LeaderState[];
     traitors: string[]; // Keeping it simple: list of card names or IDs
+    traitorOptions?: string[]; // Temporary holding for dealing 4 cards
     hand: TreacheryCard[];
 }
 
 export interface GameState {
     lobbyMessageId?: string;
-    phase: string;
+    phase: string; // e.g. "Setup", "Setup_TraitorPick", "Storm", etc.
+    pendingPlayerIds?: string[]; // Barrier Pattern: Waif for these players
     turn: number;
     stormLocation: number;
     stormMovedThisTurn?: boolean; // Track if storm has moved this turn

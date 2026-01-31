@@ -125,32 +125,54 @@ export class GameEngine {
 
         if (state.treacheryDeck.length > 0) {
             state.factions.forEach(f => {
-                // Deal 4 Traitors to each player -> they will keep 1 later, but for now just deal 4
-                // According to rules: Check "Traitor" phase or setup. 
-                // Usually: Deal 4 to each, keep 1, shuffle rest back.
-                // Simplified for MVP: Deal 4 random ones from deck?
-                // Actually, let's just deal 1 for now to match the "mock" logic but use the deck.
-                // Or better: Deal 4.
-
-                // Let's stick to the previous simple logic but use the real deck:
-                // "Pull" from deck
-                const card = state.treacheryDeck.pop();
-                if (card) {
-                    f.traitors.push(card.name);
+                // Deal 4 random traitors candidates to each player
+                f.traitorOptions = [];
+                for (let i = 0; i < 4; i++) {
+                    const card = state.treacheryDeck.pop();
+                    if (card) {
+                        f.traitorOptions.push(card.name);
+                    }
                 }
             });
         }
 
         // 4. Update Phase
-        state.phase = "Storm";
+        state.phase = "Setup_TraitorPick";
+        state.pendingPlayerIds = state.factions.map(f => f.playerDiscordId);
         state.turn = 1;
-        state.actionLog.push(`Game Started! Storm is at Sector ${state.stormLocation}.`);
+        state.actionLog.push(`Game Started! Storm is at Sector ${state.stormLocation}. Players must select 1 Traitor.`);
+
+        return state;
+    }
+
+    confirmTraitor(state: GameState, userId: string, traitorName: string): GameState {
+        const faction = state.factions.find(f => f.playerDiscordId === userId);
+        if (!faction) throw new Error("Faction not found.");
+        
+        if (state.phase !== "Setup_TraitorPick") throw new Error("Not in traitor selection phase.");
+        if (!faction.traitorOptions || !faction.traitorOptions.includes(traitorName)) throw new Error("Invalid traitor selection.");
+
+        // Confirm selection
+        faction.traitors = [traitorName];
+        faction.traitorOptions = []; // Clear options
+        
+        // Remove from pending
+        if (state.pendingPlayerIds) {
+            state.pendingPlayerIds = state.pendingPlayerIds.filter(id => id !== userId);
+        }
+
+        state.actionLog.push(`${faction.faction} has selected their traitor.`);
+
+        // Check if all players done
+        if (!state.pendingPlayerIds || state.pendingPlayerIds.length === 0) {
+            return this.advancePhase(state);
+        }
 
         return state;
     }
 
     advancePhase(state: GameState): GameState {
-        const phases = ["Storm", "Spice Blow", "CHOAM Charity", "Bidding", "Revival", "Shipment and Movement", "Battle", "Collection"];
+        const phases = ["Setup_TraitorPick", "Storm", "Spice Blow", "CHOAM Charity", "Bidding", "Revival", "Shipment and Movement", "Battle", "Collection"];
         const currentIdx = phases.indexOf(state.phase);
 
         let nextPhase = "Storm";
@@ -160,6 +182,12 @@ export class GameEngine {
             // New Turn
             state.turn++;
             state.actionLog.push(`Turn ${state.turn} Started.`);
+            nextPhase = "Storm";
+        }
+
+        // Setup -> Storm Transition
+        if (state.phase === "Setup" || state.phase === "Setup_TraitorPick") {
+            nextPhase = "Storm";
         }
 
         state.phase = nextPhase;
@@ -167,6 +195,18 @@ export class GameEngine {
         // Reset storm moved flag when entering Storm phase
         if (nextPhase === "Storm") {
             state.stormMovedThisTurn = false;
+            // Auto-resolve Storm Phase as per plan
+             // 1. Move Storm
+             // We need territories for moveStorm. Since we don't have them passed here (design flaw in original engine),
+             // we rely on the caller to handle Storm movement via `moveStorm` separately OR we fix the dependency injection.
+             // However, strictly following the plan: "Auto-advance to Spice Blow".
+             // But we need to CALCULATE storm first.
+             // If we can't calculate here (missing territories), we should enter "Storm" and let the external triggers/map update handle it?
+             // Or better: The `GameManager` handles the "Auto" part by calling `moveStorm` immediately after `advancePhase` returns "Storm".
+             // Let's stick to just setting the phase here.
+             
+             // Actually, the previous code had `moveStorm` separate.
+             // I will leave the actual movement logic to `GameManager` to orchestrate (since it has DB access for territories).
         }
 
         // Reset spice blow flag when entering Spice Blow phase

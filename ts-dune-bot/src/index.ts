@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, MessageFlags } from "discord.js";
+import { Client, GatewayIntentBits, Events, MessageFlags, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { DiscordService } from "./services/DiscordService";
@@ -222,8 +222,52 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     });
                 }
 
+                const pendingNames = state.factions
+                    .filter(f => state.pendingPlayerIds?.includes(f.playerDiscordId))
+                    .map(f => f.faction)
+                    .join(", ");
                 await interaction.reply({
-                    content: message,
+                    content: message + (pendingNames ? `\n\n**Waiting for**: ${pendingNames}` : ""),
+                    flags: MessageFlags.Ephemeral
+                });
+            } else if (action === "pick-traitor") {
+                 const game = await gameManager.getGame(gameId);
+                if (!game) {
+                    await interaction.reply({ content: "Game not found.", flags: MessageFlags.Ephemeral });
+                    return;
+                }
+
+                const state: import("./types").GameState = JSON.parse(game.stateJson);
+                const faction = state.factions.find(f => f.playerDiscordId === interaction.user.id);
+
+                if (!faction) {
+                    await interaction.reply({ content: "You are not a player in this game.", flags: MessageFlags.Ephemeral });
+                    return;
+                }
+
+                if (!faction.traitorOptions || faction.traitorOptions.length === 0) {
+                     await interaction.reply({ content: "You have no traitors to select.", flags: MessageFlags.Ephemeral });
+                     return;
+                }
+
+                // Show Select Menu
+                const row = new ActionRowBuilder<StringSelectMenuBuilder>()
+                    .addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId(`traitor-select:${gameId}`)
+                            .setPlaceholder('Select 1 Traitor to KEEP')
+                            .addOptions(
+                                faction.traitorOptions.map(t => ({
+                                    label: t,
+                                    value: t,
+                                    description: "Keep this traitor"
+                                }))
+                            )
+                    );
+
+                await interaction.reply({
+                    content: "Please select which Traitor you want to keep. The others will be discarded.",
+                    components: [row],
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -238,6 +282,29 @@ client.on(Events.InteractionCreate, async (interaction) => {
             } else {
                 await interaction.reply({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to reply error:", e));
             }
+        }
+    }
+
+    // 3. Select Menus
+    if (interaction.isStringSelectMenu()) {
+        const [action, param] = interaction.customId.split(":");
+        const gameId = parseInt(param);
+
+        try {
+            if (action === "traitor-select") {
+                const selectedTraitor = interaction.values[0];
+                await interaction.deferUpdate(); // Acknowledge without new message? Or better, edit to say confirmed.
+                
+                await gameManager.confirmTraitor(gameId, interaction.user.id, selectedTraitor);
+                
+                await interaction.editReply({ 
+                    content: `You have selected **${selectedTraitor}**. Waiting for other players...`, 
+                    components: [] 
+                });
+            }
+        } catch (error: any) {
+             console.error(error);
+             await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
         }
     }
 });

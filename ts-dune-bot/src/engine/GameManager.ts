@@ -3,6 +3,7 @@ import { DiscordService } from "../services/DiscordService";
 import { GameState } from "../types";
 import { GameEngine } from "./GameEngine";
 import { MapService } from "../services/MapService";
+import { renderGame } from "../domain/gamePresenter";
 
 export class GameManager {
     constructor(
@@ -282,6 +283,45 @@ export class GameManager {
             newState,
             this.discordService
         );
+
+        return newState;
+    }
+    async confirmTraitor(gameId: number, userId: string, traitorName: string) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        const state: GameState = JSON.parse(game.stateJson);
+
+        // Call Engine
+        const newState = this.gameEngine.confirmTraitor(state, userId, traitorName);
+
+        // Save State
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(newState) }
+        });
+
+        // Trigger Map/View Update
+        if (game.actionsChannelId) {
+            await this.discordService.sendGameView(
+                game.guildId,
+                game.actionsChannelId,
+                renderGame(newState, this.getAvailableActions(newState), game.id)
+            );
+        }
+        
+        // If phase advanced to Storm, handle Storm auto-move
+        if (newState.phase === "Storm" && !newState.stormMovedThisTurn) {
+             // Auto-move storm logic
+             // But simpler: Just update the view, and the "Next Phase" prompt will appear?
+             // Ah, wait. The plan said "Auto-advance".
+             // If we really want auto-move, we should trigger it here.
+             
+             // The moveStorm function requires calculating random sectors.
+             // Let's do it here.
+             const sectors = Math.floor(Math.random() * 6) + 1;
+             await this.moveStorm(gameId, sectors);
+        }
 
         return newState;
     }

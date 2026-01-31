@@ -47,7 +47,7 @@ describe('GameManager', () => {
 
             expect(mockGameEngine.advancePhase).toHaveBeenCalledWith({});
             expect(MapService.updateMap).toHaveBeenCalledWith(
-                { guildId: 'g1', mapChannelId: 'c1' },
+                mockGame,
                 mockState,
                 mockDiscordService
             );

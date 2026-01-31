@@ -37,7 +37,14 @@ describe("Phase Handlers - Available Actions", () => {
             const state = createMockState();
             const actions = handler.getAvailableActions(state);
 
-            expect(actions).toEqual(["MOVE_STORM", "PLAYER_ACTIONS", "NEXT_PHASE"]);
+            expect(actions).toEqual(["MOVE_STORM", "PLAYER_ACTIONS"]);
+        });
+
+        it('should return NEXT_PHASE if storm moved', () => {
+             const handler = new StormPhaseHandler();
+             const state = createMockState({ stormMovedThisTurn: true });
+             const actions = handler.getAvailableActions(state);
+             expect(actions).toEqual(["NEXT_PHASE"]);
         });
     });
 

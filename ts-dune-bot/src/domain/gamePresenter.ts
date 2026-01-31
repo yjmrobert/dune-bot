@@ -66,9 +66,24 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
             case "PLAYER_ACTIONS":
                 buttons.push({ label: 'My Actions', style: 'SECONDARY', command: { type: 'player-actions', target: gId } });
                 break;
+            case "PICK_TRAITOR":
+                buttons.push({ label: 'Select Traitor', style: 'SUCCESS', command: { type: 'pick-traitor', target: gId } });
+                break;
             // Additional actions can be mapped here as needed
         }
     });
+
+    // Barrier Pattern: Show waiting list
+    if (state.pendingPlayerIds && state.pendingPlayerIds.length > 0) {
+        const pendingNames = state.factions
+            .filter(f => state.pendingPlayerIds?.includes(f.playerDiscordId))
+            .map(f => f.faction)
+            .join(", ");
+        
+        // Append to content or description? Description is better for visibility.
+        // But renderGame description is currently: "Combat is active" or "It is currently Phase".
+        // Let's append to that.
+    }
 
     // Helper to get active player name
     let activePlayerName = "None";
@@ -83,6 +98,15 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
         ? `Combat is active!`
         : `It is currently ${state.phase}.`;
 
+    let finalDescription = description;
+    if (state.pendingPlayerIds && state.pendingPlayerIds.length > 0) {
+        const pendingNames = state.factions
+            .filter(f => state.pendingPlayerIds?.includes(f.playerDiscordId))
+            .map(f => f.faction)
+            .join(", ");
+        finalDescription += `\n\n**Waiting for**: ${pendingNames}`;
+    }
+
     const lastAction = state.actionLog.length > 0 ? state.actionLog[state.actionLog.length - 1] : "";
     const content = `**Current Phase**: ${state.phase}${lastAction ? `\n**Last Action**: ${lastAction}` : ""}`;
 
@@ -90,7 +114,7 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
         content: content,
         embed: {
             title: `Game Status`,
-            description: description,
+            description: finalDescription,
             color: isInCombat ? '#FF0000' : '#00FF00',
             fields: [
                 { name: 'Turn', value: state.turn.toString(), inline: true },
