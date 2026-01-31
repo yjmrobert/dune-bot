@@ -96,7 +96,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         await discordService.sendGameView(
                             game.guildId,
                             game.actionsChannelId,
-                            renderGame(state as any, gameManager.getAvailableActions(state))
+                            renderGame(state, gameManager.getAvailableActions(state), game.id)
                         );
 
                         // Trigger Map Update
@@ -114,7 +114,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     await discordService.sendGameView(
                         game.guildId,
                         game.actionsChannelId,
-                        renderGame(newState as any, gameManager.getAvailableActions(newState))
+                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
                     );
                 }
             }
