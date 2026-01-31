@@ -266,6 +266,38 @@ const spiceCards = [
     { name: "Shai-Hulud #3", type: "Shai-Hulud", amount: null, sector: null }
 ];
 
+const territories = [
+  // Safe Cities
+  { name: "Sietch Tabr", sector: 14, isSafe: true, description: "Fremen stronghold" },
+  { name: "Carthag", sector: 11, isSafe: true, description: "Harkonnen stronghold" },
+  { name: "Arrakeen", sector: 2, isSafe: true, description: "Atreides stronghold" },
+  { name: "Tuek's Sietch", sector: 5, isSafe: true, description: "Smuggler stronghold" },
+  { name: "Habbanya Sietch", sector: 17, isSafe: true, description: "Sietch stronghold" },
+  
+  // Safe Territories
+  { name: "Plastic Basin", sector: 1, isSafe: true, description: "Rock territory" },
+  { name: "False Wall West", sector: 3, isSafe: true, description: "Rock territory" },
+  { name: "False Wall South", sector: 4, isSafe: true, description: "Rock territory" },
+  { name: "Pasty Mesa", sector: 6, isSafe: true, description: "Rock territory" },
+  { name: "False Wall East", sector: 13, isSafe: true, description: "Rock territory" },
+  { name: "Shield Wall", sector: 10, isSafe: true, description: "Rock territory" },
+  { name: "Rm Wall West", sector: 18, isSafe: true, description: "Rock territory" },
+  
+  // Special: Always safe from storm
+  { name: "Polar Sink", sector: 0, isSafe: true, description: "Never in storm" },
+  
+  // Dangerous Territories (Sand - with Imperial Basin exception)
+  { name: "Imperial Basin", sector: 12, isSafe: true, description: "Sand but protected (exception)" },
+  { name: "Great Flat", sector: 8, isSafe: false, description: "Sand territory" },
+  { name: "Hagga Basin", sector: 11, isSafe: false, description: "Sand territory" },
+  { name: "Red Chasm", sector: 7, isSafe: false, description: "Sand territory" },
+  { name: "The Minor Erg", sector: 9, isSafe: false, description: "Sand territory" },
+  { name: "Cielago South", sector: 15, isSafe: false, description: "Sand territory" },
+  { name: "Cielago North", sector: 16, isSafe: false, description: "Sand territory" },
+  { name: "South Mesa", sector: 2, isSafe: false, description: "Sand territory" },
+  { name: "Old Gap", sector: 3, isSafe: false, description: "Sand territory" },
+];
+
 async function main() {
     console.log('Seeding Treachery Cards...');
     for (const card of cards) {
@@ -283,6 +315,15 @@ async function main() {
             update: card,
             create: card,
         })
+    }
+
+    console.log('Seeding Territories...');
+    for (const territory of territories) {
+        await prisma.territory.upsert({
+            where: { name: territory.name },
+            update: territory,
+            create: territory,
+        });
     }
 
     console.log('Seeding finished.');

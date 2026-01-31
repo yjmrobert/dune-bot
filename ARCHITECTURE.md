@@ -47,8 +47,18 @@ The solution follows a **Clean Architecture** approach, separating the domain co
 ## Database
 
 The project uses **SQLite**.
+
+### C# Implementation
 *   Connection String: `Data Source=dune.db`
 *   Context: `DuneDbContext`
+
+### TypeScript Implementation (`ts-dune-bot`)
+*   ORM: **Prisma**
+*   Database File: `dev.db`
+*   Key Models:
+    *   `Game`: Stores state as JSON blob.
+    *   `TreacheryCard`, `SpiceCard`: Static card data.
+    *   `Territory`: Map data (sectors, safe status).
 
 ## Testing
 

@@ -134,8 +134,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     return;
                 }
 
-                // Move storm by random sectors (1-3 for now, adjust as needed)
-                const sectors = Math.floor(Math.random() * 3) + 1;
+                // Move storm by random sectors (1-6)
+                const sectors = Math.floor(Math.random() * 6) + 1;
                 const newState = await gameManager.moveStorm(gameId, sectors);
 
                 await interaction.editReply(`Storm moved ${sectors} sectors to sector ${newState.stormLocation}.`);

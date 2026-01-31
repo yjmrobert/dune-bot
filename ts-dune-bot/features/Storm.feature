@@ -46,3 +46,29 @@ Feature: Storm Phase
       | Fremen    |
     When the storm moves to sector 15
     Then the First Player should be "Atreides"
+
+  Scenario: Storm destroys forces along entire path
+    Given the current storm position is sector 2
+    And the following forces are in "Territory A" (Sector 3):
+      | Faction  | Forces |
+      | Atreides |      5 |
+    And the following forces are in "Territory B" (Sector 4):
+      | Faction   | Forces |
+      | Harkonnen |      3 |
+    And the following forces are in "Territory C" (Sector 5):
+      | Faction | Forces |
+      | Fremen  |      2 |
+    When the storm moves 3 sectors
+    Then "Atreides" should have 0 forces in "Territory A"
+    And "Harkonnen" should have 0 forces in "Territory B"
+    And "Fremen" should have 0 forces in "Territory C"
+
+  Scenario: Storm wraps around the map
+    Given the current storm position is sector 16
+    When the storm moves 6 sectors
+    Then the new storm position should be 4
+
+  Scenario: Move Storm button disables after use
+    Given the game is in the "Storm" phase
+    When the storm moves
+    Then the "Move Storm" button should be disabled

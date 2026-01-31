@@ -36,3 +36,14 @@ model SpiceCard {
   amount Int?
   sector Int?
 }
+
+model Territory {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  sector      Int
+  isSafe      Boolean @default(false)
+  description String?
+
+  @@index([sector])
+  @@index([isSafe])
+}

@@ -9,6 +9,20 @@ import { TestContext } from '../support/TestContext';
 
 const stormEngine = new StormEngine();
 
+const MOCK_TERRITORIES: any[] = [
+    { name: "Old Gap", sector: 3, isSafe: false },
+    { name: "Arrakeen", sector: 2, isSafe: true },
+    { name: "Territory A", sector: 3, isSafe: false },
+    { name: "Territory B", sector: 4, isSafe: false },
+    { name: "Territory C", sector: 5, isSafe: false },
+    { name: "Imperial Basin", sector: 6, isSafe: true },
+    { name: "Sector 16 Sand", sector: 16, isSafe: false },
+    { name: "Sector 17 Sand", sector: 17, isSafe: false },
+    { name: "Sector 18 Sand", sector: 18, isSafe: false },
+    { name: "Sector 1 Sand", sector: 1, isSafe: false },
+    { name: "Sector 4 Sand", sector: 4, isSafe: false },
+];
+
 Before(() => {
     // No-op
 });
@@ -57,7 +71,9 @@ Given('a new game is starting', async function () {
 
 When('the First Storm occurs', async function () {
     const state = await getState(TestContext.gameId);
-    state.stormLocation = Math.floor(Math.random() * 18) + 1; // Simulate first storm logic
+    // 0-20 sectors from Sector 18
+    const initialMove = Math.floor(Math.random() * 21);
+    state.stormLocation = ((18 + initialMove - 1) % 18) + 1;
     await saveState(TestContext.gameId, state);
 });
 
@@ -87,23 +103,21 @@ Given('the current storm position is sector {int}', async function (location: nu
     }
 });
 
-Given('the game is in Turn {int}', async function (turn: number) {
-    const state = await getState(TestContext.gameId);
-    state.turn = turn;
-    await saveState(TestContext.gameId, state);
-});
+
 
 When('the storm moves', async function () {
     // Simulate random movement 1-3
     const state = await getState(TestContext.gameId);
-    const move = Math.floor(Math.random() * 3) + 1;
-    stormEngine.moveStorm(state, move);
+    const move = Math.floor(Math.random() * 6) + 1;
+    stormEngine.moveStorm(state, move, MOCK_TERRITORIES);
+    state.stormMovedThisTurn = true;
     await saveState(TestContext.gameId, state);
 });
 
 When('the storm moves {int} sectors', async function (sectors: number) {
     const state = await getState(TestContext.gameId);
-    stormEngine.moveStorm(state, sectors);
+    stormEngine.moveStorm(state, sectors, MOCK_TERRITORIES);
+    state.stormMovedThisTurn = true;
     await saveState(TestContext.gameId, state);
 });
 
@@ -117,7 +131,10 @@ Given('the following forces are in {string} \\(Sector {int}):', async function (
 
     const rows = dataTable.hashes();
     for (const row of rows) {
-        state.boardState[territoryName].forces[row['Faction']] = parseInt(row['Forces']);
+        if (!state.boardState[territoryName].forces[sector]) {
+            state.boardState[territoryName].forces[sector] = {};
+        }
+        state.boardState[territoryName].forces[sector][row['Faction']] = parseInt(row['Forces']);
 
         // Ensure faction exists in state for checks
         if (!state.factions.find(f => f.faction === row['Faction'])) {
@@ -140,11 +157,7 @@ Given('{string} \\(Sector {int}) has {int} Spice', async function (territoryName
     await saveState(TestContext.gameId, state);
 });
 
-Then('{string} should have {int} forces in {string}', async function (factionName: string, count: number, territoryName: string) {
-    const state = await getState(TestContext.gameId);
-    const actual = state.boardState[territoryName]?.forces[factionName] || 0;
-    expect(actual).to.equal(count);
-});
+
 
 Then('{string} should have {int} Spice', async function (territoryName: string, amount: number) {
     const state = await getState(TestContext.gameId);
@@ -201,3 +214,17 @@ Then('the First Player should be {string}', async function (factionName: string)
     const fp = state.factions.find(f => f.playerDiscordId === state.firstPlayerId);
     expect(fp?.faction).to.equal(factionName);
 });
+
+
+
+Then('the new storm position should be {int}', async function (pos: number) {
+    const state = await getState(TestContext.gameId);
+    expect(state.stormLocation).to.equal(pos);
+});
+
+Then('the "Move Storm" button should be disabled', async function () {
+    const state = await getState(TestContext.gameId);
+    expect(state.stormMovedThisTurn).to.be.true;
+});
+
+

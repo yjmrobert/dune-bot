@@ -1,3 +1,4 @@
+import { Territory } from "@prisma/client";
 import { GameState, Faction, FactionState, TreacheryCard, SpiceCard, BattlePlan } from "../types";
 import { BiddingEngine } from "./BiddingEngine";
 import { ChoamCharityEngine } from "./ChoamCharityEngine";
@@ -102,8 +103,10 @@ export class GameEngine {
         // 1. Initial Resources & Forces
         this.setupStartingForces(state);
 
-        // 2. Initialize Storm
-        state.stormLocation = Math.floor(Math.random() * 18) + 1;
+        // 2. Initialize Storm (Rule: 0-20 sectors from Sector 18)
+        const STORM_START = 18;
+        const initialMove = Math.floor(Math.random() * 21); // 0-20
+        state.stormLocation = ((STORM_START + initialMove - 1) % 18) + 1;
 
         // 3. Deal Traitors & Initialize Decks
         // Shuffle Helper
@@ -249,8 +252,8 @@ export class GameEngine {
         return state;
     }
 
-    moveStorm(state: GameState, sectors: number): GameState {
-        this.stormEngine.moveStorm(state, sectors);
+    moveStorm(state: GameState, sectors: number, territories: Territory[]): GameState {
+        this.stormEngine.moveStorm(state, sectors, territories);
         this.stormEngine.determineFirstPlayer(state);
         state.stormMovedThisTurn = true;
         return state;

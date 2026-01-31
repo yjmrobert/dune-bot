@@ -48,10 +48,10 @@ DUNE is played in turns to a maximum limit of 10 turns. Each turn is composed of
 ### Storm Phase
 
 #### First Storm
-The first time the storm is moved, the Storm Marker is placed at a random location along the map edge using the following procedure. The two players whose player circles are nearest on either side of the Storm Start Sector will secretly dial a number from 0 to 20 on the wheels. The two numbers are simultaneously revealed, totaled and the Storm Marker moved from the Storm Start sector counterclockwise around the map for the sum total of sectors.
+The first time the storm is moved, the Storm Marker is placed at a random location along the map edge using the following procedure. A random number between 0 and 20 is generated and the Storm Marker moved from the Storm Start sector counterclockwise around the map for the sum total of sectors.
 
 #### Storm Movement
-In all subsequent Storm Phases, the two players who last used the Battle Wheels will independently dial a number from 1 to 3, simultaneously reveal their numbers, add them together, and then advance the Storm Marker from its current position counterclockwise around the map for the sum total of sectors.
+In all subsequent Storm Phases, a random number between 1 and 6 is generated and the Storm Marker moved from its current position counterclockwise around the map for the sum total of sectors.
 
 #### Damage
 Any forces in a sector of sand territory (except the Imperial Basin) over which the storm passes or stops are killed. Place these forces in the Tleilaxu Tanks. Forces that are not on a sand territory find protection from the storm. In addition any spice in a sector over which a storm passes or stops is removed to the Spice Bank.

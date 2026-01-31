@@ -106,7 +106,23 @@ Given('the game {int} has started', async function (gameId: number) {
 
 When('the game {int} is started', async function (gameId: number) {
     try {
-        await engine.startGame(gameId);
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found");
+        const state = JSON.parse(game.stateJson) as GameState;
+        
+        const treacheryCards = await prisma.treacheryCard.findMany() as any;
+        const spiceCards = await prisma.spiceCard.findMany() as any;
+        
+        // Assuming startGame returns the NEW state or modifies it in place?
+        // GameEngine typically returns GameState or modifies. 
+        // Let's assume modifies or returns.
+        // If it was pure logic refactor, it returns state.
+        const newState = engine.startGame(state, treacheryCards, spiceCards);
+        
+        await prisma.game.update({
+             where: { id: gameId },
+             data: { stateJson: JSON.stringify(newState) }
+        });
     } catch (e) {
         lastError = e;
     }

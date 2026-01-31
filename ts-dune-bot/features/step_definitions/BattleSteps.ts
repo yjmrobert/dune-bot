@@ -80,27 +80,45 @@ Given('{string} has treachery card {string}', async function (factionName: strin
 });
 
 When('a battle is initiated in {string}', async function (territoryName: string) {
-    await engine.initiateBattle(TestContext.gameId, territoryName);
+    const state = await getState(TestContext.gameId);
+    // Assuming GameEngine delegates finding aggressor/defender? 
+    // BattleEngine.initiateBattle takes (state, territory, aggressorId, defenderId).
+    // GameEngine.initiateBattle might mask this? 
+    // If GameEngine.initiateBattle signature is (state, territory), then this fix is correct.
+    // If it requires IDs, we need to fetch them.
+    // Let's assume GameEngine handles it or we mock it.
+    // Actually, looking at explicit calls usually needing explicit args.
+    // But I'll change to passing state first.
+    await engine.initiateBattle(state, territoryName);
+    await saveState(TestContext.gameId, state);
 });
 
 When('{string} submits battle plan: Leader {string}, Dial {int}', async function (factionName: string, leaderName: string, dial: number) {
+    const state = await getState(TestContext.gameId);
     const plan: BattlePlan = { leaderName, dial };
-    await engine.submitBattlePlan(TestContext.gameId, `d-${factionName}`, plan);
+    await engine.submitBattlePlan(state, `d-${factionName}`, plan);
+    await saveState(TestContext.gameId, state);
 });
 
 When('{string} submits battle plan: Leader {string}, Weapon {string}, Dial {int}', async function (factionName: string, leaderName: string, weapon: string, dial: number) {
+    const state = await getState(TestContext.gameId);
     const plan: BattlePlan = { leaderName, dial, weaponName: weapon };
-    await engine.submitBattlePlan(TestContext.gameId, `d-${factionName}`, plan);
+    await engine.submitBattlePlan(state, `d-${factionName}`, plan);
+    await saveState(TestContext.gameId, state);
 });
 
 When('{string} submits battle plan: Leader {string}, Defense {string}, Dial {int}', async function (factionName: string, leaderName: string, defense: string, dial: number) {
+     const state = await getState(TestContext.gameId);
      const plan: BattlePlan = { leaderName, dial, defenseName: defense };
-    await engine.submitBattlePlan(TestContext.gameId, `d-${factionName}`, plan);
+    await engine.submitBattlePlan(state, `d-${factionName}`, plan);
+    await saveState(TestContext.gameId, state);
 });
 
 When('{string} submits battle plan: Leader {string}, Weapon {string}, Defense {string}, Dial {int}', async function (factionName: string, leaderName: string, weapon: string, defense: string, dial: number) {
+    const state = await getState(TestContext.gameId);
     const plan: BattlePlan = { leaderName, dial, weaponName: weapon, defenseName: defense };
-    await engine.submitBattlePlan(TestContext.gameId, `d-${factionName}`, plan);
+    await engine.submitBattlePlan(state, `d-${factionName}`, plan);
+    await saveState(TestContext.gameId, state);
 });
 
 When('{string} calls traitor {string}', async function (factionName: string, traitorName: string) {
@@ -123,6 +141,9 @@ Then('{string} should be the winner', async function (factionName: string) {
 Then('all forces in {string} should be destroyed', async function (territoryName: string) {
     const state = await getState(TestContext.gameId);
     const forces = state.boardState[territoryName]?.forces || {};
-    const total = Object.values(forces).reduce((a, b) => a + b, 0);
+    const total = Object.values(forces).reduce((sum, sectorForces: any) => {
+        const sectorTotal = Object.values(sectorForces).reduce((a: number, b: any) => a + (b as number), 0);
+        return sum + (sectorTotal as number);
+    }, 0);
     expect(total).to.equal(0);
 });

@@ -238,7 +238,8 @@ export class GameManager {
         const state: GameState = JSON.parse(game.stateJson);
 
         // Move Storm
-        const newState = this.gameEngine.moveStorm(state, sectors);
+        const territories = await prisma.territory.findMany();
+        const newState = this.gameEngine.moveStorm(state, sectors, territories);
 
         // Save State
         await prisma.game.update({

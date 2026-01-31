@@ -1,63 +1,46 @@
+import { Territory } from "@prisma/client";
 import { GameState, FactionState, TerritoryState } from "../types";
 import { BoardService } from "../services/BoardService";
-
-// Static map data for MVP.
-// In real app, this should be in MapService or DB
-const SAFE_SECTORS: Record<string, boolean> = {
-    "Arrakeen": true,
-    "Carthag": true,
-    "Polar Sink": true,
-    "Tuek's Sietch": true // Usually safe? Check rules. Sietches are safe from Storm.
-};
-
-const SECTOR_TERRITORIES: Record<number, string[]> = {
-    // Simplified mapping for feature file testing
-    // Sector -> [Territory Names]
-    3: ["Old Gap"],
-    2: ["Arrakeen"]
-};
-
-// Map of territories to "IsSand"
-const TERRITORY_IS_SAND: Record<string, boolean> = {
-    "Old Gap": true,
-    "Arrakeen": false
-};
 
 export class StormEngine {
 
     // Returns new storm location
-    moveStorm(state: GameState, sectors: number): number {
-        let newLocation = state.stormLocation + sectors;
-        if (newLocation > 18) newLocation -= 18;
+    moveStorm(state: GameState, sectors: number, territories: Territory[]): number {
+        let currentSector = state.stormLocation;
 
-        state.stormLocation = newLocation;
-        state.actionLog.push(`Storm moved ${sectors} sectors to Sector ${newLocation}.`);
+        for (let i = 0; i < sectors; i++) {
+            currentSector++;
+            if (currentSector > 18) currentSector = 1;
+            
+            // Log for final position is handled by caller or generic log? 
+            // We should log destruction here effectively as it happens along the path
+            this.resolveDestruction(state, currentSector, territories);
+        }
 
-        this.resolveDestruction(state, state.stormLocation);
-        return newLocation;
+        state.stormLocation = currentSector;
+        state.actionLog.push(`Storm moved ${sectors} sectors to Sector ${state.stormLocation}.`);
+        
+        return currentSector;
     }
 
-    private resolveDestruction(state: GameState, stormSector: number) {
-        const territories = SECTOR_TERRITORIES[stormSector] || [];
+    private resolveDestruction(state: GameState, stormSector: number, allTerritories: Territory[]) {
+        const sectorTerritories = allTerritories.filter(t => t.sector === stormSector);
 
-        for (const territoryName of territories) {
-            const isSand = TERRITORY_IS_SAND[territoryName] ?? true; // Default to sand/dangerous if unknown
-            const isSafe = SAFE_SECTORS[territoryName];
-
-            // If it's a safe sector, skip destruction
-            if (isSafe) continue;
-
+        for (const territory of sectorTerritories) {
+            const territoryName = territory.name;
             const territoryState = state.boardState[territoryName];
+            
             if (!territoryState) continue;
 
-            // Remove Spice
-            if (isSand && territoryState.spice > 0) {
+            // Remove Spice (Happens in all sectors passed by storm, including Imperial Basin)
+            if (territoryState.spice > 0) {
                 state.actionLog.push(`Storm destroyed ${territoryState.spice} spice in ${territoryName}.`);
                 territoryState.spice = 0;
             }
 
-            // Remove Forces
-            if (isSand) {
+            // Remove Forces (Only in unsafe territories)
+            // Imperial Basin is marked isSafe=true in DB, so it is skipped here
+            if (!territory.isSafe) {
                 const sectorForces = BoardService.getSectorForces(state, territoryName, stormSector);
                 // We need to iterate a copy of keys or entries because we are mutating
                 Object.keys(sectorForces).forEach(faction => {
@@ -65,7 +48,13 @@ export class StormEngine {
                     if (count > 0) {
                         state.actionLog.push(`Storm destroyed ${count} ${faction} forces in ${territoryName} (Sector ${stormSector}).`);
                         BoardService.removeForceFromSector(state, territoryName, stormSector, faction, count);
-                        // Todo: Add to Tanks?
+                        
+                        // Send to Tanks
+                        const factionState = state.factions.find(f => f.faction === faction);
+                        if (factionState) {
+                             factionState.forcesInTanks += count;
+                             state.actionLog.push(`${count} ${faction} forces sent to Tleilaxu Tanks.`);
+                        }
                     }
                 });
             }

@@ -174,8 +174,11 @@ Then('a Nexus should occur', async function () {
 
 Then('{string} should have {int} forces in {string}', async function (factionName: string, count: number, tName: string) {
     const state = await getState(TestContext.gameId);
-    // Forces are stored by sector -> faction -> count. Using sector 0 for testing.
-    const actual = state.boardState[tName]?.forces?.[0]?.[factionName] || 0;
+    // Forces are stored by sector -> faction -> count. Summing across all sectors.
+    const forcesMap = state.boardState[tName]?.forces || {};
+    const actual = Object.values(forcesMap).reduce((sum, sectorForces: any) => {
+        return sum + (sectorForces[factionName] || 0);
+    }, 0);
     expect(actual).to.equal(count);
 });
 
