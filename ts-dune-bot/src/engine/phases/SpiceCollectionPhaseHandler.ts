@@ -6,6 +6,6 @@ export class SpiceCollectionPhaseHandler implements PhaseHandler {
     constructor(private engine: SpiceCollectionEngine) { }
 
     getAvailableActions(state: GameState): GameAction[] {
-        return ["NEXT_PHASE"];
+        return ["COLLECT_SPICE", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

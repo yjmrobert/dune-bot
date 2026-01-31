@@ -17,9 +17,6 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
             case "PASS":
                 buttons.push({ label: 'Pass', style: 'SECONDARY', command: { type: 'pass', target: gId } });
                 break;
-            case "ATTACK":
-                buttons.push({ label: 'Attack', style: 'DANGER', command: { type: 'attack', target: 'p2' } }); // TODO: Target selection
-                break;
             case "REVIVE":
                 buttons.push({ label: 'Revive Forces', style: 'SUCCESS', command: { type: 'revive', target: gId } });
                 break;
@@ -29,15 +26,37 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
             case "MOVE":
                 buttons.push({ label: 'Move Forces', style: 'PRIMARY', command: { type: 'move', target: gId } });
                 break;
+            case "ATTACK":
+                buttons.push({ label: 'Attack', style: 'DANGER', command: { type: 'attack', target: 'p2' } }); // TODO: Target selection
+                break;
             case "SUBMIT_PLAN":
                 buttons.push({ label: 'Submit Battle Plan', style: 'DANGER', command: { type: 'plan', target: gId } });
                 break;
-            case "TRAITOR":
-                buttons.push({ label: 'Call Traitor', style: 'DANGER', command: { type: 'traitor', target: gId } });
+            case "REVEAL_PLAN":
+                buttons.push({ label: 'Reveal Battle Plan', style: 'DANGER', command: { type: 'reveal-plan', target: gId } });
                 break;
             case "RESOLVE_BATTLES":
                 buttons.push({ label: 'Resolve Battles', style: 'DANGER', command: { type: 'resolve-battles', target: gId } });
                 break;
+            case "TRAITOR":
+                buttons.push({ label: 'Call Traitor', style: 'DANGER', command: { type: 'traitor', target: gId } });
+                break;
+            case "MOVE_STORM":
+                buttons.push({ label: 'Move Storm', style: 'PRIMARY', command: { type: 'move-storm', target: gId } });
+                break;
+            case "SPICE_BLOW":
+                buttons.push({ label: 'Reveal Spice Blow', style: 'PRIMARY', command: { type: 'spice-blow', target: gId } });
+                break;
+            case "COLLECT_SPICE":
+                buttons.push({ label: 'Collect Spice', style: 'SUCCESS', command: { type: 'collect-spice', target: gId } });
+                break;
+            case "MENTAT_PAUSE":
+                buttons.push({ label: 'Mentat Pause', style: 'SECONDARY', command: { type: 'mentat-pause', target: gId } });
+                break;
+            case "PLAYER_ACTIONS":
+                buttons.push({ label: 'My Actions', style: 'SECONDARY', command: { type: 'player-actions', target: gId } });
+                break;
+            // Additional actions can be mapped here as needed
         }
     });
 

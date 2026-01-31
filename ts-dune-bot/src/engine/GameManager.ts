@@ -148,6 +148,36 @@ export class GameManager {
         return this.gameEngine.getAvailableActions(state);
     }
 
+    // Get player-specific private actions (cards, traitors, etc.)
+    getPlayerActions(state: GameState, userId: string): string[] {
+        const playerFaction = state.factions.find(f => f.playerDiscordId === userId);
+
+        if (!playerFaction) {
+            return [];
+        }
+
+        const actions: string[] = [];
+
+        // Add cards from hand
+        if (playerFaction.hand && playerFaction.hand.length > 0) {
+            playerFaction.hand.forEach(card => {
+                actions.push(`Card: ${card.name}`);
+            });
+        }
+
+        // Add traitor information (masked)
+        if (playerFaction.traitors && playerFaction.traitors.length > 0) {
+            actions.push(`Traitors: ${playerFaction.traitors.length} known`);
+        }
+
+        // Add faction-specific abilities/status
+        actions.push(`Spice: ${playerFaction.spice}`);
+        actions.push(`Reserves: ${playerFaction.reserves}`);
+        actions.push(`Forces in Tanks: ${playerFaction.forcesInTanks}`);
+
+        return actions;
+    }
+
     async getGame(gameId: number) {
         return prisma.game.findUnique({ where: { id: gameId } });
     }

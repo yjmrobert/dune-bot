@@ -6,6 +6,6 @@ export class ShipmentAndMovementPhaseHandler implements PhaseHandler {
     constructor(private engine: ShipmentMovementEngine) { }
 
     getAvailableActions(state: GameState): GameAction[] {
-        return ["SHIP", "MOVE", "NEXT_PHASE"];
+        return ["SHIP", "MOVE", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

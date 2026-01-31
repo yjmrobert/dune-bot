@@ -6,6 +6,6 @@ export class RevivalPhaseHandler implements PhaseHandler {
     constructor(private engine: RevivalEngine) { }
 
     getAvailableActions(state: GameState): GameAction[] {
-        return ["REVIVE", "NEXT_PHASE"];
+        return ["REVIVE", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

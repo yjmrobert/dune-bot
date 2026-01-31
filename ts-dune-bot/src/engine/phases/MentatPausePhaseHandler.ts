@@ -6,6 +6,6 @@ export class MentatPausePhaseHandler implements PhaseHandler {
     constructor(private engine: MentatPauseEngine) { }
 
     getAvailableActions(state: GameState): GameAction[] {
-        return ["NEXT_PHASE"];
+        return ["MENTAT_PAUSE", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

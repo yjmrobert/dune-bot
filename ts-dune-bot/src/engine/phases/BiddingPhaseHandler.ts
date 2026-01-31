@@ -7,8 +7,8 @@ export class BiddingPhaseHandler implements PhaseHandler {
 
     getAvailableActions(state: GameState): GameAction[] {
         if (state.isBiddingRoundActive) {
-            return ["BID", "PASS"];
+            return ["BID", "PASS", "PLAYER_ACTIONS", "NEXT_PHASE"];
         }
-        return ["NEXT_PHASE"];
+        return ["PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

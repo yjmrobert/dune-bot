@@ -117,6 +117,51 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
                     );
                 }
+            } else if (action === "player-actions") {
+                // Handle Player Actions - Show ephemeral message with private player info
+                const game = await gameManager.getGame(gameId);
+                if (!game) {
+                    await interaction.reply({ content: "Game not found.", flags: MessageFlags.Ephemeral });
+                    return;
+                }
+
+                const state: import("./types").GameState = JSON.parse(game.stateJson);
+                const playerActions = gameManager.getPlayerActions(state, interaction.user.id);
+
+                if (playerActions.length === 0) {
+                    await interaction.reply({
+                        content: "You have no private actions or information available at this time.",
+                        flags: MessageFlags.Ephemeral
+                    });
+                    return;
+                }
+
+                // Build ephemeral message with player info
+                let message = "**Your Private Information:**\n\n";
+
+                // Separate cards from other info
+                const cards = playerActions.filter(a => a.startsWith("Card:"));
+                const otherInfo = playerActions.filter(a => !a.startsWith("Card:"));
+
+                if (cards.length > 0) {
+                    message += "**Treachery Cards:**\n";
+                    cards.forEach(card => {
+                        message += `• ${card.replace("Card: ", "")}\n`;
+                    });
+                    message += "\n";
+                }
+
+                if (otherInfo.length > 0) {
+                    message += "**Faction Status:**\n";
+                    otherInfo.forEach(info => {
+                        message += `• ${info}\n`;
+                    });
+                }
+
+                await interaction.reply({
+                    content: message,
+                    flags: MessageFlags.Ephemeral
+                });
             }
         } catch (error: any) {
             console.error(error);

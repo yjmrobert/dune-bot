@@ -18,7 +18,18 @@ export interface TreacheryCard {
     isSpecial: boolean;
 }
 
-export type GameAction = "NEXT_PHASE" | "BID" | "PASS" | "REVIVE" | "SHIP" | "MOVE" | "ATTACK" | "SUBMIT_PLAN" | "TRAITOR" | "START_GAME" | "JOIN_GAME" | "RESOLVE_BATTLES";
+export type GameAction =
+    | "NEXT_PHASE"
+    | "BID" | "PASS"
+    | "REVIVE" | "REVIVE_HERO" | "REVIVE_FORCES"
+    | "SHIP" | "MOVE"
+    | "ATTACK" | "SUBMIT_PLAN" | "REVEAL_PLAN" | "RESOLVE_BATTLES" | "TRAITOR"
+    | "START_GAME" | "JOIN_GAME"
+    | "MOVE_STORM"
+    | "SPICE_BLOW"
+    | "COLLECT_SPICE"
+    | "MENTAT_PAUSE"
+    | "PLAYER_ACTIONS";
 
 export interface SpiceCard {
     id: number;

@@ -7,8 +7,8 @@ export class BattlePhaseHandler implements PhaseHandler {
 
     getAvailableActions(state: GameState): GameAction[] {
         if (state.battleState && !state.battleState.resolved) {
-            return ["SUBMIT_PLAN", "TRAITOR"];
+            return ["SUBMIT_PLAN", "REVEAL_PLAN", "TRAITOR", "PLAYER_ACTIONS", "NEXT_PHASE"];
         }
-        return ["RESOLVE_BATTLES", "NEXT_PHASE"];
+        return ["ATTACK", "RESOLVE_BATTLES", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }

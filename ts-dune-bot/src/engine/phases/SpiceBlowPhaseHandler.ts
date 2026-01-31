@@ -3,6 +3,6 @@ import { GameState, GameAction } from "../../types";
 
 export class SpiceBlowPhaseHandler implements PhaseHandler {
     getAvailableActions(state: GameState): GameAction[] {
-        return ["NEXT_PHASE"];
+        return ["SPICE_BLOW", "PLAYER_ACTIONS", "NEXT_PHASE"];
     }
 }
