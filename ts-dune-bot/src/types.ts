@@ -63,6 +63,7 @@ export interface GameState {
     turn: number;
     stormLocation: number;
     stormMovedThisTurn?: boolean; // Track if storm has moved this turn
+    spiceBlowRevealed?: boolean; // Track if spice blow has been revealed this turn
     factions: FactionState[];
     actionLog: string[];
 

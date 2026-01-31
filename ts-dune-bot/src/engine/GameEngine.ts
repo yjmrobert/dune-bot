@@ -7,6 +7,7 @@ import { BattleEngine } from "./BattleEngine";
 import { SpiceCollectionEngine } from "./SpiceCollectionEngine";
 import { MentatPauseEngine } from "./MentatPauseEngine";
 import { StormEngine } from "./StormEngine";
+import { SpiceBlowEngine } from "./SpiceBlowEngine";
 import { FACTION_LEADERS } from "../constants/leaders";
 import { BoardService } from "../services/BoardService";
 import { PhaseHandler } from "./phases/PhaseHandler";
@@ -35,6 +36,7 @@ export class GameEngine {
     private spiceCollectionEngine = new SpiceCollectionEngine();
     private mentatPauseEngine = new MentatPauseEngine();
     private stormEngine = new StormEngine();
+    private spiceBlowEngine = new SpiceBlowEngine();
 
     private phaseHandlers: Record<string, PhaseHandler>;
     private defaultHandler: PhaseHandler;
@@ -164,6 +166,11 @@ export class GameEngine {
             state.stormMovedThisTurn = false;
         }
 
+        // Reset spice blow flag when entering Spice Blow phase
+        if (nextPhase === "Spice Blow") {
+            state.spiceBlowRevealed = false;
+        }
+
         // Phase Triggers
         if (nextPhase === "CHOAM Charity") {
             const choamEngine = new ChoamCharityEngine(); // Instantiate locally or move to class property
@@ -246,6 +253,12 @@ export class GameEngine {
         this.stormEngine.moveStorm(state, sectors);
         this.stormEngine.determineFirstPlayer(state);
         state.stormMovedThisTurn = true;
+        return state;
+    }
+
+    revealSpiceBlow(state: GameState): GameState {
+        this.spiceBlowEngine.resolveSpiceBlow(state);
+        state.spiceBlowRevealed = true;
         return state;
     }
 

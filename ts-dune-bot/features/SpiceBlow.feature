@@ -42,3 +42,27 @@ Feature: Spice Phase
     And the next spice card B is "Broken Land"
     When the spice blow is resolved
     Then a Nexus should occur
+
+  Scenario: First Turn ignores Shai-Hulud and protects forces
+    Given the game is in Turn 1
+    And territory "Cielago Depression" has 5 spice
+    And "Atreides" has 3 forces in "Cielago Depression"
+    And the discard pile has "Cielago Depression" on top
+    And the next spice card A is "Shai-Hulud"
+    And the next spice card B is "The Great Flat"
+    When the spice blow is resolved
+    Then territory "Cielago Depression" should have 5 spice
+    And "Atreides" should have 3 forces in "Cielago Depression"
+    And territory "The Great Flat" should have 10 spice
+    And a Nexus should not occur
+    And the Spice Deck should contain "Shai-Hulud"
+
+  Scenario: First Turn ignores multiple Shai-Hulud cards
+    Given the game is in Turn 1
+    And the next spice card A is "Shai-Hulud"
+    And the next spice card B is "Shai-Hulud"
+    And the next spice card C is "The Great Flat"
+    When the spice blow is resolved
+    Then territory "The Great Flat" should have 10 spice
+    And a Nexus should not occur
+    And the Spice Deck should contain "Shai-Hulud"

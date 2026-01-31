@@ -151,6 +151,38 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
                 // Update Map
                 await MapService.updateMap(game, newState, discordService);
+            } else if (action === "spice-blow") {
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+                const game = await gameManager.getGame(gameId);
+                if (!game) {
+                    await interaction.editReply("Game not found.");
+                    return;
+                }
+
+                const state: import("./types").GameState = JSON.parse(game.stateJson);
+
+                // Check if spice blow has already been revealed this turn
+                if (state.spiceBlowRevealed) {
+                    await interaction.editReply("The spice blow has already been revealed this turn.");
+                    return;
+                }
+
+                // Reveal Spice Blow
+                const newState = await gameManager.revealSpiceBlow(gameId);
+
+                // Get revealed card info from action log
+                const lastLog = newState.actionLog[newState.actionLog.length - 1] || "Spice blow revealed";
+                await interaction.editReply(lastLog);
+
+                // Update View
+                if (game && game.actionsChannelId) {
+                    await discordService.sendGameView(
+                        game.guildId,
+                        game.actionsChannelId,
+                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
+                    );
+                }
             } else if (action === "player-actions") {
                 // Handle Player Actions - Show ephemeral message with private player info
                 const game = await gameManager.getGame(gameId);

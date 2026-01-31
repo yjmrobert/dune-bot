@@ -255,4 +255,29 @@ export class GameManager {
 
         return newState;
     }
+
+    async revealSpiceBlow(gameId: number): Promise<GameState> {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        const state: GameState = JSON.parse(game.stateJson);
+
+        // Reveal Spice Blow
+        const newState = this.gameEngine.revealSpiceBlow(state);
+
+        // Save State
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(newState) }
+        });
+
+        // Update Map
+        await MapService.updateMap(
+            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            newState,
+            this.discordService
+        );
+
+        return newState;
+    }
 }

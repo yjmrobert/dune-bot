@@ -130,7 +130,8 @@ Given('{string} has {int} forces in {string}', async function (factionName: stri
     }
 
     if (!state.boardState[tName]) state.boardState[tName] = { name: tName, spice: 0, forces: {} };
-    state.boardState[tName].forces[factionName] = count;
+    if (!state.boardState[tName].forces[0]) state.boardState[tName].forces[0] = {};
+    state.boardState[tName].forces[0][factionName] = count;
     await saveState(TestContext.gameId, state);
 });
 
@@ -169,4 +170,29 @@ Then('the spice discard pile should contain {string}', async function (cardName:
 Then('a Nexus should occur', async function () {
     const state = await getState(TestContext.gameId);
     expect(state.nexusActive).to.be.true;
+});
+
+Then('{string} should have {int} forces in {string}', async function (factionName: string, count: number, tName: string) {
+    const state = await getState(TestContext.gameId);
+    // Forces are stored by sector -> faction -> count. Using sector 0 for testing.
+    const actual = state.boardState[tName]?.forces?.[0]?.[factionName] || 0;
+    expect(actual).to.equal(count);
+});
+
+Given('the game is in Turn {int}', async function (turn: number) {
+    await ensureGame();
+    const state = await getState(TestContext.gameId);
+    state.turn = turn;
+    await saveState(TestContext.gameId, state);
+});
+
+Then('a Nexus should not occur', async function () {
+    const state = await getState(TestContext.gameId);
+    expect(state.nexusActive).to.be.false;
+});
+
+Then('the Spice Deck should contain {string}', async function (cardName: string) {
+    const state = await getState(TestContext.gameId);
+    const found = state.spiceDeck.some(c => c.name === cardName);
+    expect(found).to.be.true;
 });

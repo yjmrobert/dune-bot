@@ -50,7 +50,12 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
                 });
                 break;
             case "SPICE_BLOW":
-                buttons.push({ label: 'Reveal Spice Blow', style: 'PRIMARY', command: { type: 'spice-blow', target: gId } });
+                buttons.push({
+                    label: 'Reveal Spice Blow',
+                    style: 'PRIMARY',
+                    command: { type: 'spice-blow', target: gId },
+                    disabled: state.spiceBlowRevealed || false
+                });
                 break;
             case "COLLECT_SPICE":
                 buttons.push({ label: 'Collect Spice', style: 'SUCCESS', command: { type: 'collect-spice', target: gId } });

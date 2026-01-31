@@ -3,7 +3,7 @@ import { BoardService } from "../services/BoardService";
 
 export class SpiceBlowEngine {
 
-    resolveSpiceBlow(state: GameState, nextCardOverride?: SpiceCard) {
+    resolveSpiceBlow(state: GameState, nextCardOverride?: SpiceCard, shaiHuludSetAside: SpiceCard[] = []): void {
         if (!state.spiceDeck) state.spiceDeck = []; // Safety
         if (!state.spiceDiscard) state.spiceDiscard = [];
 
@@ -12,6 +12,32 @@ export class SpiceBlowEngine {
 
         if (!card) {
             state.actionLog.push("Spice Deck is empty.");
+            return;
+        }
+
+        // FIRST TURN RULE: Ignore Shai-Hulud cards
+        if (card.type === "Shai-Hulud" && state.turn === 1) {
+            state.actionLog.push(`Shai-Hulud card set aside (First Turn).`);
+            const isTopLevelCall = shaiHuludSetAside.length === 0;
+            shaiHuludSetAside.push(card);
+            
+            // Continue drawing until we get a territory
+            if (state.spiceDeck.length > 0) {
+                this.resolveSpiceBlow(state, undefined, shaiHuludSetAside);
+            } else {
+                state.actionLog.push("No more cards in deck.");
+            }
+            
+            // Reshuffle set-aside cards back into deck ONLY at top level
+            if (isTopLevelCall && shaiHuludSetAside.length > 0) {
+                state.spiceDeck.push(...shaiHuludSetAside);
+                // Shuffle the deck
+                for (let i = state.spiceDeck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [state.spiceDeck[i], state.spiceDeck[j]] = [state.spiceDeck[j], state.spiceDeck[i]];
+                }
+                state.actionLog.push(`${shaiHuludSetAside.length} Shai-Hulud card(s) reshuffled into deck.`);
+            }
             return;
         }
 
