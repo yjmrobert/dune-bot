@@ -111,10 +111,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 await interaction.editReply(`Advanced to phase: ${newState.phase}`);
             }
         } catch (error: any) {
+            console.error(error);
+            if (error.code === 10062 || error.code === 40060) {
+                return;
+            }
+
             if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
+                await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to follow up error:", e));
             } else {
-                await interaction.reply({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
+                await interaction.reply({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to reply error:", e));
             }
         }
     }
