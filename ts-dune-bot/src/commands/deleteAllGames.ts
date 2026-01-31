@@ -8,7 +8,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction, gameManager: GameManager) {
     if (!interaction.guildId) return;
 
-    await interaction.reply({ content: "Deleting ALL games...", flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
         const count = await gameManager.deleteAllGames();

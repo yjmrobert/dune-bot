@@ -53,12 +53,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 // @ts-ignore
                 await command.execute(interaction, gameManager);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            // Ignore Unknown Interaction (10062) and Already Acknowledged (40060)
+            if (error.code === 10062 || error.code === 40060) {
+                return;
+            }
+
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to follow up error:", e));
             } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to reply error:", e));
             }
         }
         return;
