@@ -117,6 +117,33 @@ describe('GamePresenter', () => {
         expect(moveStormButton).toBeDefined();
         expect(moveStormButton?.label).toBe('Move Storm');
         expect(moveStormButton?.style).toBe('PRIMARY');
+        expect(moveStormButton?.disabled).toBe(false);
+    });
+
+    it('should render disabled MOVE_STORM button when storm already moved', () => {
+        const mockState: GameState = {
+            phase: 'Storm',
+            turn: 1,
+            stormLocation: 0,
+            stormMovedThisTurn: true,
+            factions: [],
+            actionLog: [],
+            spiceDeck: [],
+            spiceDiscard: [],
+            treacheryDeck: [],
+            treacheryDiscard: [],
+            auctionQueue: [],
+            currentBid: 0,
+            isBiddingRoundActive: false,
+            nexusActive: false,
+            boardState: {}
+        };
+
+        const view = renderGame(mockState, ['MOVE_STORM'], 1);
+
+        const moveStormButton = view.buttons.find(b => b.command.type === 'move-storm');
+        expect(moveStormButton).toBeDefined();
+        expect(moveStormButton?.disabled).toBe(true);
     });
 
     it('should render SPICE_BLOW button', () => {

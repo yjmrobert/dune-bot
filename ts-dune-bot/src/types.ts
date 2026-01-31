@@ -62,6 +62,7 @@ export interface GameState {
     phase: string;
     turn: number;
     stormLocation: number;
+    stormMovedThisTurn?: boolean; // Track if storm has moved this turn
     factions: FactionState[];
     actionLog: string[];
 

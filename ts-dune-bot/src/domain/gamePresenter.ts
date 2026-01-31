@@ -42,7 +42,12 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
                 buttons.push({ label: 'Call Traitor', style: 'DANGER', command: { type: 'traitor', target: gId } });
                 break;
             case "MOVE_STORM":
-                buttons.push({ label: 'Move Storm', style: 'PRIMARY', command: { type: 'move-storm', target: gId } });
+                buttons.push({
+                    label: 'Move Storm',
+                    style: 'PRIMARY',
+                    command: { type: 'move-storm', target: gId },
+                    disabled: state.stormMovedThisTurn || false
+                });
                 break;
             case "SPICE_BLOW":
                 buttons.push({ label: 'Reveal Spice Blow', style: 'PRIMARY', command: { type: 'spice-blow', target: gId } });

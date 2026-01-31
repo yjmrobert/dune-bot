@@ -6,6 +6,7 @@ import { ShipmentMovementEngine } from "./ShipmentMovementEngine";
 import { BattleEngine } from "./BattleEngine";
 import { SpiceCollectionEngine } from "./SpiceCollectionEngine";
 import { MentatPauseEngine } from "./MentatPauseEngine";
+import { StormEngine } from "./StormEngine";
 import { FACTION_LEADERS } from "../constants/leaders";
 import { BoardService } from "../services/BoardService";
 import { PhaseHandler } from "./phases/PhaseHandler";
@@ -33,6 +34,7 @@ export class GameEngine {
     private battleEngine = new BattleEngine();
     private spiceCollectionEngine = new SpiceCollectionEngine();
     private mentatPauseEngine = new MentatPauseEngine();
+    private stormEngine = new StormEngine();
 
     private phaseHandlers: Record<string, PhaseHandler>;
     private defaultHandler: PhaseHandler;
@@ -157,6 +159,11 @@ export class GameEngine {
 
         state.phase = nextPhase;
 
+        // Reset storm moved flag when entering Storm phase
+        if (nextPhase === "Storm") {
+            state.stormMovedThisTurn = false;
+        }
+
         // Phase Triggers
         if (nextPhase === "CHOAM Charity") {
             const choamEngine = new ChoamCharityEngine(); // Instantiate locally or move to class property
@@ -232,6 +239,13 @@ export class GameEngine {
 
     resolveMentatPause(state: GameState): GameState {
         this.mentatPauseEngine.resolveMentatPause(state);
+        return state;
+    }
+
+    moveStorm(state: GameState, sectors: number): GameState {
+        this.stormEngine.moveStorm(state, sectors);
+        this.stormEngine.determineFirstPlayer(state);
+        state.stormMovedThisTurn = true;
         return state;
     }
 

@@ -117,6 +117,40 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
                     );
                 }
+            } else if (action === "move-storm") {
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+                const game = await gameManager.getGame(gameId);
+                if (!game) {
+                    await interaction.editReply("Game not found.");
+                    return;
+                }
+
+                const state: import("./types").GameState = JSON.parse(game.stateJson);
+
+                // Check if storm has already moved this turn
+                if (state.stormMovedThisTurn) {
+                    await interaction.editReply("The storm has already moved this turn.");
+                    return;
+                }
+
+                // Move storm by random sectors (1-3 for now, adjust as needed)
+                const sectors = Math.floor(Math.random() * 3) + 1;
+                const newState = await gameManager.moveStorm(gameId, sectors);
+
+                await interaction.editReply(`Storm moved ${sectors} sectors to sector ${newState.stormLocation}.`);
+
+                // Update View
+                if (game && game.actionsChannelId) {
+                    await discordService.sendGameView(
+                        game.guildId,
+                        game.actionsChannelId,
+                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
+                    );
+                }
+
+                // Update Map
+                await MapService.updateMap(game, newState, discordService);
             } else if (action === "player-actions") {
                 // Handle Player Actions - Show ephemeral message with private player info
                 const game = await gameManager.getGame(gameId);

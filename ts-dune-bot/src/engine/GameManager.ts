@@ -230,4 +230,29 @@ export class GameManager {
 
         return newState;
     }
+
+    async moveStorm(gameId: number, sectors: number): Promise<GameState> {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        const state: GameState = JSON.parse(game.stateJson);
+
+        // Move Storm
+        const newState = this.gameEngine.moveStorm(state, sectors);
+
+        // Save State
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(newState) }
+        });
+
+        // Update Map
+        await MapService.updateMap(
+            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            newState,
+            this.discordService
+        );
+
+        return newState;
+    }
 }
