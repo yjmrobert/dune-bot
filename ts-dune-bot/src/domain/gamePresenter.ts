@@ -83,8 +83,11 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
         ? `Combat is active!`
         : `It is currently ${state.phase}.`;
 
+    const lastAction = state.actionLog.length > 0 ? state.actionLog[state.actionLog.length - 1] : "";
+    const content = `**Current Phase**: ${state.phase}${lastAction ? `\n**Last Action**: ${lastAction}` : ""}`;
+
     return {
-        content: `**Current Phase**: ${state.phase}`,
+        content: content,
         embed: {
             title: `Game Status`,
             description: description,

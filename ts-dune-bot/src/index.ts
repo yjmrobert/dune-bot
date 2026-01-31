@@ -104,25 +104,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     }
                 }
             } else if (action === "next-phase") {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                await interaction.deferUpdate();
                 const newState = await gameManager.advancePhase(gameId);
-                await interaction.editReply(`Advanced to phase: ${newState.phase}`);
 
                 // Update View
                 const game = await gameManager.getGame(gameId);
                 if (game && game.actionsChannelId) {
-                    await discordService.sendGameView(
+                    await discordService.updateGameView(
                         game.guildId,
                         game.actionsChannelId,
+                        interaction.message.id,
                         renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
                     );
                 }
             } else if (action === "move-storm") {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                await interaction.deferUpdate();
 
                 const game = await gameManager.getGame(gameId);
                 if (!game) {
-                    await interaction.editReply("Game not found.");
+                    await interaction.followUp({ content: "Game not found.", flags: MessageFlags.Ephemeral });
                     return;
                 }
 
@@ -130,15 +130,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
                 // Check if storm has already moved this turn
                 if (state.stormMovedThisTurn) {
-                    await interaction.editReply("The storm has already moved this turn.");
+                    await interaction.followUp({ content: "The storm has already moved this turn.", flags: MessageFlags.Ephemeral });
                     return;
                 }
 
                 // Move storm by random sectors (1-6)
                 const sectors = Math.floor(Math.random() * 6) + 1;
                 const newState = await gameManager.moveStorm(gameId, sectors);
-
-                await interaction.editReply(`Storm moved ${sectors} sectors to sector ${newState.stormLocation}.`);
 
                 // Update View
                 if (game && game.actionsChannelId) {
