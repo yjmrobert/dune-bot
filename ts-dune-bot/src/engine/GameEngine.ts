@@ -59,10 +59,8 @@ export class GameEngine {
         if (state.factions.length < 1) throw new Error("Not enough players.");
 
         // 1. Initial Resources
-        state.factions.forEach(f => {
-            f.spice = 10;
-            f.reserves = 10;
-        });
+        // 1. Initial Resources & Forces
+        this.setupStartingForces(state);
 
         // 2. Initialize Storm
         state.stormLocation = Math.floor(Math.random() * 18) + 1;
@@ -199,5 +197,44 @@ export class GameEngine {
     resolveMentatPause(state: GameState): GameState {
         this.mentatPauseEngine.resolveMentatPause(state);
         return state;
+    }
+
+    private setupStartingForces(state: GameState) {
+        state.factions.forEach(f => {
+            switch (f.faction) {
+                case Faction.Atreides:
+                    f.spice = 10;
+                    f.reserves = 10;
+                    BoardService.addForce(state, "Arrakeen", 10, f.faction, 10);
+                    break;
+                case Faction.Harkonnen:
+                    f.spice = 10;
+                    f.reserves = 10;
+                    BoardService.addForce(state, "Carthag", 11, f.faction, 10);
+                    break;
+                case Faction.Fremen:
+                    f.spice = 3;
+                    f.reserves = 10;
+                    // Default to Sietch Tabr (Sector 14)
+                    BoardService.addForce(state, "Sietch Tabr", 14, f.faction, 10);
+                    break;
+                case Faction.Emperor:
+                    f.spice = 10;
+                    f.reserves = 20;
+                    break;
+                case Faction.Guild:
+                    f.spice = 5;
+                    f.reserves = 15;
+                    BoardService.addForce(state, "Tuek's Sietch", 5, f.faction, 5);
+                    break;
+                case Faction.BeneGesserit:
+                    f.spice = 5;
+                    f.reserves = 19;
+                    // Polar Sink. Using Sector 0 if not defined.
+                    BoardService.addForce(state, "Polar Sink", 0, f.faction, 1);
+                    break;
+            }
+            state.actionLog.push(`${f.faction} starting forces deployed.`);
+        });
     }
 }

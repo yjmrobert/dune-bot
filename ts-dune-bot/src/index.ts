@@ -48,7 +48,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             // Check if command needs gameEngine (hacky check for now, ideally strictly typed)
             if (["join-game", "start-game", "next-phase"].includes(interaction.commandName)) {
                 // @ts-ignore
-                await command.execute(interaction, gameEngine);
+                await command.execute(interaction, gameManager);
             } else {
                 // @ts-ignore
                 await command.execute(interaction, gameManager);
@@ -71,7 +71,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         try {
             if (action === "join-game") {
-                const { result, state, game } = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
+                const { result, state, game } = await gameManager.registerPlayer(gameId, interaction.user.id, interaction.user.username);
                 await interaction.reply({ content: result, flags: MessageFlags.Ephemeral });
 
                 // Update Lobby Message
@@ -82,7 +82,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 }
             } else if (action === "start-game") {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-                const { state, game } = await gameEngine.startGame(gameId);
+                const { state, game } = await gameManager.startGame(gameId);
                 await interaction.editReply("Game Started! Check the action channel.");
 
                 if (game.actionsChannelId) {

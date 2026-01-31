@@ -111,12 +111,76 @@ export class GameManager {
         return count;
     }
 
+    async registerPlayer(gameId: number, userId: string, username: string) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        const state: GameState = JSON.parse(game.stateJson);
+
+        // Call Engine
+        // Note: GameEngine.registerPlayer returns the updated state, but we also want a result message?
+        // Actually GameEngine.registerPlayer returns 'state' in current implementation.
+        // matching index.ts expectation: { result, state, game }
+        // The engine doesn't return a "result string", so we construct it.
+
+        try {
+            this.gameEngine.registerPlayer(state, userId, username); // This mutates state or returns it
+
+            // Save State
+            await prisma.game.update({
+                where: { id: gameId },
+                data: { stateJson: JSON.stringify(state) }
+            });
+
+            const result = `Successfully joined as ${state.factions.find(f => f.playerDiscordId === userId)?.faction}`;
+            return { result, state, game };
+
+        } catch (error: any) {
+            // If engine throws (e.g. game full), we propagate or handle. 
+            // index.ts expects a successful object return usually, or catches error.
+            // Let's rethrow to let index.ts catch it.
+            throw error;
+        }
+    }
+
+    async startGame(gameId: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        const state: GameState = JSON.parse(game.stateJson);
+
+        // Fetch Cards
+        const treacheryCards = await prisma.treacheryCard.findMany();
+        const spiceCards = await prisma.spiceCard.findMany();
+
+        // Call Engine
+        // Types from Prisma need to match Domain types. They are identical structurally.
+        // @ts-ignore
+        this.gameEngine.startGame(state, treacheryCards, spiceCards);
+
+        // Save State
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(state) }
+        });
+
+        return { state, game };
+    }
+
     async advancePhase(gameId: number): Promise<GameState> {
         const game = await prisma.game.findUnique({ where: { id: gameId } });
         if (!game) throw new Error("Game not found.");
 
+        const state: GameState = JSON.parse(game.stateJson);
+
         // 1. Advance Phase
-        const newState = await this.gameEngine.advancePhase(gameId);
+        const newState = this.gameEngine.advancePhase(state); // Fix: Pass state, not gameId
+
+        // Save State
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(newState) }
+        });
 
         // 2. Update Map
         await MapService.updateMap(
