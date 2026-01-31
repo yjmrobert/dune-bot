@@ -11,7 +11,7 @@ exports.data = new discord_js_1.SlashCommandBuilder()
     .setRequired(false));
 async function execute(interaction, gameManager) {
     if (!interaction.guildId) {
-        await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+        await interaction.reply({ content: "This command can only be used in a server.", flags: discord_js_1.MessageFlags.Ephemeral });
         return;
     }
     await interaction.deferReply();

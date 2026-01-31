@@ -1,9 +1,14 @@
 import { prisma } from "../db";
 import { DiscordService } from "../services/DiscordService";
 import { GameState } from "../types";
+import { GameEngine } from "./GameEngine";
+import { MapService } from "../services/MapService";
 
 export class GameManager {
-    constructor(private discordService: DiscordService) { }
+    constructor(
+        private discordService: DiscordService,
+        private gameEngine: GameEngine
+    ) { }
 
     async createGame(guildId: string, name: string) {
         // 1. Create Placeholder Game to get ID
@@ -51,14 +56,18 @@ export class GameManager {
             });
 
             // 4. Send Welcome/Lobby Message
-            const msgId = await this.discordService.sendActionMessage(
+            const view = {
+                content: `**Dune Game Lobby**\n**Players (0/6):**\n*(Waiting for players...)*\n\nJoin the game and then start when ready.`,
+                buttons: [
+                    { label: "Join Game", style: "SUCCESS" as const, command: { type: "join-game", target: game.id.toString() } },
+                    { label: "Start Game", style: "SUCCESS" as const, command: { type: "start-game", target: game.id.toString() } }
+                ]
+            };
+
+            const msgId = await this.discordService.sendGameView(
                 guildId,
                 channels.actionsId,
-                `**Dune Game Lobby**\n**Players (0/6):**\n*(Waiting for players...)*\n\nJoin the game and then start when ready.`,
-                [
-                    { label: "Join Game", customId: `join-game:${game.id}`, style: "Success" },
-                    { label: "Start Game", customId: `start-game:${game.id}`, style: "Success" }
-                ]
+                view
             );
 
             // 5. Update State with Lobby Message ID
@@ -100,5 +109,22 @@ export class GameManager {
             count++;
         }
         return count;
+    }
+
+    async advancePhase(gameId: number): Promise<GameState> {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+
+        // 1. Advance Phase
+        const newState = await this.gameEngine.advancePhase(gameId);
+
+        // 2. Update Map
+        await MapService.updateMap(
+            { guildId: game.guildId, mapChannelId: game.mapChannelId },
+            newState,
+            this.discordService
+        );
+
+        return newState;
     }
 }

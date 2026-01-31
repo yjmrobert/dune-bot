@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiscordService = void 0;
 const discord_js_1 = require("discord.js");
+const MapRenderer_1 = require("../engine/MapRenderer");
 class DiscordService {
     client;
     constructor(client) {
@@ -56,24 +57,63 @@ class DiscordService {
         // Delete category
         await category.delete().catch(() => { });
     }
-    async sendActionMessage(guildId, channelId, content, buttons) {
+    async sendGameView(guildId, channelId, view) {
         const guild = await this.getGuild(guildId);
         const channel = guild.channels.cache.get(channelId);
         if (!channel)
             throw new Error("Channel not found");
-        const row = new discord_js_1.ActionRowBuilder();
-        buttons.forEach(btn => {
-            const style = discord_js_1.ButtonStyle[btn.style];
-            row.addComponents(new discord_js_1.ButtonBuilder()
-                .setCustomId(btn.customId)
-                .setLabel(btn.label)
-                .setStyle(style));
-        });
+        const components = [];
+        if (view.buttons.length > 0) {
+            const row = new discord_js_1.ActionRowBuilder();
+            view.buttons.forEach(btn => {
+                const style = discord_js_1.ButtonStyle[btn.style] || discord_js_1.ButtonStyle.Primary;
+                const customId = `${btn.command.type}${btn.command.target ? ':' + btn.command.target : ''}${btn.command.value ? ':' + btn.command.value : ''}`;
+                row.addComponents(new discord_js_1.ButtonBuilder()
+                    .setCustomId(customId)
+                    .setLabel(btn.label)
+                    .setStyle(style)
+                    .setDisabled(btn.disabled ?? false));
+            });
+            components.push(row);
+        }
         const message = await channel.send({
-            content: content,
-            components: buttons.length > 0 ? [row] : []
+            content: view.content || "",
+            // Embeds not fully implemented in GameView -> Discord mapping yet but placeholder:
+            // embeds: view.embed ? [view.embed] : [],
+            components: components
         });
         return message.id;
+    }
+    async sendImageView(guildId, channelId, view) {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId);
+        if (!channel)
+            throw new Error("Channel not found");
+        // Convert ImageView to Buffer
+        const renderer = new MapRenderer_1.MapRenderer();
+        const buffer = await renderer.render(view);
+        const attachment = new discord_js_1.AttachmentBuilder(buffer, { name: 'map.png' });
+        const message = await channel.send({
+            files: [attachment]
+        });
+        return message.id;
+    }
+    async editMessage(guildId, channelId, messageId, content) {
+        // TODO: Refactor this to take GameView as well if we want full consistency
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId);
+        if (!channel)
+            throw new Error("Channel not found");
+        try {
+            const message = await channel.messages.fetch(messageId);
+            if (!message)
+                throw new Error("Message not found");
+            await message.edit(content);
+        }
+        catch (e) {
+            console.error(`Failed to edit message ${messageId}:`, e);
+            // Don't throw, just log, as this is often non-critical (message might be deleted)
+        }
     }
 }
 exports.DiscordService = DiscordService;

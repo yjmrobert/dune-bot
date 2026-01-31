@@ -12,7 +12,7 @@ exports.data = new discord_js_1.SlashCommandBuilder()
 async function execute(interaction, engine) {
     if (!interaction.guildId)
         return;
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: discord_js_1.MessageFlags.Ephemeral });
     const gameId = interaction.options.getInteger("game-id", true);
     try {
         const newState = await engine.advancePhase(gameId);

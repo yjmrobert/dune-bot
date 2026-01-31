@@ -6,8 +6,12 @@ import {
     TextChannel,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    AttachmentBuilder
 } from "discord.js";
+import { GameView } from "../domain/viewModels";
+import { ImageView } from "../domain/imageViewModels";
+import { MapRenderer } from "../engine/MapRenderer";
 
 export class DiscordService {
     private client: Client;
@@ -74,42 +78,73 @@ export class DiscordService {
         await category.delete().catch(() => { });
     }
 
-    async sendActionMessage(
+    async sendGameView(
         guildId: string,
         channelId: string,
-        content: string,
-        buttons: { label: string, customId: string, style: 'Primary' | 'Secondary' | 'Success' | 'Danger' }[]
+        view: GameView
     ): Promise<string> {
         const guild = await this.getGuild(guildId);
         const channel = guild.channels.cache.get(channelId) as TextChannel;
 
         if (!channel) throw new Error("Channel not found");
 
-        const row = new ActionRowBuilder<ButtonBuilder>();
+        const components: ActionRowBuilder<ButtonBuilder>[] = [];
 
-        buttons.forEach(btn => {
-            const style = ButtonStyle[btn.style];
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId(btn.customId)
-                    .setLabel(btn.label)
-                    .setStyle(style)
-            );
-        });
+        if (view.buttons.length > 0) {
+            const row = new ActionRowBuilder<ButtonBuilder>();
+            view.buttons.forEach(btn => {
+                const style = ButtonStyle[btn.style as keyof typeof ButtonStyle] || ButtonStyle.Primary;
+                const customId = `${btn.command.type}${btn.command.target ? ':' + btn.command.target : ''}${btn.command.value ? ':' + btn.command.value : ''}`;
+
+                row.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(customId)
+                        .setLabel(btn.label)
+                        .setStyle(style)
+                        .setDisabled(btn.disabled ?? false)
+                );
+            });
+            components.push(row);
+        }
 
         const message = await channel.send({
-            content: content,
-            components: buttons.length > 0 ? [row] : []
+            content: view.content || "",
+            // Embeds not fully implemented in GameView -> Discord mapping yet but placeholder:
+            // embeds: view.embed ? [view.embed] : [],
+            components: components
+        });
+
+        return message.id;
+    }
+
+    async sendImageView(
+        guildId: string,
+        channelId: string,
+        view: ImageView
+    ): Promise<string> {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId) as TextChannel;
+
+        if (!channel) throw new Error("Channel not found");
+
+        // Convert ImageView to Buffer
+        const renderer = new MapRenderer();
+        const buffer = await renderer.render(view);
+        const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
+
+        const message = await channel.send({
+            files: [attachment]
         });
 
         return message.id;
     }
 
     async editMessage(guildId: string, channelId: string, messageId: string, content: string) {
+        // TODO: Refactor this to take GameView as well if we want full consistency
         const guild = await this.getGuild(guildId);
         const channel = guild.channels.cache.get(channelId) as TextChannel;
         if (!channel) throw new Error("Channel not found");
-        
+
         try {
             const message = await channel.messages.fetch(messageId);
             if (!message) throw new Error("Message not found");

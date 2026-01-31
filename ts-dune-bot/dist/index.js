@@ -6,6 +6,8 @@ const commands_1 = require("./commands");
 const DiscordService_1 = require("./services/DiscordService");
 const GameManager_1 = require("./engine/GameManager");
 const GameEngine_1 = require("./engine/GameEngine");
+const dbInit_1 = require("./utils/dbInit");
+const MapService_1 = require("./services/MapService");
 const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
@@ -52,10 +54,10 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
         catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: 'There was an error while executing this command!', flags: discord_js_1.MessageFlags.Ephemeral });
             }
             else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.reply({ content: 'There was an error while executing this command!', flags: discord_js_1.MessageFlags.Ephemeral });
             }
         }
         return;
@@ -66,31 +68,48 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
         const gameId = parseInt(param);
         try {
             if (action === "join-game") {
-                const result = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
-                await interaction.reply({ content: result, ephemeral: true });
+                const { result, state, game } = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
+                await interaction.reply({ content: result, flags: discord_js_1.MessageFlags.Ephemeral });
+                // Update Lobby Message
+                if (game.actionsChannelId && state.lobbyMessageId) {
+                    const factions = state.factions.map(f => `• ${f.playerName} (${f.faction})`).join("\n");
+                    const lobbyContent = `**Dune Game Lobby**\n**Players (${state.factions.length}/6):**\n${factions || "*(Waiting for players...)*"}\n\nJoin the game and then start when ready.`;
+                    await discordService.editMessage(game.guildId, game.actionsChannelId, state.lobbyMessageId, lobbyContent);
+                }
             }
             else if (action === "start-game") {
-                await interaction.deferReply({ ephemeral: true });
-                await gameEngine.startGame(gameId);
-                await interaction.editReply("Game Started!");
+                await interaction.deferReply({ flags: discord_js_1.MessageFlags.Ephemeral });
+                const { state, game } = await gameEngine.startGame(gameId);
+                await interaction.editReply("Game Started! Check the action channel.");
+                if (game.actionsChannelId) {
+                    if (game.actionsChannelId) {
+                        await discordService.sendGameView(game.guildId, game.actionsChannelId, {
+                            content: `**GAME STARTED!**\n\n**Turn:** ${state.turn}\n**Phase:** ${state.phase}\n**Storm Sector:** ${state.stormLocation}\n\nGood luck!`,
+                            buttons: []
+                        });
+                        // Trigger Map Update
+                        await MapService_1.MapService.updateMap(game, state, discordService);
+                    }
+                }
             }
             else if (action === "next-phase") {
-                await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ flags: discord_js_1.MessageFlags.Ephemeral });
                 const newState = await gameEngine.advancePhase(gameId);
                 await interaction.editReply(`Advanced to phase: ${newState.phase}`);
             }
         }
         catch (error) {
             if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true });
+                await interaction.followUp({ content: `Error: ${error.message}`, flags: discord_js_1.MessageFlags.Ephemeral });
             }
             else {
-                await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+                await interaction.reply({ content: `Error: ${error.message}`, flags: discord_js_1.MessageFlags.Ephemeral });
             }
         }
     }
 });
 async function main() {
+    await (0, dbInit_1.ensureDatabaseInitialized)();
     await client.login(config_1.config.discordToken);
 }
 main().catch(console.error);

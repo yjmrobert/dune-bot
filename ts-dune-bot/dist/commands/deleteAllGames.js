@@ -9,7 +9,7 @@ exports.data = new discord_js_1.SlashCommandBuilder()
 async function execute(interaction, gameManager) {
     if (!interaction.guildId)
         return;
-    await interaction.reply({ content: "Deleting ALL games...", ephemeral: true });
+    await interaction.reply({ content: "Deleting ALL games...", flags: discord_js_1.MessageFlags.Ephemeral });
     try {
         const count = await gameManager.deleteAllGames();
         await interaction.editReply(`Deleted ${count} games.`);

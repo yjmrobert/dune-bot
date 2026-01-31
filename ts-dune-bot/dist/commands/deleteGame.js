@@ -13,7 +13,7 @@ async function execute(interaction, gameManager) {
     if (!interaction.guildId)
         return;
     // Ephemeral response first
-    await interaction.reply({ content: "Deleting game...", ephemeral: true });
+    await interaction.reply({ content: "Deleting game...", flags: discord_js_1.MessageFlags.Ephemeral });
     const gameId = interaction.options.getInteger("game-id", true);
     try {
         await gameManager.deleteGame(gameId);

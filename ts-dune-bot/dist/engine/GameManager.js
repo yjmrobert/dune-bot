@@ -49,10 +49,14 @@ class GameManager {
                 }
             });
             // 4. Send Welcome/Lobby Message
-            const msgId = await this.discordService.sendActionMessage(guildId, channels.actionsId, `**Dune Game Lobby**\n**Players (0/6):**\n*(Waiting for players...)*\n\nJoin the game and then start when ready.`, [
-                { label: "Join Game", customId: `join-game:${game.id}`, style: "Success" },
-                { label: "Start Game", customId: `start-game:${game.id}`, style: "Success" }
-            ]);
+            const view = {
+                content: `**Dune Game Lobby**\n**Players (0/6):**\n*(Waiting for players...)*\n\nJoin the game and then start when ready.`,
+                buttons: [
+                    { label: "Join Game", style: "SUCCESS", command: { type: "join-game", target: game.id.toString() } },
+                    { label: "Start Game", style: "SUCCESS", command: { type: "start-game", target: game.id.toString() } }
+                ]
+            };
+            const msgId = await this.discordService.sendGameView(guildId, channels.actionsId, view);
             // 5. Update State with Lobby Message ID
             initialState.lobbyMessageId = msgId;
             await db_1.prisma.game.update({

@@ -4,6 +4,8 @@ import { commands } from "./commands";
 import { DiscordService } from "./services/DiscordService";
 import { GameManager } from "./engine/GameManager";
 import { GameEngine } from "./engine/GameEngine";
+import { ensureDatabaseInitialized } from "./utils/dbInit";
+import { MapService } from "./services/MapService";
 
 const client = new Client({
     intents: [
@@ -14,9 +16,10 @@ const client = new Client({
 });
 
 // Services
+// Services
 const discordService = new DiscordService(client);
-const gameManager = new GameManager(discordService);
 const gameEngine = new GameEngine();
+const gameManager = new GameManager(discordService, gameEngine);
 
 client.once(Events.ClientReady, async c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
@@ -83,16 +86,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 await interaction.editReply("Game Started! Check the action channel.");
 
                 if (game.actionsChannelId) {
-                    await discordService.sendActionMessage(
-                        game.guildId,
-                        game.actionsChannelId,
-                        `**GAME STARTED!**\n\n**Turn:** ${state.turn}\n**Phase:** ${state.phase}\n**Storm Sector:** ${state.stormLocation}\n\nGood luck!`,
-                        []
-                    );
+                    if (game.actionsChannelId) {
+                        await discordService.sendGameView(
+                            game.guildId,
+                            game.actionsChannelId,
+                            {
+                                content: `**GAME STARTED!**\n\n**Turn:** ${state.turn}\n**Phase:** ${state.phase}\n**Storm Sector:** ${state.stormLocation}\n\nGood luck!`,
+                                buttons: []
+                            }
+                        );
+
+                        // Trigger Map Update
+                        await MapService.updateMap(game, state, discordService);
+                    }
                 }
             } else if (action === "next-phase") {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-                const newState = await gameEngine.advancePhase(gameId);
+                const newState = await gameManager.advancePhase(gameId);
                 await interaction.editReply(`Advanced to phase: ${newState.phase}`);
             }
         } catch (error: any) {
@@ -106,6 +116,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 async function main() {
+    await ensureDatabaseInitialized();
     await client.login(config.discordToken);
 }
 

@@ -58,7 +58,7 @@ class GameEngine {
             where: { id: gameId },
             data: { stateJson: JSON.stringify(state) }
         });
-        return `Joined as ${randomFaction}`;
+        return { result: `Joined as ${randomFaction}`, state, game };
     }
     async startGame(gameId) {
         const game = await db_1.prisma.game.findUnique({ where: { id: gameId } });
@@ -115,7 +115,7 @@ class GameEngine {
             where: { id: gameId },
             data: { stateJson: JSON.stringify(state) }
         });
-        return state;
+        return { state, game };
     }
     async advancePhase(gameId) {
         const game = await db_1.prisma.game.findUnique({ where: { id: gameId } });

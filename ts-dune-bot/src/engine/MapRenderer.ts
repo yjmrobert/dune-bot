@@ -10,8 +10,9 @@ export class MapRenderer {
     // For now simple load.
 
     public async render(view: ImageView): Promise<Buffer> {
-        const canvas = createCanvas(view.width, view.height);
-        const ctx = canvas.getContext('2d');
+        // 1. Render to full size canvas first
+        const fullCanvas = createCanvas(view.width, view.height);
+        const ctx = fullCanvas.getContext('2d');
 
         // Background Color
         if (view.backgroundColor) {
@@ -29,7 +30,32 @@ export class MapRenderer {
             this.drawLabel(ctx, label);
         }
 
-        return canvas.toBuffer('image/png', { compressionLevel: 6, filters: Canvas.PNG_ALL_FILTERS });
+        // 2. Calculate Scale to fit 1920x1080
+        const MAX_WIDTH = 1920;
+        const MAX_HEIGHT = 1080;
+
+        let scale = 1;
+        if (view.width > MAX_WIDTH || view.height > MAX_HEIGHT) {
+            const widthScale = MAX_WIDTH / view.width;
+            const heightScale = MAX_HEIGHT / view.height;
+            scale = Math.min(widthScale, heightScale);
+        }
+
+        if (scale === 1) {
+            return fullCanvas.toBuffer('image/png', { compressionLevel: 6, filters: Canvas.PNG_ALL_FILTERS });
+        }
+
+        // 3. Draw to scaled canvas
+        const finalWidth = Math.floor(view.width * scale);
+        const finalHeight = Math.floor(view.height * scale);
+
+        const finalCanvas = createCanvas(finalWidth, finalHeight);
+        const finalCtx = finalCanvas.getContext('2d');
+
+        // Use high quality scaling if possible, though canvas mostly does bilinear
+        finalCtx.drawImage(fullCanvas, 0, 0, finalWidth, finalHeight);
+
+        return finalCanvas.toBuffer('image/png', { compressionLevel: 6, filters: Canvas.PNG_ALL_FILTERS });
     }
 
     private async drawSprite(ctx: CanvasRenderingContext2D, sprite: ImageSprite) {

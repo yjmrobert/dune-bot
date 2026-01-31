@@ -12,11 +12,12 @@ exports.data = new discord_js_1.SlashCommandBuilder()
 async function execute(interaction, engine) {
     if (!interaction.guildId)
         return;
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: discord_js_1.MessageFlags.Ephemeral });
     const gameId = interaction.options.getInteger("game-id", true);
     try {
-        await engine.startGame(gameId);
+        const { state, game } = await engine.startGame(gameId);
         await interaction.editReply("Game Started! Check the action channel.");
+        // TODO: Send message to action channel here too if desired, or rely on button handler mainly.
     }
     catch (e) {
         await interaction.editReply(`Error starting game: ${e.message}`);
