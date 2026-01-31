@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { GameManager } from "../engine/GameManager";
 
 export const data = new SlashCommandBuilder()
@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction, gameManager: GameManager) {
     if (!interaction.guildId) {
-        await interaction.reply({ content: "This command can only be used in a server.", ephemeral: true });
+        await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
         return;
     }
 

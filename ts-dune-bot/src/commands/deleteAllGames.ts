@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { GameManager } from "../engine/GameManager";
 
 export const data = new SlashCommandBuilder()
@@ -8,7 +8,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction, gameManager: GameManager) {
     if (!interaction.guildId) return;
 
-    await interaction.reply({ content: "Deleting ALL games...", ephemeral: true });
+    await interaction.reply({ content: "Deleting ALL games...", flags: MessageFlags.Ephemeral });
 
     try {
         const count = await gameManager.deleteAllGames();

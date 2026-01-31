@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { GameEngine } from "../engine/GameEngine";
 
 export const data = new SlashCommandBuilder()
@@ -13,12 +13,13 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction, engine: GameEngine) {
     if (!interaction.guildId) return;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const gameId = interaction.options.getInteger("game-id", true);
 
     try {
-        await engine.startGame(gameId);
+        const { state, game } = await engine.startGame(gameId);
         await interaction.editReply("Game Started! Check the action channel.");
+        // TODO: Send message to action channel here too if desired, or rely on button handler mainly.
     } catch (e: any) {
         await interaction.editReply(`Error starting game: ${e.message}`);
     }

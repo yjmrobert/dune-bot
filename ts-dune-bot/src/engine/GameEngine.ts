@@ -24,7 +24,7 @@ export class GameEngine {
     private spiceCollectionEngine = new SpiceCollectionEngine();
     private mentatPauseEngine = new MentatPauseEngine();
 
-    async registerPlayer(gameId: number, userId: string, username: string): Promise<string> {
+    async registerPlayer(gameId: number, userId: string, username: string): Promise<{ result: string, state: GameState, game: any }> {
         const game = await prisma.game.findUnique({ where: { id: gameId } });
         if (!game) throw new Error("Game not found.");
 
@@ -63,7 +63,7 @@ export class GameEngine {
             data: { stateJson: JSON.stringify(state) }
         });
 
-        return `Joined as ${randomFaction}`;
+        return { result: `Joined as ${randomFaction}`, state, game };
     }
 
     async startGame(gameId: number) {
@@ -130,7 +130,7 @@ export class GameEngine {
             data: { stateJson: JSON.stringify(state) }
         });
 
-        return state;
+        return { state, game };
     }
 
     async advancePhase(gameId: number): Promise<GameState> {

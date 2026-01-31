@@ -104,4 +104,19 @@ export class DiscordService {
 
         return message.id;
     }
+
+    async editMessage(guildId: string, channelId: string, messageId: string, content: string) {
+        const guild = await this.getGuild(guildId);
+        const channel = guild.channels.cache.get(channelId) as TextChannel;
+        if (!channel) throw new Error("Channel not found");
+        
+        try {
+            const message = await channel.messages.fetch(messageId);
+            if (!message) throw new Error("Message not found");
+            await message.edit(content);
+        } catch (e) {
+            console.error(`Failed to edit message ${messageId}:`, e);
+            // Don't throw, just log, as this is often non-critical (message might be deleted)
+        }
+    }
 }

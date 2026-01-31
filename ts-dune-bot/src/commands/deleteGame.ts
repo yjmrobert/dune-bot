@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { GameManager } from "../engine/GameManager";
 
 export const data = new SlashCommandBuilder()
@@ -14,7 +14,7 @@ export async function execute(interaction: ChatInputCommandInteraction, gameMana
     if (!interaction.guildId) return;
 
     // Ephemeral response first
-    await interaction.reply({ content: "Deleting game...", ephemeral: true });
+    await interaction.reply({ content: "Deleting game...", flags: MessageFlags.Ephemeral });
 
     const gameId = interaction.options.getInteger("game-id", true);
 

@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events } from "discord.js";
+import { Client, GatewayIntentBits, Events, MessageFlags } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { DiscordService } from "./services/DiscordService";
@@ -53,9 +53,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
             } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
             }
         }
         return;
@@ -68,22 +68,38 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         try {
             if (action === "join-game") {
-                const result = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
-                await interaction.reply({ content: result, ephemeral: true });
+                const { result, state, game } = await gameEngine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
+                await interaction.reply({ content: result, flags: MessageFlags.Ephemeral });
+
+                // Update Lobby Message
+                if (game.actionsChannelId && state.lobbyMessageId) {
+                    const factions = state.factions.map(f => `• ${f.playerName} (${f.faction})`).join("\n");
+                    const lobbyContent = `**Dune Game Lobby**\n**Players (${state.factions.length}/6):**\n${factions || "*(Waiting for players...)*"}\n\nJoin the game and then start when ready.`;
+                    await discordService.editMessage(game.guildId, game.actionsChannelId, state.lobbyMessageId, lobbyContent);
+                }
             } else if (action === "start-game") {
-                await interaction.deferReply({ ephemeral: true });
-                await gameEngine.startGame(gameId);
-                await interaction.editReply("Game Started!");
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                const { state, game } = await gameEngine.startGame(gameId);
+                await interaction.editReply("Game Started! Check the action channel.");
+
+                if (game.actionsChannelId) {
+                    await discordService.sendActionMessage(
+                        game.guildId,
+                        game.actionsChannelId,
+                        `**GAME STARTED!**\n\n**Turn:** ${state.turn}\n**Phase:** ${state.phase}\n**Storm Sector:** ${state.stormLocation}\n\nGood luck!`,
+                        []
+                    );
+                }
             } else if (action === "next-phase") {
-                await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const newState = await gameEngine.advancePhase(gameId);
                 await interaction.editReply(`Advanced to phase: ${newState.phase}`);
             }
         } catch (error: any) {
             if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true });
+                await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
             } else {
-                await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+                await interaction.reply({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
             }
         }
     }

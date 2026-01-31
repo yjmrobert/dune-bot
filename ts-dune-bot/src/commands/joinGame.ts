@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { GameEngine } from "../engine/GameEngine";
 
 export const data = new SlashCommandBuilder()
@@ -13,11 +13,11 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction, engine: GameEngine) {
     if (!interaction.guildId) return;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const gameId = interaction.options.getInteger("game-id", true);
 
     try {
-        const result = await engine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
+        const { result } = await engine.registerPlayer(gameId, interaction.user.id, interaction.user.username);
         await interaction.editReply(result);
     } catch (e: any) {
         await interaction.editReply(`Error joining game: ${e.message}`);
