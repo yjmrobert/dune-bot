@@ -488,3 +488,4 @@ $RECYCLE.BIN/
 *.db-shm
 *.db-wal
 *.sqlite
+ts-dune-bot/example_map.png
