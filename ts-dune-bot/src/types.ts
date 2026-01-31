@@ -18,6 +18,8 @@ export interface TreacheryCard {
     isSpecial: boolean;
 }
 
+export type GameAction = "NEXT_PHASE" | "BID" | "PASS" | "REVIVE" | "SHIP" | "MOVE" | "ATTACK" | "SUBMIT_PLAN" | "TRAITOR" | "START_GAME" | "JOIN_GAME" | "RESOLVE_BATTLES";
+
 export interface SpiceCard {
     id: number;
     name: string;

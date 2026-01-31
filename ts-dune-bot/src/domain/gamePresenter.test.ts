@@ -12,14 +12,14 @@ describe('GamePresenter', () => {
             validActions: ['ATTACK']
         };
 
-        const view = renderGame(mockState);
+        const view = renderGame(mockState, ['ATTACK']);
 
         // Verify embed content
         expect(view.embed?.title).toContain('Player 1');
         expect(view.embed?.color).toBe('#FF0000'); // Red for combat
 
         // Verify buttons
-        const attackButton = view.buttons.find(b => b.command.type === 'ATTACK');
+        const attackButton = view.buttons.find(b => b.command.type === 'attack');
         expect(attackButton).toBeDefined();
         expect(attackButton?.label).toBe('Attack');
         expect(attackButton?.style).toBe('DANGER');
@@ -35,13 +35,14 @@ describe('GamePresenter', () => {
             validActions: ['PASS']
         };
 
-        const view = renderGame(mockState);
+        const view = renderGame(mockState, ['PASS']);
 
         expect(view.embed?.color).toBe('#00FF00'); // Green for non-combat
 
-        const passButton = view.buttons.find(b => b.command.type === 'PASS');
+        const passButton = view.buttons.find(b => b.command.type === 'pass');
         expect(passButton).toBeDefined();
         expect(passButton?.label).toBe('Pass');
         expect(passButton?.style).toBe('SECONDARY');
     });
 });
+

@@ -6,6 +6,7 @@ import { GameManager } from "./engine/GameManager";
 import { GameEngine } from "./engine/GameEngine";
 import { ensureDatabaseInitialized } from "./utils/dbInit";
 import { MapService } from "./services/MapService";
+import { renderGame } from "./domain/gamePresenter";
 
 const client = new Client({
     intents: [
@@ -95,10 +96,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         await discordService.sendGameView(
                             game.guildId,
                             game.actionsChannelId,
-                            {
-                                content: `**GAME STARTED!**\n\n**Turn:** ${state.turn}\n**Phase:** ${state.phase}\n**Storm Sector:** ${state.stormLocation}\n\nGood luck!`,
-                                buttons: []
-                            }
+                            renderGame(state as any, gameManager.getAvailableActions(state))
                         );
 
                         // Trigger Map Update
@@ -109,6 +107,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 const newState = await gameManager.advancePhase(gameId);
                 await interaction.editReply(`Advanced to phase: ${newState.phase}`);
+
+                // Update View
+                const game = await gameManager.getGame(gameId);
+                if (game && game.actionsChannelId) {
+                    await discordService.sendGameView(
+                        game.guildId,
+                        game.actionsChannelId,
+                        renderGame(newState as any, gameManager.getAvailableActions(newState))
+                    );
+                }
             }
         } catch (error: any) {
             console.error(error);

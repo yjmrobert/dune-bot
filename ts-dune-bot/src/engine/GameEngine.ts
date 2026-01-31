@@ -8,6 +8,18 @@ import { SpiceCollectionEngine } from "./SpiceCollectionEngine";
 import { MentatPauseEngine } from "./MentatPauseEngine";
 import { FACTION_LEADERS } from "../constants/leaders";
 import { BoardService } from "../services/BoardService";
+import { PhaseHandler } from "./phases/PhaseHandler";
+import { SetupPhaseHandler } from "./phases/SetupPhaseHandler";
+import { StormPhaseHandler } from "./phases/StormPhaseHandler";
+import { SpiceBlowPhaseHandler } from "./phases/SpiceBlowPhaseHandler";
+import { ChoamCharityPhaseHandler } from "./phases/ChoamCharityPhaseHandler";
+import { BiddingPhaseHandler } from "./phases/BiddingPhaseHandler";
+import { RevivalPhaseHandler } from "./phases/RevivalPhaseHandler";
+import { ShipmentAndMovementPhaseHandler } from "./phases/ShipmentAndMovementPhaseHandler";
+import { BattlePhaseHandler } from "./phases/BattlePhaseHandler";
+import { SpiceCollectionPhaseHandler } from "./phases/SpiceCollectionPhaseHandler";
+import { MentatPausePhaseHandler } from "./phases/MentatPausePhaseHandler";
+import { GameAction } from "../types";
 
 // Utility to get random item from array
 function sample<T>(arr: T[]): T {
@@ -21,6 +33,30 @@ export class GameEngine {
     private battleEngine = new BattleEngine();
     private spiceCollectionEngine = new SpiceCollectionEngine();
     private mentatPauseEngine = new MentatPauseEngine();
+
+    private phaseHandlers: Record<string, PhaseHandler>;
+    private defaultHandler: PhaseHandler;
+
+    constructor() {
+        this.phaseHandlers = {
+            "Setup": new SetupPhaseHandler(),
+            "Storm": new StormPhaseHandler(),
+            "Spice Blow": new SpiceBlowPhaseHandler(),
+            "CHOAM Charity": new ChoamCharityPhaseHandler(),
+            "Bidding": new BiddingPhaseHandler(this.biddingEngine),
+            "Revival": new RevivalPhaseHandler(this.revivalEngine),
+            "Shipment and Movement": new ShipmentAndMovementPhaseHandler(this.shipmentEngine),
+            "Battle": new BattlePhaseHandler(this.battleEngine),
+            "Collection": new SpiceCollectionPhaseHandler(this.spiceCollectionEngine),
+            "Mentat Pause": new MentatPausePhaseHandler(this.mentatPauseEngine)
+        };
+        this.defaultHandler = new StormPhaseHandler(); // Fallback
+    }
+
+    getAvailableActions(state: GameState): GameAction[] {
+        const handler = this.phaseHandlers[state.phase] || this.defaultHandler;
+        return handler.getAvailableActions(state);
+    }
 
     registerPlayer(state: GameState, userId: string, username: string): GameState {
         if (state.phase !== "Setup") throw new Error("Cannot join game in progress.");

@@ -143,6 +143,15 @@ export class GameManager {
         }
     }
 
+    // Add helper to expose actions
+    getAvailableActions(state: GameState) {
+        return this.gameEngine.getAvailableActions(state);
+    }
+
+    async getGame(gameId: number) {
+        return prisma.game.findUnique({ where: { id: gameId } });
+    }
+
     async startGame(gameId: number) {
         const game = await prisma.game.findUnique({ where: { id: gameId } });
         if (!game) throw new Error("Game not found.");
