@@ -9,7 +9,8 @@
     "dev": "nodemon src/index.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "test": "vitest src"
+    "test": "vitest src",
+    "stop": "bash scripts/kill_bot.sh"
   },
   "keywords": [],
   "author": "",
