@@ -1,7 +1,7 @@
 import { CommandContext, InteractionCommand } from "./Command";
 import { MessageFlags } from "discord.js";
 import { WizardService } from "../../services/WizardService";
-import { GameState } from "../../types"; // Import GameState type
+import { GameState, BattlePlan } from "../../types"; // Import GameState type
 import { prisma } from "../../db"; // Import prisma for database access
 
 export class WizardCommand implements InteractionCommand {
@@ -136,6 +136,91 @@ export class WizardCommand implements InteractionCommand {
              WizardService.clearWizardState(state, playerId, "setup_forces");
              
              await interaction.editReply({ content: `Forces deployed. Waiting for others...`, components: [], embeds: [] });
+        } else if (wizardType === "revival") {
+             const wizardState = WizardService.getWizardState(state, playerId, "revival");
+             const forces = wizardState.forces || 0;
+             const leader = wizardState.leader;
+
+             await interaction.deferUpdate();
+             const msgs: string[] = [];
+             
+             if (forces > 0) {
+                 await gameManager.reviveForces(gameId, playerId, forces);
+                 msgs.push(`Revived ${forces} troops.`);
+             }
+             if (leader) {
+                 await gameManager.reviveLeader(gameId, playerId, leader);
+                 msgs.push(`Revived leader ${leader}.`);
+             }
+             
+             WizardService.clearWizardState(state, playerId, "revival");
+             await interaction.editReply({ content: msgs.join("\n") || "No revival actions taken.", components: [], embeds: [] });
+
+        } else if (wizardType === "shipment") {
+             const wizardState = WizardService.getWizardState(state, playerId, "shipment");
+             const forces = wizardState.forces || 0;
+             const dest = wizardState.destination;
+             
+             if (!dest || forces <= 0) {
+                 await interaction.reply({ content: "Invalid shipment plan.", flags: MessageFlags.Ephemeral });
+                 return;
+             }
+             
+             // Determine Sector (Reuse lookup logic or default)
+             let sector = 1; // Default to sector 1 if unknown?
+             // Simple Lookup Table
+             if (dest === "Arrakeen") sector = 10;
+             else if (dest === "Carthag") sector = 11;
+             else if (dest === "Sietch Tabr") sector = 14;
+             else if (dest === "Tuek's Sietch") sector = 5;
+             else if (dest === "Polar Sink") sector = 0;
+             // If not in lookup, assume 1? Or need improved Board Service. 
+             // Ideally we shouldn't hardcode, but for MVP/Bot this works for main strongholds.
+             
+             await interaction.deferUpdate();
+             await gameManager.shipForces(gameId, playerId, dest, sector, forces);
+             WizardService.clearWizardState(state, playerId, "shipment");
+             await interaction.editReply({ content: `Shipped ${forces} troops to ${dest}.`, components: [], embeds: [] });
+
+        } else if (wizardType === "movement") {
+             const wizardState = WizardService.getWizardState(state, playerId, "movement");
+             const forces = wizardState.forces || 0;
+             const from = wizardState.from;
+             const to = wizardState.to;
+             
+             if (!from || !to || forces <= 0) {
+                 await interaction.reply({ content: "Invalid movement plan.", flags: MessageFlags.Ephemeral });
+                 return;
+             }
+             
+             await interaction.deferUpdate();
+             await gameManager.moveForces(gameId, playerId, from, to, forces);
+             WizardService.clearWizardState(state, playerId, "movement");
+             await interaction.editReply({ content: `Moved ${forces} troops from ${from} to ${to}.`, components: [], embeds: [] });
+
+        } else if (wizardType === "battle") {
+             const wizardState = WizardService.getWizardState(state, playerId, "battle");
+             const troops = wizardState.troops || 0;
+             const leader = wizardState.leader;
+             const weapon = wizardState.weapon;
+             const defense = wizardState.defense;
+             
+             if (!leader) {
+                 await interaction.reply({ content: "Leader is required for battle.", flags: MessageFlags.Ephemeral });
+                 return;
+             }
+             
+             const plan: BattlePlan = {
+                 leaderName: leader,
+                 weaponName: weapon,
+                 defenseName: defense,
+                 dial: troops
+             };
+             
+             await interaction.deferUpdate();
+             await gameManager.submitBattlePlan(gameId, playerId, plan);
+             WizardService.clearWizardState(state, playerId, "battle");
+             await interaction.editReply({ content: `Battle plan submitted.`, components: [], embeds: [] });
         }
     }
 }
