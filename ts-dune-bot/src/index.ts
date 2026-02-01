@@ -37,6 +37,7 @@ import { ShipCommand } from "./commands/interactions/ShipCommand";
 import { MoveCommand } from "./commands/interactions/MoveCommand";
 import { BattlePlanCommand } from "./commands/interactions/BattlePlanCommand";
 import { SpiceCollectionCommand } from "./commands/interactions/SpiceCollectionCommand";
+import { PrescienceCommand } from "./commands/interactions/PrescienceCommand";
 
 const dispatcher = new InteractionDispatcher(gameManager);
 dispatcher.register("join-game", new JoinGameCommand());
@@ -53,6 +54,7 @@ dispatcher.register("ship", new ShipCommand());
 dispatcher.register("move", new MoveCommand());
 dispatcher.register("plan", new BattlePlanCommand());
 dispatcher.register("collect-spice", new SpiceCollectionCommand());
+dispatcher.register("prescience", new PrescienceCommand());
 // TODO: Register other commands as they are migrated
 // dispatcher.register("spice-blow", new SpiceBlowCommand());
 // dispatcher.register("spice-blow", new SpiceBlowCommand());

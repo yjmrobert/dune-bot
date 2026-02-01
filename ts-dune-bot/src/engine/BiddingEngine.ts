@@ -10,8 +10,11 @@ function nextItem<T>(arr: T[], currentItem: T): T {
 export class BiddingEngine {
 
     startBiddingPhase(state: GameState, deck: TreacheryCard[]) {
-        // 1. Identify eligible players (Hand < 4)
-        const eligiblePlayers = state.factions.filter(f => f.hand.length < 4);
+        // 1. Identify eligible players (Hand < 4, or 8 for Harkonnen)
+        const eligiblePlayers = state.factions.filter(f => {
+            const limit = f.faction === Faction.Harkonnen ? 8 : 4;
+            return f.hand.length < limit;
+        });
 
         if (eligiblePlayers.length === 0) {
             state.actionLog.push("Bidding: No players eligible to bid.");
@@ -71,7 +74,8 @@ export class BiddingEngine {
         state.currentBidderId = starterId;
 
         const starter = state.factions.find(f => f.playerDiscordId === starterId);
-        state.actionLog.push(`Item up for bid: ${card.name}. Bidding starts with ${starter?.playerName}.`);
+        // Note: Card is Face Down. Only Atreides can peek.
+        state.actionLog.push(`Item up for bid: [Hidden Card]. Bidding starts with ${starter?.playerName}.`);
     }
 
     placeBid(state: GameState, userId: string, amount: number) {
@@ -81,7 +85,8 @@ export class BiddingEngine {
         const faction = state.factions.find(f => f.playerDiscordId === userId);
         if (!faction) throw new Error("Player not found.");
 
-        if (faction.hand.length >= 4) throw new Error("You have 4 cards and must pass.");
+        const limit = faction.faction === Faction.Harkonnen ? 8 : 4;
+        if (faction.hand.length >= limit) throw new Error(`You have ${limit} cards and must pass.`);
         if (amount <= state.currentBid) throw new Error(`Bid must be higher than ${state.currentBid}.`);
         if (amount > faction.spice) throw new Error(`Not enough spice. You have ${faction.spice}.`);
 
@@ -143,7 +148,8 @@ export class BiddingEngine {
 
         for (let i = 0; i < ids.length; i++) {
             const f = state.factions[(idx + i) % ids.length];
-            if (f.hand.length < 4) return f.playerDiscordId;
+            const limit = f.faction === Faction.Harkonnen ? 8 : 4;
+            if (f.hand.length < limit) return f.playerDiscordId;
         }
         return startId;
     }

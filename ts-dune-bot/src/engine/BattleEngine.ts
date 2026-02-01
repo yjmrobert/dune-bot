@@ -1,6 +1,7 @@
-import { GameState, BattlePlan, FactionState, TreacheryCard } from "../types";
-import { FACTION_LEADERS } from "../constants/leaders";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
+import { GameState, BattlePlan, Faction, FactionState, TreacheryCard } from "../types";
 import { BoardService } from "../services/BoardService";
+import { WizardService } from "../services/WizardService";
 
 export class BattleEngine {
 
@@ -57,6 +58,33 @@ export class BattleEngine {
             if (!card.isDefense) throw new Error(`${plan.defenseName} is not a defense.`);
         }
 
+        // Voice Validation
+        if (state.battleState.voice && state.battleState.voice.targetId === factionId) {
+             const v = state.battleState.voice;
+             if (v.action === "CANNOT") {
+                 if (v.cardType === "WEAPON" && plan.weaponName) throw new Error(`Voice: You CANNOT play a Weapon.`);
+                 if (v.cardType === "DEFENSE" && plan.defenseName) throw new Error(`Voice: You CANNOT play a Defense.`);
+                 if (v.cardType === "CHEAP_HERO" && (plan.leaderName === "Cheap Hero")) throw new Error(`Voice: You CANNOT play Cheap Hero.`);
+             } else if (v.action === "MUST") {
+                 // Must play implies: If you have one, you must play it.
+                 // We need to check hand.
+                 if (v.cardType === "WEAPON") {
+                     if (!plan.weaponName) {
+                         // Check availability
+                         const hasWeapon = faction.hand.some(c => c.isWeapon);
+                         if (hasWeapon) throw new Error(`Voice: You MUST play a Weapon.`);
+                     }
+                 } else if (v.cardType === "DEFENSE") {
+                     if (!plan.defenseName) {
+                         const hasDefense = faction.hand.some(c => c.isDefense);
+                         if (hasDefense) throw new Error(`Voice: You MUST play a Defense.`);
+                     }
+                 }
+                 // MUST CHEAP HERO is rare/not standard? Standard is "Must play a projectile/poison/defense/weapon".
+                 // MVP Logic: "Weapon" or "Defense".
+             }
+        }
+
         state.battleState.plans[factionId] = plan;
         state.actionLog.push(`${faction.faction} submitted a battle plan.`);
 
@@ -64,6 +92,56 @@ export class BattleEngine {
         const otherId = (factionId === state.battleState.aggressorId) ? state.battleState.defenderId : state.battleState.aggressorId;
         if (state.battleState.plans[otherId]) {
             this.resolveBattle(state);
+        }
+    }
+
+    setVoice(state: GameState, userId: string, action: "MUST" | "CANNOT", cardType: "WEAPON" | "DEFENSE" | "CHEAP_HERO") {
+        if (!state.battleState) throw new Error("No active battle.");
+        
+        const faction = state.factions.find(f => f.playerDiscordId === userId);
+        if (!faction || faction.faction !== Faction.BeneGesserit) throw new Error("Only Bene Gesserit can use Voice.");
+        
+        // Determine target
+        let targetId = "";
+        if (state.battleState.aggressorId === userId) targetId = state.battleState.defenderId;
+        else if (state.battleState.defenderId === userId) targetId = state.battleState.aggressorId;
+        else throw new Error("You are not in this battle.");
+
+        if (state.battleState.voice) throw new Error("Voice already used.");
+
+        state.battleState.voice = {
+            targetId,
+            action,
+            cardType
+        };
+        
+        state.actionLog.push(`Bene Gesserit uses Voice: You ${action} play a ${cardType}.`);
+
+        // Check if target already submitted a plan
+        if (state.battleState.plans[targetId]) {
+            const plan = state.battleState.plans[targetId];
+            const targetFaction = state.factions.find(f => f.playerDiscordId === targetId);
+            
+            if (targetFaction) {
+                let invalid = false;
+                if (action === "CANNOT") {
+                     if (cardType === "WEAPON" && plan.weaponName) invalid = true;
+                     if (cardType === "DEFENSE" && plan.defenseName) invalid = true;
+                     if (cardType === "CHEAP_HERO" && plan.leaderName === "Cheap Hero") invalid = true;
+                } else if (action === "MUST") {
+                     if (cardType === "WEAPON" && !plan.weaponName) {
+                         if (targetFaction.hand.some(c => c.isWeapon)) invalid = true;
+                     }
+                     if (cardType === "DEFENSE" && !plan.defenseName) {
+                         if (targetFaction.hand.some(c => c.isDefense)) invalid = true;
+                     }
+                }
+                
+                if (invalid) {
+                    delete state.battleState.plans[targetId];
+                    state.actionLog.push(`Voice invalidates ${targetFaction.faction}'s battle plan! They must resubmit.`);
+                }
+            }
         }
     }
 

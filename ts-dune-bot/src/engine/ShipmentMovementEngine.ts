@@ -1,4 +1,4 @@
-import { GameState, FactionState } from "../types";
+import { GameState, FactionState, Faction } from "../types";
 import { BOARD_MAP } from "../constants/map";
 import { BoardService } from "../services/BoardService";
 
@@ -23,9 +23,37 @@ export class ShipmentMovementEngine {
 
         // Cost Calculation
         // Stronghold = 1, Other = 2
-        // Guild has half price? (Not implementing special powers yet, stick to rules first)
-        const costPerForce = territoryData.isStronghold ? 1 : 2;
-        const totalCost = count * costPerForce;
+        let costPerForce = territoryData.isStronghold ? 1 : 2;
+
+        // Faction Abilities
+        if (faction.faction === Faction.Guild) {
+            // Guild pays half? (Round up or down? "Pay half" usually implies ceil cost or strict 50%)
+            // Rules say "Guild pays half spice for shipment."
+            // Let's implement generic 50% off total.
+        }
+        
+        // Fremen Shipment Rule: Ship to Great Flat or adjacent for FREE?
+        // Rules: "Fremen forces... can be shipped to the Great Flat or any territory within 2 territories of the Great Flat... for free."
+        // Actually usually "reserves are on Arrakis" so they don't ship from space.
+        // But for MVP, if "shipping" action is used:
+        let isFremenFreeShipment = false;
+        if (faction.faction === Faction.Fremen) {
+             // Check distance to Great Flat
+             // For now, simpler rule: Ship to Great Flat is free.
+             if (territoryName === "Great Flat") isFremenFreeShipment = true;
+             // Check adjacent?
+             // TODO: Real distance check. For MVP, just Great Flat is 0.
+        }
+
+        if (isFremenFreeShipment) {
+            costPerForce = 0;
+        }
+
+        let totalCost = count * costPerForce;
+
+        if (faction.faction === Faction.Guild && totalCost > 0) {
+            totalCost = Math.ceil(totalCost / 2);
+        }
 
         if (faction.spice < totalCost) throw new Error(`Not enough spice. Cost is ${totalCost}.`);
 
@@ -69,7 +97,14 @@ export class ShipmentMovementEngine {
         // Ornithopters = 3 range IF have forces in Arrakeen or Carthag
 
         const hasOrnithopters = this.checkOrnithopters(state, faction.faction); // Using faction enum/string
-        const maxRange = hasOrnithopters ? 3 : 1;
+        let maxRange = hasOrnithopters ? 3 : 1;
+        
+        // Fremen Ability: "Move 2 territories"
+        if (faction.faction === Faction.Fremen) {
+            maxRange = Math.max(maxRange, 2);
+            // If they have Ornis, do they get 3? Yes (3 > 2).
+            // So default 2, or 3 with Ornis.
+        }
 
         const distance = this.getDistance(fromTerritory, toTerritory);
 

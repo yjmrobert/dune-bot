@@ -50,8 +50,12 @@ export class WizardCommand implements InteractionCommand {
 
         if (wizardAction === "confirm") {
             // Special handling for Confirm -> Call Engine
-            await this.handleConfirm(context, state, wizardType);
+            await this.handleConfirm(context, state, wizardType, args[1]); // args[1] IS "confirm"
             return;
+        } else if (wizardAction === "confirm_voice") {
+             // Handle Voice Confirm
+             await this.handleConfirm(context, state, wizardType, "confirm_voice");
+             return;
         }
 
         // Handle Wizard Interaction (Select, Reset, etc.)
@@ -79,7 +83,7 @@ export class WizardCommand implements InteractionCommand {
         }
     }
 
-    private async handleConfirm(context: CommandContext, state: GameState, wizardType: string) {
+    private async handleConfirm(context: CommandContext, state: GameState, wizardType: string, actionType: string = "confirm") {
         const { interaction, gameManager, gameId } = context;
         const playerId = interaction.user.id;
 
@@ -177,6 +181,19 @@ export class WizardCommand implements InteractionCommand {
              await interaction.editReply({ content: `Moved ${forces} troops from ${from} to ${to}.`, components: [], embeds: [] });
 
         } else if (wizardType === "battle") {
+            if (actionType === "confirm_voice") {
+                const wizardState = WizardService.getWizardState(state, playerId, "battle");
+                const vAction = wizardState.voiceAction || "MUST";
+                const vType = wizardState.voiceType || "WEAPON";
+                
+                await interaction.deferUpdate();
+                await gameManager.setVoice(gameId, playerId, vAction, vType);
+                // Wizard state cleared? No, might want to continue planning.
+                // But generally voice is done.
+                await interaction.editReply({ content: `Voice used: ${vAction} ${vType}.`, components: [], embeds: [] });
+                return;
+            }
+
              const wizardState = WizardService.getWizardState(state, playerId, "battle");
              const troops = wizardState.troops || 0;
              const leader = wizardState.leader;

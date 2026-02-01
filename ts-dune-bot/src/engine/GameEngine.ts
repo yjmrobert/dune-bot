@@ -416,6 +416,10 @@ export class GameEngine {
         return state;
     }
 
+    setVoice(state: GameState, userId: string, action: "MUST" | "CANNOT", cardType: "WEAPON" | "DEFENSE" | "CHEAP_HERO") {
+        this.battleEngine.setVoice(state, userId, action, cardType);
+    }
+
     resolveSpiceCollection(state: GameState): GameState {
         this.spiceCollectionEngine.resolveCollection(state);
         return state;

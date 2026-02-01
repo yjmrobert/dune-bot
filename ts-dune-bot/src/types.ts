@@ -33,7 +33,8 @@ export type GameAction =
     | "PLAYER_ACTIONS"
     | "TOGGLE_READY" // Barrier Pattern
     | "WIZARD_STEP" // Wizard Pattern
-    | "SETUP_FORCES"; // Force Placement Wizard
+    | "SETUP_FORCES" // Force Placement Wizard
+    | "PRESCIENCE"; // Atreides Peek
 
 export interface SpiceCard {
     id: number;
@@ -117,6 +118,11 @@ export interface BattleStateData {
     plans: Record<string, BattlePlan>;
     resolved: boolean;
     winnerId?: string;
+    voice?: {
+        targetId: string; // The opponent ID (optional, usually implied as the other player)
+        action: "MUST" | "CANNOT";
+        cardType: "WEAPON" | "DEFENSE" | "CHEAP_HERO";
+    };
 }
 
 export interface TerritoryState {

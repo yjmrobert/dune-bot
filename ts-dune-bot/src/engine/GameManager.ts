@@ -232,7 +232,7 @@ export class GameManager {
 
         // 2. Update Map
         await MapService.updateMap(
-            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: (game as any).mapMessageId ?? null },
             newState,
             this.discordService
         );
@@ -247,7 +247,7 @@ export class GameManager {
         const state: GameState = JSON.parse(game.stateJson);
 
         // Move Storm
-        const territories = await prisma.territory.findMany();
+        const territories = await (prisma as any).territory.findMany();
         const newState = this.gameEngine.moveStorm(state, sectors, territories);
 
         // Save State
@@ -258,7 +258,7 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: (game as any).mapMessageId ?? null },
             newState,
             this.discordService
         );
@@ -283,7 +283,7 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: (game as any).mapMessageId ?? null },
             newState,
             this.discordService
         );
@@ -371,7 +371,7 @@ export class GameManager {
         await this.refreshGameView(gameId);
         // Map Update too? Forces changed.
         await MapService.updateMap(
-            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: (game as any).mapMessageId ?? null },
             newState, 
             this.discordService
         );
@@ -412,6 +412,17 @@ export class GameManager {
         const state: GameState = JSON.parse(game.stateJson);
 
         this.gameEngine.submitBattlePlan(state, userId, plan);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async setVoice(gameId: number, userId: string, action: "MUST" | "CANNOT", cardType: "WEAPON" | "DEFENSE" | "CHEAP_HERO") {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.setVoice(state, userId, action, cardType);
 
         await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
         await this.refreshGameView(gameId);

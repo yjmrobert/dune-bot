@@ -175,6 +175,9 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
             case "TOGGLE_READY":
                  buttons.push({ label: 'Ready', style: 'SUCCESS', command: { type: 'toggle-ready', target: gId } });
                  break;
+            case "PRESCIENCE":
+                 buttons.push({ label: 'Prescience', style: 'PRIMARY', command: { type: 'prescience', target: gId } });
+                 break;
         }
     });
 

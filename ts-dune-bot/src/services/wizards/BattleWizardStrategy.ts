@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, EmbedBuilder } from "discord.js";
-import { GameState } from "../../types";
+import { GameState, Faction } from "../../types";
 import { WizardService, WizardStep } from "../WizardService";
 import { IWizardStrategy } from "./IWizardStrategy";
 
@@ -50,6 +50,19 @@ export class BattleWizardStrategy implements IWizardStrategy {
         } else if (action === "select_defense") {
              const cardName = args[0];
              WizardService.updateWizardState(state, playerId, key, { defense: cardName, subMenu: 'none' });
+        } 
+        
+        // Voice Actions
+        else if (action === "voice_must") {
+             WizardService.updateWizardState(state, playerId, key, { voiceAction: "MUST" });
+        } else if (action === "voice_cannot") {
+             WizardService.updateWizardState(state, playerId, key, { voiceAction: "CANNOT" });
+        } else if (action === "voice_type_weapon") {
+             WizardService.updateWizardState(state, playerId, key, { voiceType: "WEAPON" });
+        } else if (action === "voice_type_defense") {
+             WizardService.updateWizardState(state, playerId, key, { voiceType: "DEFENSE" });
+        } else if (action === "voice_type_cheap") {
+             WizardService.updateWizardState(state, playerId, key, { voiceType: "CHEAP_HERO" });
         }
 
         return this.getStep(state, playerId);
@@ -59,6 +72,52 @@ export class BattleWizardStrategy implements IWizardStrategy {
         const faction = state.factions.find(f => f.playerDiscordId === playerId);
         if (!faction) return { content: "Error: Faction not found.", components: [] };
         if (!state.battleState) return { content: "Error: No active battle.", components: [] };
+
+        const turn = state.turn;
+        
+        // Check for Voice Phase
+        if (faction.faction === Faction.BeneGesserit && !state.battleState.voice) {
+            // Check if BG is involved
+            const isAgg = state.battleState.aggressorId === playerId;
+            const isDef = state.battleState.defenderId === playerId;
+            
+            if (isAgg || isDef) {
+                // Determine opponent
+                const opponentId = isAgg ? state.battleState.defenderId : state.battleState.aggressorId;
+                const opponent = state.factions.find(f => f.playerDiscordId === opponentId);
+                
+                const wState = WizardService.getWizardState(state, playerId, "battle");
+                const vAction = wState.voiceAction || "MUST";
+                const vType = wState.voiceType || "WEAPON";
+                
+                const embed = new EmbedBuilder()
+                    .setTitle("Voice (Bene Gesserit)")
+                    .setDescription(`You may voice your opponent ${opponent?.faction}.\n\nCurrent: You **${vAction}** play a **${vType}**.`);
+                
+                const components: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
+                
+                // Action Row
+                components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(
+                    new ButtonBuilder().setCustomId(`wizard:battle:voice_must:${turn}`).setLabel("Must").setStyle(vAction === "MUST" ? ButtonStyle.Success : ButtonStyle.Secondary),
+                    new ButtonBuilder().setCustomId(`wizard:battle:voice_cannot:${turn}`).setLabel("Cannot").setStyle(vAction === "CANNOT" ? ButtonStyle.Danger : ButtonStyle.Secondary)
+                ));
+                
+                // Type Row
+                components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(
+                    new ButtonBuilder().setCustomId(`wizard:battle:voice_type_weapon:${turn}`).setLabel("Weapon").setStyle(vType === "WEAPON" ? ButtonStyle.Primary : ButtonStyle.Secondary),
+                    new ButtonBuilder().setCustomId(`wizard:battle:voice_type_defense:${turn}`).setLabel("Defense").setStyle(vType === "DEFENSE" ? ButtonStyle.Primary : ButtonStyle.Secondary),
+                    new ButtonBuilder().setCustomId(`wizard:battle:voice_type_cheap:${turn}`).setLabel("Cheap Hero").setStyle(vType === "CHEAP_HERO" ? ButtonStyle.Primary : ButtonStyle.Secondary)
+                ));
+                
+                // Confirm Voice
+                components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(
+                    new ButtonBuilder().setCustomId(`wizard:battle:confirm_voice:${turn}`).setLabel("Use Voice").setStyle(ButtonStyle.Success)
+                ));
+                
+                return { embed, components };
+            }
+        }
+
 
         const wState = WizardService.getWizardState(state, playerId, "battle");
         const troops = wState.troops || 0;
@@ -72,7 +131,6 @@ export class BattleWizardStrategy implements IWizardStrategy {
             .setColor(0xFF0000);
 
         const components: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
-        const turn = state.turn;
 
         if (subMenu === 'leader') {
              embed.setDescription("Pick a Leader or Cheap Hero.");
@@ -153,6 +211,16 @@ export class BattleWizardStrategy implements IWizardStrategy {
 
         // Main Battle Menu
         embed.setDescription(`Configuring battle plan.\nTroops: ${troops}\nLeader: ${leader || "None"}\nWeapon: ${weapon || "None"}\nDefense: ${defense || "None"}`);
+        
+        if (state.battleState.voice) {
+            embed.addFields({ name: "Voice Active", value: `Bene Gesserit commands: You ${state.battleState.voice.action} play a ${state.battleState.voice.cardType}.` });
+        } else if (state.factions.some(f => f.faction === Faction.BeneGesserit) && !state.battleState.voice) {
+            // If BG is involved but hasn't voiced yet, opponent should probably wait?
+            // "Bene Gesserit may voice... *before* playing battle plans."
+            // So if I am NOT BG, and BG is involved, I might need to wait?
+            // For MVP, enable planning, but maybe warn? Or just let validation catch it.
+            // Validation handles "Must Play" logic.
+        }
         
         // Troop Controls
         components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(

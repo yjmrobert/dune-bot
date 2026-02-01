@@ -29,10 +29,21 @@ export class MoveStormCommand implements InteractionCommand {
              return;
         }
 
-        // Generate Movement (1d6)
-        // TODO: Handle Weather Control card interaction (requires wizard?)
-        // For now, random 1-6
-        const sectors = Math.floor(Math.random() * 6) + 1;
+        // Generate Movement
+        // First Turn: 0-20
+        // Subsequent: 1-6
+        let sectors = 0;
+        if (state.turn === 1) {
+             sectors = Math.floor(Math.random() * 21); // 0-20
+             // Correction: If this is the FIRST time the storm is placed, it's 0-20 from START?
+             // Or from current location?
+             // Rules: "A random number between 0 and 20 is generated and the Storm Marker moved from the Storm Start sector..."
+             // Where is Storm Start? If undefined, assume 18? Or 0?
+             // Usually initialized at 18 or 0.
+             // If state.stormLocation is effectively undefined or default, handle it.
+        } else {
+             sectors = Math.floor(Math.random() * 6) + 1; // 1-6
+        }
 
         // Execute
         await gameManager.moveStorm(gameId, sectors);
