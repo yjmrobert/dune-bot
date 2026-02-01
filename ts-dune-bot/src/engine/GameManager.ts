@@ -27,7 +27,11 @@ export class GameManager {
             treacheryDeck: [],
             treacheryDiscard: [],
             nexusActive: false,
-            boardState: {}
+            boardState: {},
+            
+            // New Architecture Fields
+            wizardState: {},
+            readyPlayerIds: []
         };
 
         const game = await prisma.game.create({
@@ -228,7 +232,7 @@ export class GameManager {
 
         // 2. Update Map
         await MapService.updateMap(
-            game,
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
             newState,
             this.discordService
         );
@@ -254,7 +258,7 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            game,
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
             newState,
             this.discordService
         );
@@ -279,13 +283,36 @@ export class GameManager {
 
         // Update Map
         await MapService.updateMap(
-            game,
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
             newState,
             this.discordService
         );
 
         return newState;
     }
+    async deployForces(gameId: number, userId: string, deployment: { territory: string, sector: number, amount: number }[]) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        
+        const state: GameState = JSON.parse(game.stateJson);
+        const newState = this.gameEngine.deployForces(state, userId, deployment);
+        
+        await prisma.game.update({
+            where: { id: gameId },
+            data: { stateJson: JSON.stringify(newState) }
+        });
+        
+        await this.refreshGameView(gameId);
+        // Map Update too? Forces changed.
+        await MapService.updateMap(
+            { id: game.id, guildId: game.guildId, mapChannelId: game.mapChannelId, mapMessageId: game.mapMessageId ?? null },
+            newState, 
+            this.discordService
+        );
+        
+        return newState;
+    }
+    
     async confirmTraitor(gameId: number, userId: string, traitorName: string) {
         const game = await prisma.game.findUnique({ where: { id: gameId } });
         if (!game) throw new Error("Game not found.");
@@ -302,27 +329,73 @@ export class GameManager {
         });
 
         // Trigger Map/View Update
-        if (game.actionsChannelId) {
-            await this.discordService.sendGameView(
-                game.guildId,
-                game.actionsChannelId,
-                renderGame(newState, this.getAvailableActions(newState), game.id)
-            );
-        }
+        await this.refreshGameView(gameId);
         
         // If phase advanced to Storm, handle Storm auto-move
         if (newState.phase === "Storm" && !newState.stormMovedThisTurn) {
-             // Auto-move storm logic
-             // But simpler: Just update the view, and the "Next Phase" prompt will appear?
-             // Ah, wait. The plan said "Auto-advance".
-             // If we really want auto-move, we should trigger it here.
-             
-             // The moveStorm function requires calculating random sectors.
-             // Let's do it here.
              const sectors = Math.floor(Math.random() * 6) + 1;
              await this.moveStorm(gameId, sectors);
         }
 
         return newState;
+    }
+
+    // --- View Updates ---
+
+    async refreshGameView(gameId: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game || !game.actionsChannelId) return;
+
+        const state: GameState = JSON.parse(game.stateJson);
+        const view = renderGame(state, this.getAvailableActions(state), game.id);
+
+        if (state.lobbyMessageId) {
+             // If we are still in Setup/Lobby phases, we might need to update that specific message 
+             // OR if we have moved past it, we use the "last known message" or send a new one?
+             // The architecture uses `sendGameView` which sends a NEW message usually?
+             // No, `updateGameView` edits. `sendGameView` sends new.
+             // We need to track the "Main Game Message" ID. 
+             // Currently `state.lobbyMessageId` seems to be the only ID tracked? 
+             // Let's assume `lobbyMessageId` becomes the `gameViewMessageId` effectively.
+             
+             await this.discordService.updateGameView(
+                 game.guildId,
+                 game.actionsChannelId,
+                 state.lobbyMessageId,
+                 view
+             );
+        } else {
+             // Send new one and save ID?
+             // Original logic for `startGame` was `sendGameView`.
+             // We should probably track `gameMessageId` in GameState to act as the persistent dashboard.
+             
+             const msgId = await this.discordService.sendGameView(
+                 game.guildId,
+                 game.actionsChannelId,
+                 view
+             );
+             // Update state with new ID if we didn't have one? 
+             // Or maybe we treat LobbyMessageId AS the GameMessageId.
+             // Let's assign it.
+             state.lobbyMessageId = msgId;
+             await prisma.game.update({
+                 where: { id: gameId },
+                 data: { stateJson: JSON.stringify(state) }
+             });
+        }
+    }
+
+    async updateLobby(gameId: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game || !game.actionsChannelId) return;
+
+        const state: GameState = JSON.parse(game.stateJson);
+        if (!state.lobbyMessageId) return;
+
+        const factions = state.factions.map(f => `• ${f.playerName} (${f.faction})`).join("\n");
+        const lobbyContent = `**Dune Game Lobby**\n**Players (${state.factions.length}/6):**\n${factions || "*(Waiting for players...)*"}\n\nJoin the game and then start when ready.`;
+        
+        // Use basic edit message
+        await this.discordService.editMessage(game.guildId, game.actionsChannelId, state.lobbyMessageId, lobbyContent);
     }
 }

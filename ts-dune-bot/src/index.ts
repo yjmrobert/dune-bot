@@ -17,10 +17,29 @@ const client = new Client({
 });
 
 // Services
-// Services
 const discordService = new DiscordService(client);
 const gameEngine = new GameEngine();
 const gameManager = new GameManager(discordService, gameEngine);
+
+// Command Dispatcher
+import { InteractionDispatcher } from "./commands/interactions/InteractionDispatcher";
+import { JoinGameCommand } from "./commands/interactions/JoinGameCommand";
+import { StartGameCommand } from "./commands/interactions/StartGameCommand";
+import { NextPhaseCommand } from "./commands/interactions/NextPhaseCommand";
+import { WizardCommand } from "./commands/interactions/WizardCommand";
+import { PlayerInfoCommand } from "./commands/interactions/PlayerInfoCommand";
+
+const dispatcher = new InteractionDispatcher(gameManager);
+dispatcher.register("join-game", new JoinGameCommand());
+dispatcher.register("start-game", new StartGameCommand());
+dispatcher.register("next-phase", new NextPhaseCommand());
+dispatcher.register("wizard", new WizardCommand());
+dispatcher.register("player-actions", new PlayerInfoCommand());
+// TODO: Register other commands as they are migrated
+// dispatcher.register("move-storm", new MoveStormCommand());
+// dispatcher.register("spice-blow", new SpiceBlowCommand());
+// dispatcher.register("player-actions", new PlayerActionsCommand());
+// dispatcher.register("wizard", new WizardCommand());
 
 client.once(Events.ClientReady, async c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
@@ -70,242 +89,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         return;
     }
 
-    // 2. Buttons
-    if (interaction.isButton()) {
-        const [action, param] = interaction.customId.split(":");
-        const gameId = parseInt(param);
-
-        try {
-            if (action === "join-game") {
-                const { result, state, game } = await gameManager.registerPlayer(gameId, interaction.user.id, interaction.user.username);
-                await interaction.reply({ content: result, flags: MessageFlags.Ephemeral });
-
-                // Update Lobby Message
-                if (game.actionsChannelId && state.lobbyMessageId) {
-                    const factions = state.factions.map(f => `• ${f.playerName} (${f.faction})`).join("\n");
-                    const lobbyContent = `**Dune Game Lobby**\n**Players (${state.factions.length}/6):**\n${factions || "*(Waiting for players...)*"}\n\nJoin the game and then start when ready.`;
-                    await discordService.editMessage(game.guildId, game.actionsChannelId, state.lobbyMessageId, lobbyContent);
-                }
-            } else if (action === "start-game") {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-                const { state, game } = await gameManager.startGame(gameId);
-                await interaction.editReply("Game Started! Check the action channel.");
-
-                if (game.actionsChannelId) {
-                    if (game.actionsChannelId) {
-                        await discordService.sendGameView(
-                            game.guildId,
-                            game.actionsChannelId,
-                            renderGame(state, gameManager.getAvailableActions(state), game.id)
-                        );
-
-                        // Trigger Map Update
-                        await MapService.updateMap(game, state, discordService);
-                    }
-                }
-            } else if (action === "next-phase") {
-                await interaction.deferUpdate();
-                const newState = await gameManager.advancePhase(gameId);
-
-                // Update View
-                const game = await gameManager.getGame(gameId);
-                if (game && game.actionsChannelId) {
-                    await discordService.updateGameView(
-                        game.guildId,
-                        game.actionsChannelId,
-                        interaction.message.id,
-                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
-                    );
-                }
-            } else if (action === "move-storm") {
-                await interaction.deferUpdate();
-
-                const game = await gameManager.getGame(gameId);
-                if (!game) {
-                    await interaction.followUp({ content: "Game not found.", flags: MessageFlags.Ephemeral });
-                    return;
-                }
-
-                const state: import("./types").GameState = JSON.parse(game.stateJson);
-
-                // Check if storm has already moved this turn
-                if (state.stormMovedThisTurn) {
-                    await interaction.followUp({ content: "The storm has already moved this turn.", flags: MessageFlags.Ephemeral });
-                    return;
-                }
-
-                // Move storm by random sectors (1-6)
-                const sectors = Math.floor(Math.random() * 6) + 1;
-                const newState = await gameManager.moveStorm(gameId, sectors);
-
-                // Update View
-                if (game && game.actionsChannelId) {
-                    await discordService.updateGameView(
-                        game.guildId,
-                        game.actionsChannelId,
-                        interaction.message.id,
-                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
-                    );
-                }
-
-
-            } else if (action === "spice-blow") {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-                const game = await gameManager.getGame(gameId);
-                if (!game) {
-                    await interaction.editReply("Game not found.");
-                    return;
-                }
-
-                const state: import("./types").GameState = JSON.parse(game.stateJson);
-
-                // Check if spice blow has already been revealed this turn
-                if (state.spiceBlowRevealed) {
-                    await interaction.editReply("The spice blow has already been revealed this turn.");
-                    return;
-                }
-
-                // Reveal Spice Blow
-                const newState = await gameManager.revealSpiceBlow(gameId);
-
-                // Get revealed card info from action log
-                const lastLog = newState.actionLog[newState.actionLog.length - 1] || "Spice blow revealed";
-                await interaction.editReply(lastLog);
-
-                // Update View
-                if (game && game.actionsChannelId) {
-                    await discordService.sendGameView(
-                        game.guildId,
-                        game.actionsChannelId,
-                        renderGame(newState as any, gameManager.getAvailableActions(newState), game.id)
-                    );
-                }
-            } else if (action === "player-actions") {
-                // Handle Player Actions - Show ephemeral message with private player info
-                const game = await gameManager.getGame(gameId);
-                if (!game) {
-                    await interaction.reply({ content: "Game not found.", flags: MessageFlags.Ephemeral });
-                    return;
-                }
-
-                const state: import("./types").GameState = JSON.parse(game.stateJson);
-                const playerActions = gameManager.getPlayerActions(state, interaction.user.id);
-
-                if (playerActions.length === 0) {
-                    await interaction.reply({
-                        content: "You have no private actions or information available at this time.",
-                        flags: MessageFlags.Ephemeral
-                    });
-                    return;
-                }
-
-                // Build ephemeral message with player info
-                let message = "**Your Private Information:**\n\n";
-
-                // Separate cards from other info
-                const cards = playerActions.filter(a => a.startsWith("Card:"));
-                const otherInfo = playerActions.filter(a => !a.startsWith("Card:"));
-
-                if (cards.length > 0) {
-                    message += "**Treachery Cards:**\n";
-                    cards.forEach(card => {
-                        message += `• ${card.replace("Card: ", "")}\n`;
-                    });
-                    message += "\n";
-                }
-
-                if (otherInfo.length > 0) {
-                    message += "**Faction Status:**\n";
-                    otherInfo.forEach(info => {
-                        message += `• ${info}\n`;
-                    });
-                }
-
-                const pendingNames = state.factions
-                    .filter(f => state.pendingPlayerIds?.includes(f.playerDiscordId))
-                    .map(f => f.faction)
-                    .join(", ");
-                await interaction.reply({
-                    content: message + (pendingNames ? `\n\n**Waiting for**: ${pendingNames}` : ""),
-                    flags: MessageFlags.Ephemeral
-                });
-            } else if (action === "pick-traitor") {
-                 const game = await gameManager.getGame(gameId);
-                if (!game) {
-                    await interaction.reply({ content: "Game not found.", flags: MessageFlags.Ephemeral });
-                    return;
-                }
-
-                const state: import("./types").GameState = JSON.parse(game.stateJson);
-                const faction = state.factions.find(f => f.playerDiscordId === interaction.user.id);
-
-                if (!faction) {
-                    await interaction.reply({ content: "You are not a player in this game.", flags: MessageFlags.Ephemeral });
-                    return;
-                }
-
-                if (!faction.traitorOptions || faction.traitorOptions.length === 0) {
-                     await interaction.reply({ content: "You have no traitors to select.", flags: MessageFlags.Ephemeral });
-                     return;
-                }
-
-                // Show Select Menu
-                const row = new ActionRowBuilder<StringSelectMenuBuilder>()
-                    .addComponents(
-                        new StringSelectMenuBuilder()
-                            .setCustomId(`traitor-select:${gameId}`)
-                            .setPlaceholder('Select 1 Traitor to KEEP')
-                            .addOptions(
-                                faction.traitorOptions.map(t => ({
-                                    label: t,
-                                    value: t,
-                                    description: "Keep this traitor"
-                                }))
-                            )
-                    );
-
-                await interaction.reply({
-                    content: "Please select which Traitor you want to keep. The others will be discarded.",
-                    components: [row],
-                    flags: MessageFlags.Ephemeral
-                });
-            }
-        } catch (error: any) {
-            console.error(error);
-            if (error.code === 10062 || error.code === 40060) {
-                return;
-            }
-
-            if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to follow up error:", e));
-            } else {
-                await interaction.reply({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral }).catch(e => console.error("Failed to reply error:", e));
-            }
-        }
-    }
-
-    // 3. Select Menus
-    if (interaction.isStringSelectMenu()) {
-        const [action, param] = interaction.customId.split(":");
-        const gameId = parseInt(param);
-
-        try {
-            if (action === "traitor-select") {
-                const selectedTraitor = interaction.values[0];
-                await interaction.deferUpdate(); // Acknowledge without new message? Or better, edit to say confirmed.
-                
-                await gameManager.confirmTraitor(gameId, interaction.user.id, selectedTraitor);
-                
-                await interaction.editReply({ 
-                    content: `You have selected **${selectedTraitor}**. Waiting for other players...`, 
-                    components: [] 
-                });
-            }
-        } catch (error: any) {
-             console.error(error);
-             await interaction.followUp({ content: `Error: ${error.message}`, flags: MessageFlags.Ephemeral });
-        }
+    // 2. Buttons & Select Menus (Handled by Dispatcher)
+    if (interaction.isButton() || interaction.isStringSelectMenu()) {
+        await dispatcher.dispatch(interaction);
     }
 });
 
@@ -315,3 +101,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

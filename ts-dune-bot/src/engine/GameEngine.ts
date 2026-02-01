@@ -95,13 +95,68 @@ export class GameEngine {
         return state;
     }
 
+    // Barrier Pattern: Toggle Ready
+    handleReadyToggle(state: GameState, userId: string): GameState {
+        if (!state.readyPlayerIds) state.readyPlayerIds = [];
+
+        const index = state.readyPlayerIds.indexOf(userId);
+        if (index === -1) {
+            state.readyPlayerIds.push(userId);
+        } else {
+            state.readyPlayerIds.splice(index, 1);
+        }
+        return state;
+    }
+
+    checkBarrier(state: GameState): boolean {
+        // Returns true if all players are ready
+        const allPlayerIds = state.factions.map(f => f.playerDiscordId);
+        if (allPlayerIds.length === 0) return false;
+        
+        // Ensure readyPlayerIds is initialized
+        if (!state.readyPlayerIds) state.readyPlayerIds = [];
+
+        return allPlayerIds.every(id => state.readyPlayerIds.includes(id));
+    }
+
     startGame(state: GameState, treacheryCards: TreacheryCard[], spiceCards: SpiceCard[]): GameState {
         if (state.phase !== "Setup") throw new Error("Game already started.");
         if (state.factions.length < 1) throw new Error("Not enough players.");
 
-        // 1. Initial Resources
-        // 1. Initial Resources & Forces
-        this.setupStartingForces(state);
+        // 1. Initial Resources (Full Strength to Reserves)
+        state.factions.forEach(f => {
+             // Default values for standard game
+             f.spice = 0; // Default, overrides below
+             f.forcesInTanks = 0;
+             f.reserves = 20; // Default max forces
+             
+             switch (f.faction) {
+                case Faction.Atreides:
+                    f.spice = 10;
+                    f.reserves = 20; 
+                    break;
+                case Faction.Harkonnen:
+                    f.spice = 10;
+                    f.reserves = 20;
+                    break;
+                case Faction.Fremen:
+                    f.spice = 3;
+                    f.reserves = 20; 
+                    break;
+                case Faction.Emperor:
+                    f.spice = 10;
+                    f.reserves = 20;
+                    break;
+                case Faction.Guild:
+                    f.spice = 5;
+                    f.reserves = 20;
+                    break;
+                case Faction.BeneGesserit:
+                    f.spice = 5;
+                    f.reserves = 20;
+                    break;
+            }
+        });
 
         // 2. Initialize Storm (Rule: 0-20 sectors from Sector 18)
         const STORM_START = 18;
@@ -123,6 +178,10 @@ export class GameEngine {
         state.spiceDeck = shuffle([...spiceCards] as any);
         state.spiceDiscard = [];
 
+        // Initialize Wizard State
+        state.wizardState = {};
+        state.readyPlayerIds = [];
+
         if (state.treacheryDeck.length > 0) {
             state.factions.forEach(f => {
                 // Deal 4 random traitors candidates to each player
@@ -139,11 +198,48 @@ export class GameEngine {
         // 4. Update Phase
         state.phase = "Setup_TraitorPick";
         state.pendingPlayerIds = state.factions.map(f => f.playerDiscordId);
+        
         state.turn = 1;
         state.actionLog.push(`Game Started! Storm is at Sector ${state.stormLocation}. Players must select 1 Traitor.`);
 
         return state;
     }
+
+    // ... confirmTraitor ...
+
+    deployForces(state: GameState, userId: string, deployment: { territory: string, sector: number, amount: number }[]): GameState {
+        const faction = state.factions.find(f => f.playerDiscordId === userId);
+        if (!faction) throw new Error("Faction not found.");
+        
+        if (state.phase !== "Setup_Forces") throw new Error("Not in force placement phase.");
+
+        // Validate Validation: Total deployed <= reserves
+        const totalDeployed = deployment.reduce((sum, d) => sum + d.amount, 0);
+        if (totalDeployed > faction.reserves) throw new Error("Not enough reserves.");
+
+        // Execute Deployment
+        deployment.forEach(d => {
+            BoardService.addForce(state, d.territory, d.sector, faction.faction, d.amount);
+        });
+
+        faction.reserves -= totalDeployed;
+        
+        // Remove from pending
+        if (state.pendingPlayerIds) {
+            state.pendingPlayerIds = state.pendingPlayerIds.filter(id => id !== userId);
+        }
+
+        state.actionLog.push(`${faction.faction} deployed ${totalDeployed} forces.`);
+
+        // Check if all players done
+        if (!state.pendingPlayerIds || state.pendingPlayerIds.length === 0) {
+            return this.advancePhase(state);
+        }
+
+        return state;
+    }
+    
+    // ... rest of class ...
 
     confirmTraitor(state: GameState, userId: string, traitorName: string): GameState {
         const faction = state.factions.find(f => f.playerDiscordId === userId);
@@ -172,41 +268,56 @@ export class GameEngine {
     }
 
     advancePhase(state: GameState): GameState {
-        const phases = ["Setup_TraitorPick", "Storm", "Spice Blow", "CHOAM Charity", "Bidding", "Revival", "Shipment and Movement", "Battle", "Collection"];
+        // Clear Barrier State
+        state.readyPlayerIds = [];
+        state.pendingPlayerIds = []; // Clear legacy
+
+        const phases = [
+            "Setup_TraitorPick", 
+            "Setup_Forces", // Added for Force Placement Step
+            "Storm", 
+            "Spice Blow", 
+            "CHOAM Charity", 
+            "Bidding", 
+            "Revival", 
+            "Shipment and Movement", 
+            "Battle", 
+            "Collection",
+            "Mentat Pause" // Added
+        ];
+        
         const currentIdx = phases.indexOf(state.phase);
 
         let nextPhase = "Storm";
-        if (currentIdx !== -1 && currentIdx < phases.length - 1) {
-            nextPhase = phases[currentIdx + 1];
-        } else {
-            // New Turn
-            state.turn++;
-            state.actionLog.push(`Turn ${state.turn} Started.`);
-            nextPhase = "Storm";
-        }
-
-        // Setup -> Storm Transition
+        
+        // Setup Logic
         if (state.phase === "Setup" || state.phase === "Setup_TraitorPick") {
+            // After Traitors, go to Force Placement
+            // Assuming TraitorPick handles its own transition, but logical flow:
+            if (state.phase === "Setup_TraitorPick") {
+                nextPhase = "Setup_Forces"; 
+            } else {
+                 nextPhase = "Setup_TraitorPick";
+            }
+        } else if (state.phase === "Setup_Forces") {
             nextPhase = "Storm";
+        } else {
+             // Normal Loop
+            if (currentIdx !== -1 && currentIdx < phases.length - 1) {
+                nextPhase = phases[currentIdx + 1];
+            } else {
+                // New Turn
+                state.turn++;
+                state.actionLog.push(`Turn ${state.turn} Started.`);
+                nextPhase = "Storm";
+            }
         }
-
+        
         state.phase = nextPhase;
 
         // Reset storm moved flag when entering Storm phase
         if (nextPhase === "Storm") {
             state.stormMovedThisTurn = false;
-            // Auto-resolve Storm Phase as per plan
-             // 1. Move Storm
-             // We need territories for moveStorm. Since we don't have them passed here (design flaw in original engine),
-             // we rely on the caller to handle Storm movement via `moveStorm` separately OR we fix the dependency injection.
-             // However, strictly following the plan: "Auto-advance to Spice Blow".
-             // But we need to CALCULATE storm first.
-             // If we can't calculate here (missing territories), we should enter "Storm" and let the external triggers/map update handle it?
-             // Or better: The `GameManager` handles the "Auto" part by calling `moveStorm` immediately after `advancePhase` returns "Storm".
-             // Let's stick to just setting the phase here.
-             
-             // Actually, the previous code had `moveStorm` separate.
-             // I will leave the actual movement logic to `GameManager` to orchestrate (since it has DB access for territories).
         }
 
         // Reset spice blow flag when entering Spice Blow phase
@@ -214,20 +325,28 @@ export class GameEngine {
             state.spiceBlowRevealed = false;
         }
 
+        // Initialize Pending Players for Setup_Forces
+        if (nextPhase === "Setup_Forces") {
+            state.pendingPlayerIds = state.factions.map(f => f.playerDiscordId);
+        }
+
         // Phase Triggers
         if (nextPhase === "CHOAM Charity") {
-            const choamEngine = new ChoamCharityEngine(); // Instantiate locally or move to class property
+            const choamEngine = new ChoamCharityEngine(); 
             const messages = choamEngine.processCharity(state);
             state.actionLog.push(...messages);
-
-            // Auto-advance to Bidding
-            return this.advancePhase(state); // Recursive call to move to Bidding
+            // Wait for Barrier? No, auto-advance logic says "Claim share". 
+            // Spec says: [CHOAM] Button or [Ready]. 
+            // So we do NOT auto-advance here. We wait for user interaction.
         }
 
         if (nextPhase === "Bidding") {
-            // Need deck for bidding start
-            // Assuming deck is in state.treacheryDeck
             this.biddingEngine.startBiddingPhase(state, state.treacheryDeck || []);
+        }
+        
+        if (nextPhase === "Mentat Pause") {
+             // Just a pause.
+             this.mentatPauseEngine.resolveMentatPause(state);
         }
 
         state.actionLog.push(`Phase advanced to: ${nextPhase}`);
@@ -305,42 +424,5 @@ export class GameEngine {
         return state;
     }
 
-    private setupStartingForces(state: GameState) {
-        state.factions.forEach(f => {
-            switch (f.faction) {
-                case Faction.Atreides:
-                    f.spice = 10;
-                    f.reserves = 10;
-                    BoardService.addForce(state, "Arrakeen", 10, f.faction, 10);
-                    break;
-                case Faction.Harkonnen:
-                    f.spice = 10;
-                    f.reserves = 10;
-                    BoardService.addForce(state, "Carthag", 11, f.faction, 10);
-                    break;
-                case Faction.Fremen:
-                    f.spice = 3;
-                    f.reserves = 10;
-                    // Default to Sietch Tabr (Sector 14)
-                    BoardService.addForce(state, "Sietch Tabr", 14, f.faction, 10);
-                    break;
-                case Faction.Emperor:
-                    f.spice = 10;
-                    f.reserves = 20;
-                    break;
-                case Faction.Guild:
-                    f.spice = 5;
-                    f.reserves = 15;
-                    BoardService.addForce(state, "Tuek's Sietch", 5, f.faction, 5);
-                    break;
-                case Faction.BeneGesserit:
-                    f.spice = 5;
-                    f.reserves = 19;
-                    // Polar Sink. Using Sector 0 if not defined.
-                    BoardService.addForce(state, "Polar Sink", 0, f.faction, 1);
-                    break;
-            }
-            state.actionLog.push(`${f.faction} starting forces deployed.`);
-        });
-    }
+
 }

@@ -20,7 +20,9 @@ describe('GameEngine (Pure Logic)', () => {
             treacheryDeck: [],
             treacheryDiscard: [],
             nexusActive: false,
-            boardState: {}
+            boardState: {},
+            wizardState: {},
+            readyPlayerIds: []
         };
 
         // Act
@@ -51,7 +53,9 @@ describe('GameEngine (Pure Logic)', () => {
             treacheryDeck: [],
             treacheryDiscard: [],
             nexusActive: false,
-            boardState: {}
+            boardState: {},
+            wizardState: {},
+            readyPlayerIds: []
         };
 
         // Act: Player 1 Bids 5

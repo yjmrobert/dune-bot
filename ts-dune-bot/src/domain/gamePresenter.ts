@@ -67,7 +67,10 @@ export function renderGame(state: GameState, actions: GameAction[] = [], gameId:
                 buttons.push({ label: 'My Actions', style: 'SECONDARY', command: { type: 'player-actions', target: gId } });
                 break;
             case "PICK_TRAITOR":
-                buttons.push({ label: 'Select Traitor', style: 'SUCCESS', command: { type: 'pick-traitor', target: gId } });
+                buttons.push({ label: 'Select Traitor', style: 'SUCCESS', command: { type: 'wizard', target: 'setup_traitor', value: `open:${gId}` } });
+                break;
+            case "SETUP_FORCES":
+                buttons.push({ label: 'Place Forces', style: 'SUCCESS', command: { type: 'wizard', target: 'setup_forces', value: `open:${gId}` } });
                 break;
             // Additional actions can be mapped here as needed
         }

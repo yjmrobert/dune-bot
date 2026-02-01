@@ -30,7 +30,10 @@ export type GameAction =
     | "SPICE_BLOW"
     | "COLLECT_SPICE"
     | "MENTAT_PAUSE"
-    | "PLAYER_ACTIONS";
+    | "PLAYER_ACTIONS"
+    | "TOGGLE_READY" // Barrier Pattern
+    | "WIZARD_STEP" // Wizard Pattern
+    | "SETUP_FORCES"; // Force Placement Wizard
 
 export interface SpiceCard {
     id: number;
@@ -62,13 +65,18 @@ export interface FactionState {
 export interface GameState {
     lobbyMessageId?: string;
     phase: string; // e.g. "Setup", "Setup_TraitorPick", "Storm", etc.
-    pendingPlayerIds?: string[]; // Barrier Pattern: Waif for these players
+    pendingPlayerIds?: string[]; // Legacy Barrier Pattern: Wait for these players
+    readyPlayerIds: string[]; // New Barrier Pattern: Positive list of ready players
     turn: number;
     stormLocation: number;
     stormMovedThisTurn?: boolean; // Track if storm has moved this turn
     spiceBlowRevealed?: boolean; // Track if spice blow has been revealed this turn
     factions: FactionState[];
     actionLog: string[];
+
+    // Wizard State (Memento Pattern)
+    // Key: `p_{playerId}_{wizardType}` -> Value: Any serializable object
+    wizardState: Record<string, any>;
 
     // Bidding State
     auctionQueue: TreacheryCard[];
