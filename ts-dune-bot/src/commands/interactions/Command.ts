@@ -1,8 +1,8 @@
-import { ButtonInteraction, StringSelectMenuInteraction } from "discord.js";
+import { ButtonInteraction, StringSelectMenuInteraction, ModalSubmitInteraction } from "discord.js";
 import { GameManager } from "../../engine/GameManager";
 
 export interface CommandContext {
-    interaction: ButtonInteraction | StringSelectMenuInteraction;
+    interaction: ButtonInteraction | StringSelectMenuInteraction | ModalSubmitInteraction;
     gameManager: GameManager;
     gameId: number;
     args: string[];

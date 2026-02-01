@@ -1,4 +1,4 @@
-import { ButtonInteraction, StringSelectMenuInteraction, MessageFlags } from "discord.js";
+import { ButtonInteraction, StringSelectMenuInteraction, ModalSubmitInteraction, MessageFlags } from "discord.js";
 import { GameManager } from "../../engine/GameManager";
 import { InteractionCommand, CommandContext } from "./Command";
 
@@ -11,7 +11,7 @@ export class InteractionDispatcher {
         this.commands[action] = command;
     }
 
-    async dispatch(interaction: ButtonInteraction | StringSelectMenuInteraction) {
+    async dispatch(interaction: ButtonInteraction | StringSelectMenuInteraction | ModalSubmitInteraction) {
         const parts = interaction.customId.split(":");
         const action = parts[0];
         const param = parts[1];

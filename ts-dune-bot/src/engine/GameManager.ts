@@ -1,6 +1,6 @@
 import { prisma } from "../db";
 import { DiscordService } from "../services/DiscordService";
-import { GameState } from "../types";
+import { GameState, BattlePlan } from "../types";
 import { GameEngine } from "./GameEngine";
 import { MapService } from "../services/MapService";
 import { renderGame } from "../domain/gamePresenter";
@@ -290,6 +290,72 @@ export class GameManager {
 
         return newState;
     }
+    async placeBid(gameId: number, userId: string, amount: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.placeBid(state, userId, amount);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async passBid(gameId: number, userId: string) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.passBid(state, userId);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async reviveForces(gameId: number, userId: string, count: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.reviveForces(state, userId, count);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async reviveLeader(gameId: number, userId: string, leaderName: string) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.reviveLeader(state, userId, leaderName);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async shipForces(gameId: number, userId: string, territoryName: string, sector: number, count: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.shipForces(state, userId, territoryName, sector, count);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async moveForces(gameId: number, userId: string, fromTerritory: string, toTerritory: string, count: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.moveForces(state, userId, fromTerritory, toTerritory, count);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
     async deployForces(gameId: number, userId: string, deployment: { territory: string, sector: number, amount: number }[]) {
         const game = await prisma.game.findUnique({ where: { id: gameId } });
         if (!game) throw new Error("Game not found.");
@@ -338,6 +404,28 @@ export class GameManager {
         }
 
         return newState;
+    }
+
+    async submitBattlePlan(gameId: number, userId: string, plan: BattlePlan) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.submitBattlePlan(state, userId, plan);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
+    }
+
+    async resolveSpiceCollection(gameId: number) {
+        const game = await prisma.game.findUnique({ where: { id: gameId } });
+        if (!game) throw new Error("Game not found.");
+        const state: GameState = JSON.parse(game.stateJson);
+
+        this.gameEngine.resolveSpiceCollection(state);
+
+        await prisma.game.update({ where: { id: gameId }, data: { stateJson: JSON.stringify(state) } });
+        await this.refreshGameView(gameId);
     }
 
     // --- View Updates ---

@@ -22,6 +22,7 @@ import { ShipmentAndMovementPhaseHandler } from "./phases/ShipmentAndMovementPha
 import { BattlePhaseHandler } from "./phases/BattlePhaseHandler";
 import { SpiceCollectionPhaseHandler } from "./phases/SpiceCollectionPhaseHandler";
 import { MentatPausePhaseHandler } from "./phases/MentatPausePhaseHandler";
+import { NexusPhaseHandler } from "./phases/NexusPhaseHandler";
 import { GameAction } from "../types";
 
 // Utility to get random item from array
@@ -47,6 +48,7 @@ export class GameEngine {
             "Setup": new SetupPhaseHandler(),
             "Storm": new StormPhaseHandler(),
             "Spice Blow": new SpiceBlowPhaseHandler(),
+            "Nexus": new NexusPhaseHandler(),
             "CHOAM Charity": new ChoamCharityPhaseHandler(),
             "Bidding": new BiddingPhaseHandler(this.biddingEngine),
             "Revival": new RevivalPhaseHandler(this.revivalEngine),
@@ -241,6 +243,14 @@ export class GameEngine {
     
     // ... rest of class ...
 
+    placeBid(state: GameState, userId: string, amount: number) {
+        this.biddingEngine.placeBid(state, userId, amount);
+    }
+
+    passBid(state: GameState, userId: string) {
+        this.biddingEngine.passBid(state, userId);
+    }
+
     confirmTraitor(state: GameState, userId: string, traitorName: string): GameState {
         const faction = state.factions.find(f => f.playerDiscordId === userId);
         if (!faction) throw new Error("Faction not found.");
@@ -301,6 +311,11 @@ export class GameEngine {
             }
         } else if (state.phase === "Setup_Forces") {
             nextPhase = "Storm";
+        } else if (state.phase === "Spice Blow" && state.nexusActive) {
+            nextPhase = "Nexus";
+        } else if (state.phase === "Nexus") {
+            nextPhase = "CHOAM Charity";
+            state.nexusActive = false; // Reset Nexus flag
         } else {
              // Normal Loop
             if (currentIdx !== -1 && currentIdx < phases.length - 1) {
@@ -328,6 +343,8 @@ export class GameEngine {
         // Initialize Pending Players for Setup_Forces
         if (nextPhase === "Setup_Forces") {
             state.pendingPlayerIds = state.factions.map(f => f.playerDiscordId);
+        } else if (nextPhase === "Bidding") {
+            this.biddingEngine.startBiddingPhase(state, state.treacheryDeck);
         }
 
         // Phase Triggers
@@ -340,9 +357,7 @@ export class GameEngine {
             // So we do NOT auto-advance here. We wait for user interaction.
         }
 
-        if (nextPhase === "Bidding") {
-            this.biddingEngine.startBiddingPhase(state, state.treacheryDeck || []);
-        }
+
         
         if (nextPhase === "Mentat Pause") {
              // Just a pause.

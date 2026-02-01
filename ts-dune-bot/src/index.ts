@@ -28,6 +28,15 @@ import { StartGameCommand } from "./commands/interactions/StartGameCommand";
 import { NextPhaseCommand } from "./commands/interactions/NextPhaseCommand";
 import { WizardCommand } from "./commands/interactions/WizardCommand";
 import { PlayerInfoCommand } from "./commands/interactions/PlayerInfoCommand";
+import { MoveStormCommand } from "./commands/interactions/MoveStormCommand";
+import { SpiceBlowCommand } from "./commands/interactions/SpiceBlowCommand";
+import { BidCommand } from "./commands/interactions/BidCommand";
+import { PassCommand } from "./commands/interactions/PassCommand";
+import { ReviveCommand } from "./commands/interactions/ReviveCommand";
+import { ShipCommand } from "./commands/interactions/ShipCommand";
+import { MoveCommand } from "./commands/interactions/MoveCommand";
+import { BattlePlanCommand } from "./commands/interactions/BattlePlanCommand";
+import { SpiceCollectionCommand } from "./commands/interactions/SpiceCollectionCommand";
 
 const dispatcher = new InteractionDispatcher(gameManager);
 dispatcher.register("join-game", new JoinGameCommand());
@@ -35,8 +44,17 @@ dispatcher.register("start-game", new StartGameCommand());
 dispatcher.register("next-phase", new NextPhaseCommand());
 dispatcher.register("wizard", new WizardCommand());
 dispatcher.register("player-actions", new PlayerInfoCommand());
+dispatcher.register("move-storm", new MoveStormCommand());
+dispatcher.register("spice-blow", new SpiceBlowCommand());
+dispatcher.register("bid", new BidCommand());
+dispatcher.register("pass", new PassCommand());
+dispatcher.register("revive", new ReviveCommand());
+dispatcher.register("ship", new ShipCommand());
+dispatcher.register("move", new MoveCommand());
+dispatcher.register("plan", new BattlePlanCommand());
+dispatcher.register("collect-spice", new SpiceCollectionCommand());
 // TODO: Register other commands as they are migrated
-// dispatcher.register("move-storm", new MoveStormCommand());
+// dispatcher.register("spice-blow", new SpiceBlowCommand());
 // dispatcher.register("spice-blow", new SpiceBlowCommand());
 // dispatcher.register("player-actions", new PlayerActionsCommand());
 // dispatcher.register("wizard", new WizardCommand());
@@ -90,7 +108,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     // 2. Buttons & Select Menus (Handled by Dispatcher)
-    if (interaction.isButton() || interaction.isStringSelectMenu()) {
+    if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
         await dispatcher.dispatch(interaction);
     }
 });
