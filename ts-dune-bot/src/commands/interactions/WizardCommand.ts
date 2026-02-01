@@ -2,7 +2,8 @@ import { CommandContext, InteractionCommand } from "./Command";
 import { MessageFlags } from "discord.js";
 import { WizardService } from "../../services/WizardService";
 import { GameState, BattlePlan } from "../../types"; // Import GameState type
-import { prisma } from "../../db"; // Import prisma for database access
+import { prisma } from "../../db"; 
+import { BoardService } from "../../services/BoardService";
 
 export class WizardCommand implements InteractionCommand {
     async execute(context: CommandContext): Promise<void> {
@@ -103,30 +104,16 @@ export class WizardCommand implements InteractionCommand {
             await interaction.editReply({ content: `Traitor **${selectedTraitor}** confirmed. Waiting for others...`, components: [] });
         } else if (wizardType === "setup_forces") {
              const wizardState = WizardService.getWizardState(state, playerId, "setup_forces");
-             const forces = wizardState.forces || {}; // { territory: count }
+             const forces = wizardState.forces || {}; 
              
-             // Convert to Array
              const deployment: { territory: string, sector: number, amount: number }[] = [];
              for (const [terr, amount] of Object.entries(forces)) {
                  if (typeof amount === 'number' && amount > 0) {
-                     // Need SECTOR. Wizard just knew Name.
-                     // We need a lookup for Sector. Assumed Hardcoded/Default for now?
-                     // Or WizardService should have tracked it.
-                     // For canonical starts, Sector is fixed.
-                     // MapService/BoardService might know.
-                     // Let's hardcode canonical sectors here or in a constant.
-                     // Ideally `gameEngine` or `BoardService` has `getCanonicalSector(territory)`.
-                     
-                     let sector = 0;
-                     // Quick lookup based on knowns
-                     if (terr === "Arrakeen") sector = 10;
-                     if (terr === "Carthag") sector = 11;
-                     if (terr === "Sietch Tabr") sector = 14;
-                     if (terr === "Tuek's Sietch") sector = 5;
-                     if (terr === "Polar Sink") sector = 0;
-                     if (terr.includes("False Wall")) sector = 12; // Approximation
-                     
-                     deployment.push({ territory: terr, sector, amount });
+                     deployment.push({ 
+                         territory: terr, 
+                         sector: BoardService.getCanonicalSector(terr), 
+                         amount 
+                     });
                  }
              }
 
@@ -166,16 +153,7 @@ export class WizardCommand implements InteractionCommand {
                  return;
              }
              
-             // Determine Sector (Reuse lookup logic or default)
-             let sector = 1; // Default to sector 1 if unknown?
-             // Simple Lookup Table
-             if (dest === "Arrakeen") sector = 10;
-             else if (dest === "Carthag") sector = 11;
-             else if (dest === "Sietch Tabr") sector = 14;
-             else if (dest === "Tuek's Sietch") sector = 5;
-             else if (dest === "Polar Sink") sector = 0;
-             // If not in lookup, assume 1? Or need improved Board Service. 
-             // Ideally we shouldn't hardcode, but for MVP/Bot this works for main strongholds.
+             const sector = BoardService.getCanonicalSector(dest);
              
              await interaction.deferUpdate();
              await gameManager.shipForces(gameId, playerId, dest, sector, forces);
