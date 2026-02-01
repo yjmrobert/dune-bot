@@ -141,6 +141,8 @@ export class GameManager {
                 data: { stateJson: JSON.stringify(state) }
             });
 
+            await this.updateLobby(gameId);
+
             const result = `Successfully joined as ${state.factions.find(f => f.playerDiscordId === userId)?.faction}`;
             return { result, state, game };
 

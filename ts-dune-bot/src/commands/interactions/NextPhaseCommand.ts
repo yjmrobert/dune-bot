@@ -1,4 +1,6 @@
 import { CommandContext, InteractionCommand } from "./Command";
+import { MessageFlags } from "discord.js";
+import { GameState, FactionState } from "../../types";
 
 export class NextPhaseCommand implements InteractionCommand {
     async execute(context: CommandContext): Promise<void> {
@@ -7,6 +9,12 @@ export class NextPhaseCommand implements InteractionCommand {
 
         if (interaction.isButton() || interaction.isStringSelectMenu()) { 
              await interaction.deferUpdate();
+        }
+
+        const game = await gameManager.getGame(gameId);
+        if (!game) {
+             await interaction.followUp({ content: "Game not found.", flags: MessageFlags.Ephemeral });
+             return;
         }
 
         const state: GameState = JSON.parse(game.stateJson);
