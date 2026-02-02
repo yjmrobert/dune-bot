@@ -25,6 +25,7 @@ All UI responses must adhere to these constraints.
     - "Waiting for players to select traitors..."
     - "Waiting for players to place forces..."
 - `[Select Traitor]` (Ephemeral Wizard)
+    - NOTE: The only traitors available are the leaders of the factions that are part of the game.
     - `[Keep {traitorName}]`
     - `[Discard {traitorName}]`
     - `[Reset]`

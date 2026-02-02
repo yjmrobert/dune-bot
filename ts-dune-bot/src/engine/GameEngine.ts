@@ -46,6 +46,8 @@ export class GameEngine {
     constructor() {
         this.phaseHandlers = {
             "Setup": new SetupPhaseHandler(),
+            "Setup_TraitorPick": new SetupPhaseHandler(),
+            "Setup_Forces": new SetupPhaseHandler(),
             "Storm": new StormPhaseHandler(),
             "Spice Blow": new SpiceBlowPhaseHandler(),
             "Nexus": new NexusPhaseHandler(),
